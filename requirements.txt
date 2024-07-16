@@ -1,0 +1,8 @@
+pyinstaller
+auto-py-to-exe
+pandas
+Pyarrow
+pymupdf
+openpyxl
+pymupdf-fonts
+
