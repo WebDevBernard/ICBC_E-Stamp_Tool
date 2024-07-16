@@ -382,7 +382,7 @@ def check_if_matching_transaction_timestamp(
 ):
     # check for duplicates in input folder
     if timestamp in processed_timestamps:
-        return
+        pass
     processed_timestamps.add(timestamp)
     # checks for duplicates in output folder
     output_dir_paths = list(Path(icbc_e_stamp_copies_dir).rglob("*.pdf"))
