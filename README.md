@@ -40,7 +40,7 @@ The code, written in a single Python file, allows you to easily verify there are
 ## Script Not Working?
 
 - Ensure the Downloads directory in Microsoft Edge is set to "C:\Users\<your_username>\Downloads" and "Ask me what to do with each download" is toggled off.
-- If it does not allow you to copy the same policy document, delete the "ICBC E-Stamp Copies (this folder can be deleted)" folder from your desktop.
+- The script will not copy the same policy document. If it cannot copy, try deleting the 'ICBC E-Stamp Copies (this folder can be deleted)' folder from your desktop.
 - Note that not all documents will work. This script scans a set of coordinates for the phrase "Transaction Timestamp".
 
 <table align="center">
