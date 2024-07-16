@@ -200,7 +200,7 @@ def get_excel_data():
     root_dir = Path(__file__).parent.parent
     excel_path = root_dir / "BM3KXR.xlsx"
     defaults = {
-        "number_of_pdfs": 10,
+        "number_of_pdfs": 5,
         "agency_name": "",
         "toggle_timestamp": "Timestamp",
         "font": "SpaceMono",
