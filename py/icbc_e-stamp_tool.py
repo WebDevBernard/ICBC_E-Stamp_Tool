@@ -209,7 +209,7 @@ def get_excel_data():
     try:
         df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
         data = {
-            "number_of_pdfs": ee(df_excel, 2, defaults["number_of_pdfs"]),
+            "number_of_pdfs": defaults["number_of_pdfs"] if isinstance(ee(df_excel, 2, defaults["number_of_pdfs"]), str) else ee(df_excel, 2, defaults["number_of_pdfs"]),
             "agency_name": ee(df_excel, 4, defaults["agency_name"]),
             "toggle_timestamp": ee(df_excel, 6, defaults["toggle_timestamp"]),
             "toggle_customer_copy": ee(df_excel, 8, defaults["toggle_customer_copy"]),
@@ -562,16 +562,22 @@ def copy_policy(df, doc, pdf):
 
 
 # <=========================================Begin code execution=========================================>
-
+timer = 0
 def main():
+    global timer
+    loop_counter = 0
+    copy_counter = 0
+    found_icbc = 0
     # Stores the timestamps in input folder to avoid duplicate copies of the same pdf
     processed_timestamps = set()
     # Step 1: open the specified number of pdfs in the input directory (downloads folder)
     for pdf in sorted_input_dir[:number_of_pdfs]:
+        loop_counter += 1
         with fitz.open(pdf) as doc:
             # Step 2 open each pdf and identify if it is an ICBC policy doc
             is_icbc_pdf = identify_icbc_pdf(doc)
             if is_icbc_pdf:
+                found_icbc += 1
                 # Step 3 if is ICBC doc, extract all text, their coordinates and page number where they are found
                 all_text = get_all_text(doc)
                 # Step 4 Search for keywords using the keyword dictionary
@@ -598,21 +604,27 @@ def main():
                     if not stamp_does_not_fit:
                         # Step 9 Copy files to folder
                         copy_policy(df, doc, pdf)
-                        print(df)
-
-    if len(sorted_input_dir[:number_of_pdfs]) == 0:
-        print("There are no ICBC Policy Documents in the Downloads folder")
-        time.sleep(3)
+                        copy_counter += 1
     if stamp_does_not_fit:
-        print("Agency name is too long, will not fit in the stamped area")
+        print("Agency name is over the 17 character limit")
         os.system('pause')
         return
+    elif found_icbc > 0:
+        print(f"Scanned: {found_icbc} out of {loop_counter} documents")
+        print(f"Copied: {copy_counter} out of {found_icbc} documents")
+        timer = 3
+    elif found_icbc == 0:
+        print(f"There are no policy documents in the Downloads folder")
+        timer = 3
 
 
 if __name__ == "__main__":
     time_taken = timeit.timeit(lambda: main(), number=1)
     try:
-        print(f"Time taken: {time_taken} seconds")
+        if not stamp_does_not_fit:
+            print(f"Time taken: {time_taken} seconds")
+            if timer > 0:
+                time.sleep(timer)
     except Exception as e:
         print(str(e))
         time.sleep(3)
