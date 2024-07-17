@@ -12,15 +12,10 @@ import pandas as pd
 
 warnings.simplefilter("ignore")
 
-# fonts and timestamp locations
+# font size and font options
 
-time_of_validation_am = (0, 0.5, 0, 0)
-time_of_validation_pm = (0, 21.9, 0, 0)
-agency_name_coordinates = (0, 5, 0, 0)
-agency_number_coordinates = (0, 10, 0, 0)
-agency_name_number_coordinates = (0, 12, 0, 0)
-time_stamped_coordinates = (0, 13, 0, 0)
-
+font_size = 9
+font = "SpaceMono"
 fonts = {
     "FiraMono": ["fimo", "fimbo"],
     "SpaceMono": ["spacemo", "spacembo"],
@@ -126,6 +121,7 @@ keyword_dict = {
     )._asdict(),
 }
 
+
 # <=========================================Helper Functions=========================================>
 
 
@@ -192,6 +188,7 @@ def unique_file_name(path):
         counter += 1
     return path
 
+
 # <=========================================Main Functions=========================================>
 
 
@@ -203,8 +200,6 @@ def get_excel_data():
         "number_of_pdfs": 5,
         "agency_name": "",
         "toggle_timestamp": "Timestamp",
-        "font": "SpaceMono",
-        "font_size": 9,
         "toggle_customer_copy": "No"
     }
 
@@ -217,9 +212,7 @@ def get_excel_data():
             "number_of_pdfs": ee(df_excel, 2, defaults["number_of_pdfs"]),
             "agency_name": ee(df_excel, 4, defaults["agency_name"]),
             "toggle_timestamp": ee(df_excel, 6, defaults["toggle_timestamp"]),
-            "font": ee(df_excel, 8, defaults["font"]),
-            "font_size": ee(df_excel, 10, defaults["font_size"]),
-            "toggle_customer_copy": ee(df_excel, 12, defaults["toggle_customer_copy"]),
+            "toggle_customer_copy": ee(df_excel, 8, defaults["toggle_customer_copy"]),
         }
     except KeyError:
         return None
@@ -230,8 +223,6 @@ def get_excel_data():
     number_of_pdfs,
     agency_name,
     toggle_timestamp,
-    font,
-    font_size,
     toggle_customer_copy,
 ) = get_excel_data().values()
 
@@ -250,14 +241,14 @@ sorted_input_dir = get_sorted_input_dir()
 
 # output directory
 icbc_e_stamp_copies_dir = (
-    Path.home() / "Desktop" / "ICBC E-Stamp Copies (this folder can be deleted)"
+        Path.home() / "Desktop" / "ICBC E-Stamp Copies (this folder can be deleted)"
 )
 icbc_e_stamp_copies_dir.mkdir(exist_ok=True)
 unsorted_e_stamp_copies_dir = (
-    Path.home()
-    / "Desktop"
-    / "ICBC E-Stamp Copies (this folder can be deleted)"
-    / "Unsorted E-Stamp Copies"
+        Path.home()
+        / "Desktop"
+        / "ICBC E-Stamp Copies (this folder can be deleted)"
+        / "Unsorted E-Stamp Copies"
 )
 if toggle_customer_copy == "No":
     unsorted_e_stamp_copies_dir.mkdir(exist_ok=True)
@@ -312,9 +303,9 @@ def locate_keywords(all_text, type_of_pdf):
                     try:
                         # This if statement list with [page number, (coordinates)] for the validation stamp position
                         if (
-                            target.target_keyword
-                            and target.target_coordinates
-                            and any(target.target_keyword in s for s in word_list[0])
+                                target.target_keyword
+                                and target.target_coordinates
+                                and any(target.target_keyword in s for s in word_list[0])
                         ):
                             coordinates = tuple(
                                 x + y
@@ -328,7 +319,7 @@ def locate_keywords(all_text, type_of_pdf):
 
                         # This if statement is used to find keywords other than license plate number
                         elif isinstance(target.target_keyword, str) and any(
-                            target.target_keyword in s for s in word_list[0]
+                                target.target_keyword in s for s in word_list[0]
                         ):
                             word = all_text[pg_num][i + target.first_index][0][
                                 target.second_index
@@ -340,7 +331,7 @@ def locate_keywords(all_text, type_of_pdf):
                                     " ".join(word).split(", ")
                                 )
                             elif (
-                                word and word not in field_dict[type_of_pdf][j]
+                                    word and word not in field_dict[type_of_pdf][j]
                             ):
                                 field_dict[type_of_pdf][j].append(word)
 
@@ -350,8 +341,8 @@ def locate_keywords(all_text, type_of_pdf):
                                 target.second_index
                             ]
                             if (
-                                re.search(target.target_keyword, word)
-                                and word not in field_dict[type_of_pdf][j]
+                                    re.search(target.target_keyword, word)
+                                    and word not in field_dict[type_of_pdf][j]
                             ):
                                 field_dict[type_of_pdf][j].append(word)
                     except IndexError:
@@ -376,9 +367,9 @@ def format_keywords(matching_keywords):
 
 # find matching transaction timestamps in the input and output folder
 def check_if_matching_transaction_timestamp(
-    processed_timestamps,
-    icbc_file_name,
-    timestamp,
+        processed_timestamps,
+        icbc_file_name,
+        timestamp,
 ):
     # check for duplicates in input folder
     if timestamp in processed_timestamps:
@@ -407,11 +398,19 @@ def check_if_matching_transaction_timestamp(
     return matching_transaction_ids
 
 
+# Checks if stamp will fit if agency name entered is too long
+stamp_does_not_fit = False
+
+
 # Stamp the location where the string "NOT VALID UNLESS STAMPED BY" are found
 def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
+    global stamp_does_not_fit
     fontname = fonts[font][0]
     fontname_bold = fonts[font][1]
-    fontsize = int(font_size)
+    agency_name_coordinates = (3, 7, -3, 0)
+    agency_name_factor = 60
+    agency_number_coordinates = (0, 10, 0, 0)
+    time_stamp_coordinates = (0, 13, 0, 0)
     formatted_date = (
         timestamp_date.strftime("%b %d, %Y")
         if toggle_timestamp == "Timestamp"
@@ -420,42 +419,51 @@ def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
     agency_name_location = tuple(
         x + y for x, y in zip(stamp_location.coordinates, agency_name_coordinates)
     )
-    toggle_location = stamp_location.coordinates if not agency_name else agency_name_location
-    agency_number_y_location = agency_number_coordinates if not agency_name else agency_name_number_coordinates
+
     agency_number_location = tuple(
-        x + y for x, y in zip(toggle_location, agency_number_y_location)
+        x + y for x, y in zip(stamp_location.coordinates, agency_number_coordinates)
     )
 
     date_location = tuple(
-        x + y for x, y in zip(agency_number_location, time_stamped_coordinates)
+        x + y for x, y in zip(agency_number_location, time_stamp_coordinates)
     )
-    if isinstance(agency_name, str):
-        page.insert_textbox(
+    agency_name_str = str(agency_name)
+
+    rect = fitz.Rect(stamp_location.coordinates)
+    fs = font_size * (min(rect.width, rect.height) / agency_name_factor)
+
+    if len(agency_name_str) > 0:
+        stamp_with_agency_name = page.insert_textbox(
             agency_name_location,
-            str(agency_name),
+            f"{agency_name_str}\n{agency_number}\n{formatted_date}",
             align=fitz.TEXT_ALIGN_CENTER,
             fontname=fontname,
-            fontsize=fontsize,
+            fontsize=fs,
         )
-    page.insert_textbox(
-        agency_number_location,
-        str(agency_number),
-        align=fitz.TEXT_ALIGN_CENTER,
-        fontname=fontname_bold if not agency_name else fontname,
-        fontsize=fontsize,
-    )
-    page.insert_textbox(
-        date_location,
-        formatted_date,
-        align=fitz.TEXT_ALIGN_CENTER,
-        fontname=fontname,
-        fontsize=fontsize,
-    )
+        if stamp_with_agency_name < 0:
+            stamp_does_not_fit = True
+
+    else:
+        page.insert_textbox(
+            agency_number_location,
+            agency_number,
+            align=fitz.TEXT_ALIGN_CENTER,
+            fontname=fontname_bold,
+            fontsize=font_size,
+        )
+        page.insert_textbox(
+            date_location,
+            formatted_date,
+            align=fitz.TEXT_ALIGN_CENTER,
+            fontname=fontname,
+            fontsize=font_size,
+        )
 
 
 # Stamp the location where the string "TIME OF VALIDATION" are found
 def find_time_of_validation_location(time_location, timestamp_date, page):
-
+    time_of_validation_am = (0, 0.5, 0, 0)
+    time_of_validation_pm = (0, 21.9, 0, 0)
     formatted_date = (
         timestamp_date.strftime("%I:%M")
         if toggle_timestamp == "Timestamp"
@@ -484,10 +492,10 @@ def find_time_of_validation_location(time_location, timestamp_date, page):
 
 # finds the pages that need to be stamped
 def stamp_policy(
-    timestamp,
-    matching_keywords,
-    doc,
-    agency_number
+        timestamp,
+        matching_keywords,
+        doc,
+        agency_number,
 ):
     timestamp_date = format_transaction_timestamp(timestamp)
     ValidationStamp = namedtuple("ValidationStamp", ["page_num", "coordinates"])
@@ -518,8 +526,8 @@ def not_customer_copy_page_numbers(pdf):
             "text", clip=keyword_dict["ICBC"]["top"].target_coordinates
         )
         if (
-            "Temporary Operation Permit and Owner’s Certificate of Insurance".casefold()
-            in top_block.casefold()
+                "Temporary Operation Permit and Owner’s Certificate of Insurance".casefold()
+                in top_block.casefold()
         ):
             top = True
         for page_num in range(len(doc)):
@@ -555,7 +563,6 @@ def copy_policy(df, doc, pdf):
 
 # <=========================================Begin code execution=========================================>
 
-
 def main():
     # Stores the timestamps in input folder to avoid duplicate copies of the same pdf
     processed_timestamps = set()
@@ -573,13 +580,12 @@ def main():
                 formatted_keywords = format_keywords(ll(matching_keywords[is_icbc_pdf]))
                 # Step 6 Save into a Pandas Data frame, data analysis to find matching transaction timestamp
                 df = pd.DataFrame([formatted_keywords])
-                print(df)
                 # Step 7 Check if matching transaction timestamp in input and output folder
                 timestamp = df["transaction_timestamp"].at[0]
                 matching_timestamp = check_if_matching_transaction_timestamp(
                     processed_timestamps,
                     root_folder_filename(df),
-                    int(timestamp),
+                    int(timestamp)
                 )
                 # Step 8 Stamp ICBC
                 if int(timestamp) not in matching_timestamp:
@@ -587,13 +593,20 @@ def main():
                         timestamp,
                         matching_keywords,
                         doc,
-                        df["agency_number"].at[0]
+                        df["agency_number"].at[0],
                     )
-                    # Step 9 Copy files to folder
-                    copy_policy(df, doc, pdf)
+                    if not stamp_does_not_fit:
+                        # Step 9 Copy files to folder
+                        copy_policy(df, doc, pdf)
+                        print(df)
+
     if len(sorted_input_dir[:number_of_pdfs]) == 0:
-        print("There are no ICBC Policy Documents in Downloads folder")
+        print("There are no ICBC Policy Documents in the Downloads folder")
         time.sleep(3)
+    if stamp_does_not_fit:
+        print("Agency name is too long, will not fit in the stamped area")
+        os.system('pause')
+        return
 
 
 if __name__ == "__main__":
