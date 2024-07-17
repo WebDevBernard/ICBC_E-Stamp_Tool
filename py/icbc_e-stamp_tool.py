@@ -6,7 +6,7 @@ import warnings
 from collections import namedtuple, defaultdict
 from datetime import datetime
 from pathlib import Path
-
+import sys
 import fitz
 import pandas as pd
 
@@ -189,6 +189,22 @@ def unique_file_name(path):
     return path
 
 
+# https://stackoverflow.com/questions/3160699/python-progress-bar
+def progressbar(it, prefix="", size=60, out=sys.stdout): # Python3.6+
+    count = len(it)
+    start = time.time() # time estimate start
+    def show(j):
+        x = int(size*j/count)
+        # time estimate calculation and string
+        remaining = ((time.time() - start) / j) * (count - j)
+        mins, sec = divmod(remaining, 60) # limited to minutes
+        time_str = f"{int(mins):02}:{sec:03.1f}"
+        print(f"{prefix}[{u'█'*x}{('.'*(size-x))}] {j}/{count} Est wait {time_str}", end='\r', file=out, flush=True)
+    show(0.1) # avoid div/0
+    for i, item in enumerate(it):
+        yield item
+        show(i+1)
+    print(flush=True, file=out)
 # <=========================================Main Functions=========================================>
 
 
@@ -571,7 +587,7 @@ def main():
     # Stores the timestamps in input folder to avoid duplicate copies of the same pdf
     processed_timestamps = set()
     # Step 1: open the specified number of pdfs in the input directory (downloads folder)
-    for pdf in sorted_input_dir[:number_of_pdfs]:
+    for pdf in progressbar(sorted_input_dir[:number_of_pdfs], prefix="Progress: ", size=40):
         loop_counter += 1
         with fitz.open(pdf) as doc:
             # Step 2 open each pdf and identify if it is an ICBC policy doc
