@@ -221,7 +221,7 @@ def get_excel_data():
 
     if not excel_path.exists():
         return defaults
-    print(type(pd.read_excel(excel_path, sheet_name=0, header=None).at[2,1]))
+
     try:
         df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
 
