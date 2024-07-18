@@ -587,7 +587,10 @@ def copy_policy(df, doc, pdf):
 
 
 # <=========================================Begin code execution=========================================>
+timer = 0
+
 def main():
+    global timer
     loop_counter = 0
     scan_counter = 0
     copy_counter = 0
@@ -638,10 +641,10 @@ def main():
     elif scan_counter > 0:
         print(f"Scanned: {scan_counter} out of {loop_counter} documents")
         print(f"Copied: {copy_counter} out of {scan_counter} documents")
-        time.sleep(3)
+        timer = 3
     elif scan_counter == 0:
         print(f"There are no policy documents in the Downloads folder")
-        time.sleep(3)
+        timer = 3
 
 
 if __name__ == "__main__":
@@ -649,6 +652,8 @@ if __name__ == "__main__":
     try:
         if not stamp_does_not_fit:
             print(f"Time taken: {time_taken} seconds")
+            if timer > 0:
+                time.sleep(timer)
     except Exception as e:
         print(str(e))
         time.sleep(3)
