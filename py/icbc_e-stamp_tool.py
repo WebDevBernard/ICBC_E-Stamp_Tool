@@ -207,17 +207,15 @@ def progressbar(it, prefix="", size=60, out=sys.stdout): # Python3.6+
     print(flush=True, file=out)
 # <=========================================Main Functions=========================================>
 
-defaults = {
-    "number_of_pdfs": 5,
-    "agency_name": "",
-    "toggle_timestamp": "Timestamp",
-    "toggle_customer_copy": "No"
-}
-
 
 # This Excel sheet reads the user inputs
 def get_excel_data():
-    global defaults
+    defaults = {
+        "number_of_pdfs": 5,
+        "agency_name": "",
+        "toggle_timestamp": "Timestamp",
+        "toggle_customer_copy": "No"
+    }
     root_dir = Path(__file__).parent.parent
     excel_path = root_dir / "BM3KXR.xlsx"
 
