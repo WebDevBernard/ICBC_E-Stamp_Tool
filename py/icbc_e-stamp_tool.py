@@ -135,27 +135,8 @@ def append_word_to_dict(word_list, field_dict, append_duplicates):
             field_dict.append(word)
 
 
-# Clean and transforms list items
-def dd(dict_items, field_dict, key, regex=None, strip_char=None):
-    for items in dict_items[key]:
-        for item in items:
-            if regex:
-                item = re.sub(re.compile(regex), "", item)
-            if strip_char:
-                item = item.rstrip(strip_char)
-                field_dict["insured_name"] = item
-            else:
-                field_dict[key] = item
-
-
-# used in Excel sheet Function
-def ee(df, row, default):
-    value = df.at[row, 1]
-    return default if isinstance(value, float) else value
-
-
 # makes all strings into a list
-def ll(dictionary):
+def make_string_to_list(dictionary):
     for key, value in dictionary.items():
         if value and isinstance(value[0], str):
             dictionary[key] = [value]
@@ -210,9 +191,14 @@ def progressbar(it, prefix="", size=60, out=sys.stdout): # Python3.6+
 
 # This Excel sheet reads the user inputs
 def get_excel_data():
+    # used in Excel sheet Function
+    def find_excel_values(df, row, default):
+        value = df.at[row, 1]
+        return default if isinstance(value, float) else value
     defaults = {
         "number_of_pdfs": 5,
         "agency_name": "",
+        "broker_number": "",
         "toggle_timestamp": "Timestamp",
         "toggle_customer_copy": "No"
     }
@@ -224,15 +210,16 @@ def get_excel_data():
 
     try:
         df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
-
         data = {
-            "number_of_pdfs": defaults["number_of_pdfs"] if isinstance(ee(df_excel, 2, defaults["number_of_pdfs"]), str) else ee(df_excel, 2, defaults["number_of_pdfs"]),
-            "agency_name": ee(df_excel, 4, defaults["agency_name"]),
-            "toggle_timestamp": ee(df_excel, 6, defaults["toggle_timestamp"]),
-            "toggle_customer_copy": ee(df_excel, 8, defaults["toggle_customer_copy"]),
+            # special if statement in case user enters a string
+            "number_of_pdfs": defaults["number_of_pdfs"] if isinstance(find_excel_values(df_excel, 2, defaults["number_of_pdfs"]), str) else find_excel_values(df_excel, 2, defaults["number_of_pdfs"]),
+            "agency_name":  find_excel_values(df_excel, 4, defaults["agency_name"]),
+            "agency_number": find_excel_values(df_excel, 6, defaults["broker_number"]),
+            "toggle_timestamp": find_excel_values(df_excel, 8, defaults["toggle_timestamp"]),
+            "toggle_customer_copy": find_excel_values(df_excel, 10, defaults["toggle_customer_copy"]),
         }
     except KeyError:
-        return None
+        return defaults
 
     return data
 
@@ -240,6 +227,7 @@ def get_excel_data():
 (
     number_of_pdfs,
     agency_name,
+    broker_number,
     toggle_timestamp,
     toggle_customer_copy,
 ) = get_excel_data().values()
@@ -370,16 +358,35 @@ def locate_keywords(all_text, type_of_pdf):
 
 # Removes whitespace and non-relevant words
 def format_keywords(matching_keywords):
+    # Clean and transforms dictionary items (return the first index)
+    # First index to avoid issue of agents comments throwing false match
+    def filter_keywords(dict_items, filter_dict, key, regex=None, strip_char=None):
+        for items in dict_items[key]:
+            if regex:
+                items[0] = re.sub(re.compile(regex), "", items[0])
+            if strip_char:
+                filter_dict["insured_name"] = items[0].rstrip(strip_char)
+            else:
+                filter_dict[key] = items[0]
+
+            # This is the old method, will break script if certain words appear in agents comments:
+            # for item in items:
+            #     if regex:
+            #         item = re.sub(re.compile(regex), "", item)
+            #     if strip_char:
+            #         field_dict["insured_name"] = item.rstrip(strip_char)
+            #     else:
+            #         field_dict[key] = item
     field_dict = {}
     if not matching_keywords["licence_plate"]:
         field_dict["licence_plate"] = "NONLIC"
     else:
-        dd(matching_keywords, field_dict, "licence_plate", r"Licence Plate Number ")
-    dd(matching_keywords, field_dict, "transaction_timestamp", r"Transaction Timestamp ")
-    dd(matching_keywords, field_dict, "agency_number", r"Agency Number ")
-    dd(matching_keywords, field_dict, "owner_name", strip_char=".")
-    dd(matching_keywords, field_dict, "applicant_name", strip_char=".")
-    dd(matching_keywords, field_dict, "insured_name", strip_char=".")
+        filter_keywords(matching_keywords, field_dict, "licence_plate", r"Licence Plate Number ")
+    filter_keywords(matching_keywords, field_dict, "transaction_timestamp", r"Transaction Timestamp ")
+    filter_keywords(matching_keywords, field_dict, "agency_number", r"Agency Number ")
+    filter_keywords(matching_keywords, field_dict, "owner_name", strip_char=".")
+    filter_keywords(matching_keywords, field_dict, "applicant_name", strip_char=".")
+    filter_keywords(matching_keywords, field_dict, "insured_name", strip_char=".")
     return field_dict
 
 
@@ -432,7 +439,7 @@ def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
     formatted_date = (
         timestamp_date.strftime("%b %d, %Y")
         if toggle_timestamp == "Timestamp"
-        else datetime.today().strftime("%I:%M")
+        else datetime.today().strftime("%b %d, %Y")
     )
     agency_name_location = tuple(
         x + y for x, y in zip(stamp_location.coordinates, agency_name_coordinates)
@@ -446,10 +453,8 @@ def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
         x + y for x, y in zip(agency_number_location, time_stamp_coordinates)
     )
     agency_name_str = str(agency_name)
-
     rect = fitz.Rect(stamp_location.coordinates)
     fs = font_size * (min(rect.width, rect.height) / agency_name_factor)
-
     if len(agency_name_str) > 0:
         stamp_with_agency_name = page.insert_textbox(
             agency_name_location,
@@ -464,7 +469,7 @@ def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
     else:
         page.insert_textbox(
             agency_number_location,
-            agency_number,
+            str(agency_number),
             align=fitz.TEXT_ALIGN_CENTER,
             fontname=fontname_bold,
             fontsize=font_size,
@@ -582,9 +587,7 @@ def copy_policy(df, doc, pdf):
 
 
 # <=========================================Begin code execution=========================================>
-timer = 0
 def main():
-    global timer
     loop_counter = 0
     scan_counter = 0
     copy_counter = 0
@@ -603,7 +606,7 @@ def main():
                 # Step 4 Search for keywords using the keyword dictionary
                 matching_keywords = locate_keywords(all_text, is_icbc_pdf)
                 # Step 5 Remove white space and irrelevant words in keywords
-                formatted_keywords = format_keywords(ll(matching_keywords[is_icbc_pdf]))
+                formatted_keywords = format_keywords(make_string_to_list(matching_keywords[is_icbc_pdf]))
                 # Step 6 Save into a Pandas Data frame, data analysis to find matching transaction timestamp
                 df = pd.DataFrame([formatted_keywords])
                 # Step 7 Check if matching transaction timestamp in input and output folder
@@ -613,13 +616,16 @@ def main():
                     root_folder_filename(df),
                     int(timestamp)
                 )
+                # Used when user uses the broker_number in the Excel sheet
+                agency_number_or_broker_number = df["agency_number"].at[0] if len(
+                    str(broker_number)) == 0 else broker_number
                 # Step 8 Stamp ICBC
                 if int(timestamp) not in matching_timestamp:
                     stamp_policy(
                         timestamp,
                         matching_keywords,
                         doc,
-                        df["agency_number"].at[0],
+                        agency_number_or_broker_number,
                     )
                     if not stamp_does_not_fit:
                         # Step 9 Copy files to folder
@@ -632,10 +638,10 @@ def main():
     elif scan_counter > 0:
         print(f"Scanned: {scan_counter} out of {loop_counter} documents")
         print(f"Copied: {copy_counter} out of {scan_counter} documents")
-        timer = 3
+        time.sleep(3)
     elif scan_counter == 0:
         print(f"There are no policy documents in the Downloads folder")
-        timer = 3
+        time.sleep(3)
 
 
 if __name__ == "__main__":
@@ -643,8 +649,6 @@ if __name__ == "__main__":
     try:
         if not stamp_does_not_fit:
             print(f"Time taken: {time_taken} seconds")
-            if timer > 0:
-                time.sleep(timer)
     except Exception as e:
         print(str(e))
         time.sleep(3)
