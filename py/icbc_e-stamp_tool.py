@@ -207,23 +207,26 @@ def progressbar(it, prefix="", size=60, out=sys.stdout): # Python3.6+
     print(flush=True, file=out)
 # <=========================================Main Functions=========================================>
 
+defaults = {
+    "number_of_pdfs": 5,
+    "agency_name": "",
+    "toggle_timestamp": "Timestamp",
+    "toggle_customer_copy": "No"
+}
+
 
 # This Excel sheet reads the user inputs
 def get_excel_data():
+    global defaults
     root_dir = Path(__file__).parent.parent
     excel_path = root_dir / "BM3KXR.xlsx"
-    defaults = {
-        "number_of_pdfs": 5,
-        "agency_name": "",
-        "toggle_timestamp": "Timestamp",
-        "toggle_customer_copy": "No"
-    }
 
     if not excel_path.exists():
         return defaults
-
+    print(type(pd.read_excel(excel_path, sheet_name=0, header=None).at[2,1]))
     try:
         df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
+
         data = {
             "number_of_pdfs": defaults["number_of_pdfs"] if isinstance(ee(df_excel, 2, defaults["number_of_pdfs"]), str) else ee(df_excel, 2, defaults["number_of_pdfs"]),
             "agency_name": ee(df_excel, 4, defaults["agency_name"]),
@@ -234,6 +237,7 @@ def get_excel_data():
         return None
 
     return data
+
 
 (
     number_of_pdfs,
@@ -560,6 +564,7 @@ def not_customer_copy_page_numbers(pdf):
 
 
 def copy_policy(df, doc, pdf):
+    non_customer_copy = (not_customer_copy_page_numbers(pdf))
     root_folder_output_path = icbc_e_stamp_copies_dir / root_folder_filename(df)
     sub_folder_output_path = unsorted_e_stamp_copies_dir / sub_folder_filename(df)
     if toggle_customer_copy == "No":
@@ -568,7 +573,8 @@ def copy_policy(df, doc, pdf):
             garbage=4,
             deflate=True,
         )
-    doc.delete_pages(not_customer_copy_page_numbers(pdf))
+    if len(non_customer_copy) > 0:
+        doc.delete_pages(non_customer_copy)
     if len(doc) > 0:
         doc.save(
             unique_file_name(root_folder_output_path),
@@ -582,8 +588,8 @@ timer = 0
 def main():
     global timer
     loop_counter = 0
+    scan_counter = 0
     copy_counter = 0
-    found_icbc = 0
     # Stores the timestamps in input folder to avoid duplicate copies of the same pdf
     processed_timestamps = set()
     # Step 1: open the specified number of pdfs in the input directory (downloads folder)
@@ -593,7 +599,7 @@ def main():
             # Step 2 open each pdf and identify if it is an ICBC policy doc
             is_icbc_pdf = identify_icbc_pdf(doc)
             if is_icbc_pdf:
-                found_icbc += 1
+                scan_counter += 1
                 # Step 3 if is ICBC doc, extract all text, their coordinates and page number where they are found
                 all_text = get_all_text(doc)
                 # Step 4 Search for keywords using the keyword dictionary
@@ -625,11 +631,11 @@ def main():
         print("Agency name is over the 17 character limit")
         os.system('pause')
         return
-    elif found_icbc > 0:
-        print(f"Scanned: {found_icbc} out of {loop_counter} documents")
-        print(f"Copied: {copy_counter} out of {found_icbc} documents")
+    elif scan_counter > 0:
+        print(f"Scanned: {scan_counter} out of {loop_counter} documents")
+        print(f"Copied: {copy_counter} out of {scan_counter} documents")
         timer = 3
-    elif found_icbc == 0:
+    elif scan_counter == 0:
         print(f"There are no policy documents in the Downloads folder")
         timer = 3
 
