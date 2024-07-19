@@ -17,11 +17,11 @@ warnings.simplefilter("ignore")
 font_size = 9
 font = "SpaceMono"
 fonts = {
-    "FiraMono": ["fimo", "fimbo"],
+    # "FiraMono": ["fimo", "fimbo"],
     "SpaceMono": ["spacemo", "spacembo"],
-    "NotoSans": ["notos", "notosbo"],
-    "Ubuntu": ["ubuntu", "ubuntubo"],
-    "Cascadia": ["cascadia", "cascadiab"],
+    # "NotoSans": ["notos", "notosbo"],
+    # "Ubuntu": ["ubuntu", "ubuntubo"],
+    # "Cascadia": ["cascadia", "cascadiab"],
 }
 
 # <=========================================Coordinates and Locations=========================================>
@@ -125,16 +125,6 @@ keyword_dict = {
 # <=========================================Helper Functions=========================================>
 
 
-# append words list used in search_for_keyword function
-def append_word_to_dict(word_list, field_dict, append_duplicates):
-    for words in word_list:
-        word = words[4].strip().split("\n")
-        if append_duplicates:
-            field_dict.append(word)
-        if word and word not in field_dict:
-            field_dict.append(word)
-
-
 # makes all strings into a list
 def make_string_to_list(dictionary):
     for key, value in dictionary.items():
@@ -154,13 +144,7 @@ def format_transaction_timestamp(timestamp_str):
     return datetime_obj
 
 
-# used in check_if_matching_transaction_timestamp to find matching transaction timestamps
-def find_matching_paths(target_filename, paths):
-    matching_paths = [path for path in paths if path.stem.split()[0] == target_filename]
-    return matching_paths
-
-
-# adds a # next to identical file names
+# adds a (+=1) next to identical file names
 def unique_file_name(path):
     filename, extension = os.path.splitext(path)
     counter = 1
@@ -171,21 +155,26 @@ def unique_file_name(path):
 
 
 # https://stackoverflow.com/questions/3160699/python-progress-bar
-def progressbar(it, prefix="", size=60, out=sys.stdout): # Python3.6+
+def progressbar(it, prefix="", size=60, out=sys.stdout):  # Python3.6+
     count = len(it)
-    start = time.time() # time estimate start
+    start = time.time()  # time estimate start
+
     def show(j):
-        x = int(size*j/count)
+        x = int(size * j / count)
         # time estimate calculation and string
         remaining = ((time.time() - start) / j) * (count - j)
-        mins, sec = divmod(remaining, 60) # limited to minutes
+        mins, sec = divmod(remaining, 60)  # limited to minutes
         time_str = f"{int(mins):02}:{sec:03.1f}"
-        print(f"{prefix}[{u'█'*x}{('.'*(size-x))}] {j}/{count} Est wait {time_str}", end='\r', file=out, flush=True)
-    show(0.1) # avoid div/0
+        print(f"{prefix}[{u'█' * x}{('.' * (size - x))}] {j}/{count} Est wait {time_str}", end='\r', file=out,
+              flush=True)
+
+    show(0.1)  # avoid div/0
     for i, item in enumerate(it):
         yield item
-        show(i+1)
+        show(i + 1)
     print(flush=True, file=out)
+
+
 # <=========================================Main Functions=========================================>
 
 
@@ -195,6 +184,7 @@ def get_excel_data():
     def find_excel_values(df, row, default):
         value = df.at[row, 1]
         return default if isinstance(value, float) else value
+
     defaults = {
         "number_of_pdfs": 5,
         "agency_name": "",
@@ -212,8 +202,11 @@ def get_excel_data():
         df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
         data = {
             # special if statement in case user enters a string
-            "number_of_pdfs": defaults["number_of_pdfs"] if isinstance(find_excel_values(df_excel, 2, defaults["number_of_pdfs"]), str) else find_excel_values(df_excel, 2, defaults["number_of_pdfs"]),
-            "agency_name":  find_excel_values(df_excel, 4, defaults["agency_name"]),
+            "number_of_pdfs": defaults["number_of_pdfs"] if isinstance(
+                find_excel_values(df_excel, 2, defaults["number_of_pdfs"]), str) else find_excel_values(df_excel, 2,
+                                                                                                        defaults[
+                                                                                                            "number_of_pdfs"]),
+            "agency_name": find_excel_values(df_excel, 4, defaults["agency_name"]),
             "agency_number": find_excel_values(df_excel, 6, defaults["broker_number"]),
             "toggle_timestamp": find_excel_values(df_excel, 8, defaults["toggle_timestamp"]),
             "toggle_customer_copy": find_excel_values(df_excel, 10, defaults["toggle_customer_copy"]),
@@ -259,6 +252,9 @@ unsorted_e_stamp_copies_dir = (
 if toggle_customer_copy == "No":
     unsorted_e_stamp_copies_dir.mkdir(exist_ok=True)
 
+output_dir_paths = list(Path(icbc_e_stamp_copies_dir).rglob("*.pdf"))
+output_dir_file_names = [path.stem.split()[0] for path in output_dir_paths]
+
 
 def root_folder_filename(df):
     if df["licence_plate"].at[0] != "NONLIC":
@@ -279,7 +275,7 @@ def identify_icbc_pdf(doc):
     page_one = doc[0].get_text(
         "text", clip=keyword_dict["ICBC"]["is_icbc"].target_coordinates
     )
-    if "Transaction Timestamp ".casefold() in page_one.casefold():
+    if "Transaction Timestamp " in page_one:
         return "ICBC"
 
 
@@ -358,35 +354,35 @@ def locate_keywords(all_text, type_of_pdf):
 
 # Removes whitespace and non-relevant words
 def format_keywords(matching_keywords):
-    # Clean and transforms dictionary items (return the first index)
-    # First index to avoid issue of agents comments throwing false match
-    def filter_keywords(dict_items, filter_dict, key, regex=None, strip_char=None):
+    # Returns the first match to a keyword
+    def filter_keywords(dict_items, key, regex=None, strip_char=None):
         for items in dict_items[key]:
             if regex:
                 items[0] = re.sub(re.compile(regex), "", items[0])
             if strip_char:
-                filter_dict["insured_name"] = items[0].rstrip(strip_char)
+                field_dict["insured_name"] = items[0].rstrip(strip_char)
             else:
-                filter_dict[key] = items[0]
+                field_dict[key] = items[0]
 
-            # This is the old method, will break script if certain words appear in agents comments:
-            # for item in items:
-            #     if regex:
-            #         item = re.sub(re.compile(regex), "", item)
-            #     if strip_char:
-            #         field_dict["insured_name"] = item.rstrip(strip_char)
-            #     else:
-            #         field_dict[key] = item
+        # This will break the script if certain words appear in agents comments:
+        # for item in items:
+        #     if regex:
+        #         item = re.sub(re.compile(regex), "", item)
+        #     if strip_char:
+        #         field_dict["insured_name"] = item.rstrip(strip_char)
+        #     else:
+        #         field_dict[key] = item
+
     field_dict = {}
     if not matching_keywords["licence_plate"]:
         field_dict["licence_plate"] = "NONLIC"
     else:
-        filter_keywords(matching_keywords, field_dict, "licence_plate", r"Licence Plate Number ")
-    filter_keywords(matching_keywords, field_dict, "transaction_timestamp", r"Transaction Timestamp ")
-    filter_keywords(matching_keywords, field_dict, "agency_number", r"Agency Number ")
-    filter_keywords(matching_keywords, field_dict, "owner_name", strip_char=".")
-    filter_keywords(matching_keywords, field_dict, "applicant_name", strip_char=".")
-    filter_keywords(matching_keywords, field_dict, "insured_name", strip_char=".")
+        filter_keywords(matching_keywords, "licence_plate", r"Licence Plate Number ")
+    filter_keywords(matching_keywords, "transaction_timestamp", r"Transaction Timestamp ")
+    filter_keywords(matching_keywords, "agency_number", r"Agency Number ")
+    filter_keywords(matching_keywords, "owner_name", strip_char=".")
+    filter_keywords(matching_keywords, "applicant_name", strip_char=".")
+    filter_keywords(matching_keywords, "insured_name", strip_char=".")
     return field_dict
 
 
@@ -396,17 +392,19 @@ def check_if_matching_transaction_timestamp(
         icbc_file_name,
         timestamp,
 ):
+    # used to find matching transaction timestamps in output folder
+    def find_matching_paths(paths):
+        return [path for path in paths if path.stem.split()[0] == target_filename]
+
     # check for duplicates in input folder
     if timestamp in processed_timestamps:
         pass
     processed_timestamps.add(timestamp)
     # checks for duplicates in output folder
-    output_dir_paths = list(Path(icbc_e_stamp_copies_dir).rglob("*.pdf"))
-    output_dir_file_names = [path.stem.split()[0] for path in output_dir_paths]
     target_filename = Path(icbc_file_name).stem.split()[0]
     matching_transaction_ids = []
     if target_filename in output_dir_file_names:
-        matching_paths = find_matching_paths(target_filename, output_dir_paths)
+        matching_paths = find_matching_paths(output_dir_paths)
         for path_name in matching_paths:
             with fitz.open(path_name) as doc:
                 target_transaction_id = doc[0].get_text(
@@ -549,8 +547,8 @@ def not_customer_copy_page_numbers(pdf):
             "text", clip=keyword_dict["ICBC"]["top"].target_coordinates
         )
         if (
-                "Temporary Operation Permit and Owner’s Certificate of Insurance".casefold()
-                in top_block.casefold()
+                "Temporary Operation Permit and Owner’s Certificate of Insurance"
+                in top_block
         ):
             top = True
         for page_num in range(len(doc)):
@@ -559,7 +557,7 @@ def not_customer_copy_page_numbers(pdf):
                 "text",
                 clip=keyword_dict["ICBC"]["customer_copy_pages"].target_coordinates,
             )
-            if not "Customer Copy".casefold() in text_block.casefold():
+            if not "Customer Copy" in text_block:
                 pages.append(page_num)
         if top:
             del pages[-1]
@@ -588,6 +586,7 @@ def copy_policy(df, doc, pdf):
 
 # <=========================================Begin code execution=========================================>
 timer = 0
+
 
 def main():
     global timer
