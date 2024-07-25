@@ -648,11 +648,7 @@ def main():
 
 if __name__ == "__main__":
     time_taken = timeit.timeit(lambda: main(), number=1)
-    try:
-        if not stamp_does_not_fit:
-            print(f"Time taken: {time_taken} seconds")
-            if timer > 0:
-                time.sleep(timer)
-    except Exception as e:
-        print(str(e))
-        time.sleep(3)
+    if not stamp_does_not_fit:
+        print(f"Time taken: {time_taken} seconds")
+        if timer > 0:
+            time.sleep(timer)
