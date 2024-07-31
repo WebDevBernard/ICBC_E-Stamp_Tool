@@ -12,14 +12,6 @@ import pandas as pd
 
 warnings.simplefilter("ignore")
 
-# font size and font options
-
-font_size = 9
-font = "helv"
-fonts = {
-    "helv": ["helv", "hebo"]
-}
-
 # <=========================================Coordinates and Locations=========================================>
 
 # Names of all the keywords to search for
@@ -43,8 +35,6 @@ search_params = [
     "first_index",
     "second_index",
     "target_coordinates",
-    "append_duplicates",
-    "join_list",
 ]
 
 # This sets a default value of None if unused
@@ -56,8 +46,8 @@ SearchParams = namedtuple(
 )
 
 # Keyword dictionary and their search params
-keyword_dict = {
-    "ICBC": KeywordSearch(
+keyword_dict = (
+    KeywordSearch(
         # no keyword + coordinate search params
         is_icbc=SearchParams(
             target_coordinates=(
@@ -75,9 +65,6 @@ keyword_dict = {
                 769.977294921875,
             ),
         ),
-        top=SearchParams(
-            target_coordinates=(230.3990020751953, 36.0, 573.6226196289062, 48.2890625),
-        ),
         # keyword + index search params
         transaction_timestamp=SearchParams(
             target_keyword="Transaction Timestamp", first_index=0, second_index=0
@@ -94,6 +81,8 @@ keyword_dict = {
         applicant_name=SearchParams(
             target_keyword="Applicant", first_index=0, second_index=1
         ),
+        top=SearchParams(target_keyword="Temporary Operation Permit and Owner’s Certificate of Insurance",
+                         first_index=0, second_index=0),
         # regex keyword + index search params
         licence_plate=SearchParams(
             target_keyword=re.compile(r"(?<!Previous )\bLicence Plate Number\b"),
@@ -114,8 +103,7 @@ keyword_dict = {
             target_keyword="TIME OF VALIDATION",
             target_coordinates=(0.0, 10.354278564453125, 0.0, 40),
         ),
-    )._asdict(),
-}
+    )._asdict())
 
 
 # <=========================================Helper Functions=========================================>
@@ -270,10 +258,10 @@ def sub_folder_filename(df):
 # open the first page of the pdf and scan a set coordinate to determine if it is an ICBC doc
 def identify_icbc_pdf(doc):
     page_one = doc[0].get_text(
-        "text", clip=keyword_dict["ICBC"]["is_icbc"].target_coordinates
+        "text", clip=keyword_dict["is_icbc"].target_coordinates
     )
     if "Transaction Timestamp " in page_one:
-        return "ICBC"
+        return True
 
 
 # Returns all text, their coordinates, and which page number they are found on
@@ -292,85 +280,81 @@ def get_all_text(doc):
     return field_dict
 
 
-# Search for keyword matches, this one is hard to understand, will refactor later
-def locate_keywords(all_text, type_of_pdf):
-    field_dict = defaultdict(lambda: defaultdict(list))
+# Search for keyword matches
+def locate_keywords(all_text):
+    field_dict = defaultdict(list)
     for pg_num, pg in all_text.items():
+        # "i" is the index of all the words extracted from the pdf
         for i, word_list in enumerate(pg):
-            for j, target in keyword_dict[type_of_pdf].items():
-                if target is not None:
-                    try:
-                        # This if statement list with [page number, (coordinates)] for the validation stamp position
-                        if (
-                                target.target_keyword
-                                and target.target_coordinates
-                                and any(target.target_keyword in s for s in word_list[0])
-                        ):
-                            coordinates = tuple(
-                                x + y
-                                for x, y in zip(
-                                    all_text[pg_num][i][1],
-                                    target.target_coordinates,
-                                )
+            # j is the keyword_dict key names (transaction_timestamp, agency_number, etc.)
+            for j, target in keyword_dict.items():
+                try:
+                    # This if statement list with [page number, (coordinates)] for the validation stamp position
+                    if (
+                            target.target_keyword
+                            and target.target_coordinates
+                            and any(target.target_keyword in s for s in word_list[0])
+                    ):
+                        coordinates = tuple(
+                            x + y
+                            for x, y in zip(
+                                all_text[pg_num][i][1],
+                                target.target_coordinates,
                             )
-                            page_and_coordinates = [pg_num - 1, coordinates]
-                            field_dict[type_of_pdf][j].append(page_and_coordinates)
+                        )
+                        page_and_coordinates = [pg_num - 1, coordinates]
+                        field_dict[j].append(page_and_coordinates)
 
-                        # This if statement is used to find keywords other than license plate number
-                        elif isinstance(target.target_keyword, str) and any(
-                                target.target_keyword in s for s in word_list[0]
-                        ):
-                            word = all_text[pg_num][i + target.first_index][0][
-                                target.second_index
-                            ]
-                            if target.append_duplicates:
-                                field_dict[type_of_pdf][j].append(word)
-                            elif target.join_list:
-                                field_dict[type_of_pdf][j].append(
-                                    " ".join(word).split(", ")
-                                )
-                            elif (
-                                    word and word not in field_dict[type_of_pdf][j]
-                            ):
-                                field_dict[type_of_pdf][j].append(word)
+                    # This if statement is used to find keywords other than license plate number
+                    elif isinstance(target.target_keyword, str) and any(
+                            target.target_keyword in s for s in word_list[0]
+                    ):
+                        word = all_text[pg_num][i + target.first_index][0][
+                            target.second_index
+                        ]
+                        if word and word not in field_dict[j]:
+                            field_dict[j].append(word)
 
-                        #  This if statement is used to find the license plate number
-                        elif isinstance(target.target_keyword, re.Pattern):
-                            word = all_text[pg_num][i + target.first_index][0][
-                                target.second_index
-                            ]
-                            if (
-                                    re.search(target.target_keyword, word)
-                                    and word not in field_dict[type_of_pdf][j]
-                            ):
-                                field_dict[type_of_pdf][j].append(word)
-                    except IndexError:
-                        continue
+                    #  This if statement is used to find the license plate number
+                    elif isinstance(target.target_keyword, re.Pattern):
+                        word = all_text[pg_num][i + target.first_index][0][
+                            target.second_index
+                        ]
+                        if re.search(target.target_keyword, word) and word not in field_dict[j]:
+                            field_dict[j].append(word)
+                except IndexError:
+                    continue
     return field_dict
 
 
 # Removes whitespace and non-relevant words
 def format_keywords(matching_keywords):
     # Returns the first match to a keyword
-    def filter_keywords(dict_items, key, regex=None, strip_char=None):
-        for items in dict_items[key]:
+    def filter_keywords(key, regex=None, strip_char=None):
+        for items in matching_keywords[key]:
             if regex:
                 items[0] = re.sub(re.compile(regex), "", items[0])
             if strip_char:
                 field_dict["insured_name"] = items[0].rstrip(strip_char)
             else:
                 field_dict[key] = items[0]
+
     field_dict = {}
     if not matching_keywords["licence_plate"]:
         field_dict["licence_plate"] = "NONLIC"
     else:
-        filter_keywords(matching_keywords, "licence_plate", r"Licence Plate Number ")
+        filter_keywords("licence_plate", r"Licence Plate Number ")
 
-    filter_keywords(matching_keywords, "transaction_timestamp", r"Transaction Timestamp ")
-    filter_keywords(matching_keywords, "agency_number", r"Agency Number ")
-    filter_keywords(matching_keywords, "owner_name", strip_char=".")
-    filter_keywords(matching_keywords, "applicant_name", strip_char=".")
-    filter_keywords(matching_keywords, "insured_name", strip_char=".")
+    if len(matching_keywords["top"]) > 0 and "Temporary Operation Permit and Owner’s Certificate of Insurance" in \
+            matching_keywords["top"][0]:
+        field_dict["top"] = True
+    else:
+        field_dict["top"] = False
+    filter_keywords("transaction_timestamp", r"Transaction Timestamp ")
+    filter_keywords("agency_number", r"Agency Number ")
+    filter_keywords("owner_name", strip_char=".")
+    filter_keywords("applicant_name", strip_char=".")
+    filter_keywords("insured_name", strip_char=".")
     return field_dict
 
 
@@ -382,6 +366,7 @@ def check_if_matching_transaction_timestamp(
     # used to find matching transaction timestamps in output folder
     def find_matching_paths(paths):
         return [path for path in paths if path.stem.split()[0] == target_filename]
+
     # checks for duplicates in output folder
     target_filename = Path(icbc_file_name).stem.split()[0]
     if target_filename in output_dir_file_names:
@@ -390,7 +375,7 @@ def check_if_matching_transaction_timestamp(
             with fitz.open(path_name) as doc:
                 target_transaction_id = doc[0].get_text(
                     "text",
-                    clip=keyword_dict["ICBC"]["is_icbc"].target_coordinates,
+                    clip=keyword_dict["is_icbc"].target_coordinates,
                 )
                 match = int(
                     re.match(re.compile(r".*?(\d+)"), target_transaction_id).group(
@@ -408,6 +393,11 @@ stamp_does_not_fit = False
 # Stamp the location where the string "NOT VALID UNLESS STAMPED BY" are found
 def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
     global stamp_does_not_fit
+    font_size = 9
+    font = "SpaceMono"
+    fonts = {
+        "SpaceMono": ["spacemo", "spacembo"]
+    }
     fontname = fonts[font][0]
     fontname_bold = fonts[font][1]
     agency_name_coordinates = (3, 7, -3, 0)
@@ -463,7 +453,7 @@ def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
 
 # Stamp the location where the string "TIME OF VALIDATION" are found
 def find_time_of_validation_location(time_location, timestamp_date, page):
-    time_of_validation_am = (0, 0.7, 0, 0)
+    time_of_validation_am = (0, 0.5, 0, 0)
     time_of_validation_pm = (0, 21.9, 0, 0)
     formatted_date = (
         timestamp_date.strftime("%I:%M")
@@ -486,7 +476,7 @@ def find_time_of_validation_location(time_location, timestamp_date, page):
         time_location,
         formatted_date,
         align=fitz.TEXT_ALIGN_RIGHT,
-        fontname=fonts["helv"][0],
+        fontname="helv",
         fontsize=6,
     )
 
@@ -502,7 +492,7 @@ def stamp_policy(
     ValidationStamp = namedtuple("ValidationStamp", ["page_num", "coordinates"])
     validation_stamp = [
         ValidationStamp(page_num=t[0], coordinates=t[1])
-        for t in matching_keywords["ICBC"]["validation_stamp"]
+        for t in matching_keywords["validation_stamp"]
     ]
     for stamp_location in validation_stamp:
         page = doc[stamp_location.page_num]
@@ -511,43 +501,35 @@ def stamp_policy(
     TimeOfValidation = namedtuple("TimeOfValidation", ["page_num", "coordinates"])
     time_of_validation = [
         TimeOfValidation(page_num=t[0], coordinates=t[1])
-        for t in matching_keywords["ICBC"]["time_of_validation"]
+        for t in matching_keywords["time_of_validation"]
     ]
     for time_location in time_of_validation:
         page = doc[time_location.page_num]
         find_time_of_validation_location(time_location, timestamp_date, page)
 
 
-# Return page numbers of all non customer copy pages
-def not_customer_copy_page_numbers(pdf):
-    pages = []
-    with fitz.open(pdf) as doc:
-        top = False
-        top_block = doc[0].get_text(
-            "text", clip=keyword_dict["ICBC"]["top"].target_coordinates
-        )
-        if (
-                "Temporary Operation Permit and Owner’s Certificate of Insurance"
-                in top_block
-        ):
-            top = True
+def copy_policy(df, doc):
+    # Return page numbers of all non customer copy pages
+    def not_customer_copy_page_numbers():
+        pages = []
+        # need top because it does not print customer copy on that page
+        top = df["top"].at[0]
         for page_num in range(len(doc)):
             page = doc[page_num]
             text_block = page.get_text(
                 "text",
-                clip=keyword_dict["ICBC"]["customer_copy_pages"].target_coordinates,
+                clip=keyword_dict["customer_copy_pages"].target_coordinates,
             )
             if "Customer Copy" not in text_block:
                 pages.append(page_num)
-        if top:
+        if len(pages) > 0 and top:
             del pages[-1]
-    return list(reversed(pages))
+        return list(reversed(pages))
 
-
-def copy_policy(df, doc, pdf):
-    non_customer_copy = (not_customer_copy_page_numbers(pdf))
+    non_customer_copy = (not_customer_copy_page_numbers())
     root_folder_output_path = icbc_e_stamp_copies_dir / root_folder_filename(df)
     sub_folder_output_path = unsorted_e_stamp_copies_dir / sub_folder_filename(df)
+
     if toggle_customer_copy == "No":
         doc.save(
             unique_file_name(sub_folder_output_path),
@@ -573,7 +555,7 @@ def main():
     loop_counter = 0
     scan_counter = 0
     copy_counter = 0
-    # Stores the timestamps in input folder to avoid duplicate copies of the same pdf
+    # Stores the timestamps in input and output folder to avoid duplicate copies of the same pdf
     processed_timestamps = set()
     # Step 1: open the specified number of pdfs in the input directory (downloads folder)
     for pdf in progressbar(sorted_input_dir[:number_of_pdfs], prefix="Progress: ", size=40):
@@ -587,9 +569,9 @@ def main():
             # Step 3 if is ICBC doc, extract all text, their coordinates and page number where they are found
             all_text = get_all_text(doc)
             # Step 4 Search for keywords using the keyword dictionary
-            matching_keywords = locate_keywords(all_text, is_icbc_pdf)
+            matching_keywords = locate_keywords(all_text)
             # Step 5 Remove white space and irrelevant words in keywords
-            formatted_keywords = format_keywords(make_string_to_list(matching_keywords[is_icbc_pdf]))
+            formatted_keywords = format_keywords(make_string_to_list(matching_keywords))
             # Step 6 Save into a Pandas DF, data analysis to find matching transaction timestamp
             df = pd.DataFrame([formatted_keywords])
             # Step 7 Check if matching transaction timestamp in input and output folder
@@ -616,7 +598,7 @@ def main():
             # Step 9 Copy files to folder
             # After stamping, add it to the set so any duplicates in input (downloads folder) will be ignored
             processed_timestamps.add(timestamp_int)
-            copy_policy(df, doc, pdf)
+            copy_policy(df, doc)
             copy_counter += 1
     if stamp_does_not_fit:
         print("Agency name is over the 17 character limit")
