@@ -15,13 +15,9 @@ warnings.simplefilter("ignore")
 # font size and font options
 
 font_size = 9
-font = "SpaceMono"
+font = "helv"
 fonts = {
-    # "FiraMono": ["fimo", "fimbo"],
-    "SpaceMono": ["spacemo", "spacembo"],
-    # "NotoSans": ["notos", "notosbo"],
-    # "Ubuntu": ["ubuntu", "ubuntubo"],
-    # "Cascadia": ["cascadia", "cascadiab"],
+    "helv": ["helv", "hebo"]
 }
 
 # <=========================================Coordinates and Locations=========================================>
@@ -364,16 +360,6 @@ def format_keywords(matching_keywords):
                 field_dict["insured_name"] = items[0].rstrip(strip_char)
             else:
                 field_dict[key] = items[0]
-
-        # This will break the script if certain words appear in agents comments:
-        # for item in items:
-        #     if regex:
-        #         item = re.sub(re.compile(regex), "", item)
-        #     if strip_char:
-        #         field_dict["insured_name"] = item.rstrip(strip_char)
-        #     else:
-        #         field_dict[key] = item
-
     field_dict = {}
     if not matching_keywords["licence_plate"]:
         field_dict["licence_plate"] = "NONLIC"
@@ -477,7 +463,7 @@ def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
 
 # Stamp the location where the string "TIME OF VALIDATION" are found
 def find_time_of_validation_location(time_location, timestamp_date, page):
-    time_of_validation_am = (0, 0.5, 0, 0)
+    time_of_validation_am = (0, 0.7, 0, 0)
     time_of_validation_pm = (0, 21.9, 0, 0)
     formatted_date = (
         timestamp_date.strftime("%I:%M")
@@ -500,7 +486,7 @@ def find_time_of_validation_location(time_location, timestamp_date, page):
         time_location,
         formatted_date,
         align=fitz.TEXT_ALIGN_RIGHT,
-        fontname=fonts["SpaceMono"][0],
+        fontname=fonts["helv"][0],
         fontsize=6,
     )
 
@@ -628,7 +614,7 @@ def main():
             if stamp_does_not_fit:
                 continue
             # Step 9 Copy files to folder
-            # After stamping, add it to the set so any duplicates in input will be ignored
+            # After stamping, add it to the set so any duplicates in input (downloads folder) will be ignored
             processed_timestamps.add(timestamp_int)
             copy_policy(df, doc, pdf)
             copy_counter += 1
@@ -647,7 +633,5 @@ def main():
 
 if __name__ == "__main__":
     time_taken = timeit.timeit(lambda: main(), number=1)
-    if not stamp_does_not_fit:
-        print(f"Time taken: {time_taken} seconds")
-        if timer > 0:
-            time.sleep(timer)
+    print(f"Time taken: {time_taken} seconds")
+    time.sleep(timer)
