@@ -4,5 +4,3 @@ pandas
 Pyarrow
 pymupdf
 openpyxl
-pymupdf-fonts
-

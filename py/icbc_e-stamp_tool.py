@@ -453,7 +453,7 @@ def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
 
 # Stamp the location where the string "TIME OF VALIDATION" are found
 def find_time_of_validation_location(time_location, timestamp_date, page):
-    time_of_validation_am = (0, 0.5, 0, 0)
+    time_of_validation_am = (0, 0.7, 0, 0)
     time_of_validation_pm = (0, 21.9, 0, 0)
     formatted_date = (
         timestamp_date.strftime("%I:%M")
