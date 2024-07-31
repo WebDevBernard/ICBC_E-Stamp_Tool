@@ -167,6 +167,7 @@ def progressbar(it, prefix="", size=60, out=sys.stdout):  # Python3.6+
         time_str = f"{int(mins):02}:{sec:03.1f}"
         print(f"{prefix}[{u'█' * x}{('.' * (size - x))}] {j}/{count} Est wait {time_str}", end='\r', file=out,
               flush=True)
+
     if len(it) > 0:
         show(0.1)  # avoid div/0
         for i, item in enumerate(it):
@@ -378,6 +379,7 @@ def format_keywords(matching_keywords):
         field_dict["licence_plate"] = "NONLIC"
     else:
         filter_keywords(matching_keywords, "licence_plate", r"Licence Plate Number ")
+
     filter_keywords(matching_keywords, "transaction_timestamp", r"Transaction Timestamp ")
     filter_keywords(matching_keywords, "agency_number", r"Agency Number ")
     filter_keywords(matching_keywords, "owner_name", strip_char=".")
@@ -390,19 +392,12 @@ def format_keywords(matching_keywords):
 def check_if_matching_transaction_timestamp(
         processed_timestamps,
         icbc_file_name,
-        timestamp,
 ):
     # used to find matching transaction timestamps in output folder
     def find_matching_paths(paths):
         return [path for path in paths if path.stem.split()[0] == target_filename]
-
-    # check for duplicates in input folder
-    if timestamp in processed_timestamps:
-        pass
-    processed_timestamps.add(timestamp)
     # checks for duplicates in output folder
     target_filename = Path(icbc_file_name).stem.split()[0]
-    matching_transaction_ids = []
     if target_filename in output_dir_file_names:
         matching_paths = find_matching_paths(output_dir_paths)
         for path_name in matching_paths:
@@ -411,14 +406,13 @@ def check_if_matching_transaction_timestamp(
                     "text",
                     clip=keyword_dict["ICBC"]["is_icbc"].target_coordinates,
                 )
-                if target_transaction_id:
-                    match = int(
-                        re.match(re.compile(r".*?(\d+)"), target_transaction_id).group(
-                            1
-                        )
+                match = int(
+                    re.match(re.compile(r".*?(\d+)"), target_transaction_id).group(
+                        1
                     )
-                    matching_transaction_ids.append(match)
-    return matching_transaction_ids
+                )
+                processed_timestamps.add(match)
+    return processed_timestamps
 
 
 # Checks if stamp will fit if agency name entered is too long
@@ -557,7 +551,7 @@ def not_customer_copy_page_numbers(pdf):
                 "text",
                 clip=keyword_dict["ICBC"]["customer_copy_pages"].target_coordinates,
             )
-            if not "Customer Copy" in text_block:
+            if "Customer Copy" not in text_block:
                 pages.append(page_num)
         if top:
             del pages[-1]
@@ -584,7 +578,7 @@ def copy_policy(df, doc, pdf):
         )
 
 
-# <=========================================Begin code execution=========================================>
+# <=========================================Start of loop=========================================>
 timer = 0
 
 
@@ -601,38 +595,43 @@ def main():
         with fitz.open(pdf) as doc:
             # Step 2 open each pdf and identify if it is an ICBC policy doc
             is_icbc_pdf = identify_icbc_pdf(doc)
-            if is_icbc_pdf:
-                scan_counter += 1
-                # Step 3 if is ICBC doc, extract all text, their coordinates and page number where they are found
-                all_text = get_all_text(doc)
-                # Step 4 Search for keywords using the keyword dictionary
-                matching_keywords = locate_keywords(all_text, is_icbc_pdf)
-                # Step 5 Remove white space and irrelevant words in keywords
-                formatted_keywords = format_keywords(make_string_to_list(matching_keywords[is_icbc_pdf]))
-                # Step 6 Save into a Pandas Data frame, data analysis to find matching transaction timestamp
-                df = pd.DataFrame([formatted_keywords])
-                # Step 7 Check if matching transaction timestamp in input and output folder
-                timestamp = df["transaction_timestamp"].at[0]
-                matching_timestamp = check_if_matching_transaction_timestamp(
-                    processed_timestamps,
-                    root_folder_filename(df),
-                    int(timestamp)
-                )
-                # Used when user uses the broker_number in the Excel sheet
-                agency_number_or_broker_number = df["agency_number"].at[0] if len(
-                    str(broker_number)) == 0 else broker_number
-                # Step 8 Stamp ICBC
-                if int(timestamp) not in matching_timestamp:
-                    stamp_policy(
-                        timestamp,
-                        matching_keywords,
-                        doc,
-                        agency_number_or_broker_number,
-                    )
-                    if not stamp_does_not_fit:
-                        # Step 9 Copy files to folder
-                        copy_policy(df, doc, pdf)
-                        copy_counter += 1
+            if not is_icbc_pdf:
+                continue
+            scan_counter += 1
+            # Step 3 if is ICBC doc, extract all text, their coordinates and page number where they are found
+            all_text = get_all_text(doc)
+            # Step 4 Search for keywords using the keyword dictionary
+            matching_keywords = locate_keywords(all_text, is_icbc_pdf)
+            # Step 5 Remove white space and irrelevant words in keywords
+            formatted_keywords = format_keywords(make_string_to_list(matching_keywords[is_icbc_pdf]))
+            # Step 6 Save into a Pandas DF, data analysis to find matching transaction timestamp
+            df = pd.DataFrame([formatted_keywords])
+            # Step 7 Check if matching transaction timestamp in input and output folder
+            timestamp_str = df["transaction_timestamp"].at[0]
+            timestamp_int = int(df["transaction_timestamp"].at[0])
+            check_if_matching_transaction_timestamp(
+                processed_timestamps,
+                root_folder_filename(df)
+            )
+            if timestamp_int in processed_timestamps:
+                continue
+            # Used when user uses the broker_number in the Excel sheet
+            agency_number_or_broker_number = df["agency_number"].at[0] if len(
+                str(broker_number)) == 0 else broker_number
+            # Step 8 Stamp ICBC
+            stamp_policy(
+                timestamp_str,
+                matching_keywords,
+                doc,
+                agency_number_or_broker_number,
+            )
+            if stamp_does_not_fit:
+                continue
+            # Step 9 Copy files to folder
+            # After stamping, add it to the set so any duplicates in input will be ignored
+            processed_timestamps.add(timestamp_int)
+            copy_policy(df, doc, pdf)
+            copy_counter += 1
     if stamp_does_not_fit:
         print("Agency name is over the 17 character limit")
         os.system('pause')
