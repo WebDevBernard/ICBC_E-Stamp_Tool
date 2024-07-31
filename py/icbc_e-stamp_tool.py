@@ -283,45 +283,45 @@ def get_all_text(doc):
 # Search for keyword matches
 def locate_keywords(all_text):
     field_dict = defaultdict(list)
-    for pg_num, pg in all_text.items():
-        # "i" is the index of all the words extracted from the pdf
-        for i, word_list in enumerate(pg):
-            # j is the keyword_dict key names (transaction_timestamp, agency_number, etc.)
-            for j, target in keyword_dict.items():
+    for page_num, pages in all_text.items():
+        # text_index is the index of all the words extracted from the pdf
+        for text_index, text_single_page in enumerate(pages):
+            # params_key is the keyword_dict key names (transaction_timestamp, agency_number, etc.)
+            for params_key, params in keyword_dict.items():
                 try:
                     # This if statement list with [page number, (coordinates)] for the validation stamp position
                     if (
-                            target.target_keyword
-                            and target.target_coordinates
-                            and any(target.target_keyword in s for s in word_list[0])
+                            params.target_keyword
+                            and params.target_coordinates
+                            and any(params.target_keyword in s for s in text_single_page[0])
                     ):
                         coordinates = tuple(
                             x + y
                             for x, y in zip(
-                                all_text[pg_num][i][1],
-                                target.target_coordinates,
+                                all_text[page_num][text_index][1],
+                                params.target_coordinates,
                             )
                         )
-                        page_and_coordinates = [pg_num - 1, coordinates]
-                        field_dict[j].append(page_and_coordinates)
+                        page_and_coordinates = [page_num - 1, coordinates]
+                        field_dict[params_key].append(page_and_coordinates)
 
                     # This if statement is used to find keywords other than license plate number
-                    elif isinstance(target.target_keyword, str) and any(
-                            target.target_keyword in s for s in word_list[0]
+                    elif isinstance(params.target_keyword, str) and any(
+                            params.target_keyword in s for s in text_single_page[0]
                     ):
-                        word = all_text[pg_num][i + target.first_index][0][
-                            target.second_index
+                        keyword = all_text[page_num][text_index + params.first_index][0][
+                            params.second_index
                         ]
-                        if word and word not in field_dict[j]:
-                            field_dict[j].append(word)
+                        if keyword and keyword not in field_dict[params_key]:
+                            field_dict[params_key].append(keyword)
 
                     #  This if statement is used to find the license plate number
-                    elif isinstance(target.target_keyword, re.Pattern):
-                        word = all_text[pg_num][i + target.first_index][0][
-                            target.second_index
+                    elif isinstance(params.target_keyword, re.Pattern):
+                        keyword = all_text[page_num][text_index + params.first_index][0][
+                            params.second_index
                         ]
-                        if re.search(target.target_keyword, word) and word not in field_dict[j]:
-                            field_dict[j].append(word)
+                        if re.search(params.target_keyword, keyword) and keyword not in field_dict[params_key]:
+                            field_dict[params_key].append(keyword)
                 except IndexError:
                     continue
     return field_dict
