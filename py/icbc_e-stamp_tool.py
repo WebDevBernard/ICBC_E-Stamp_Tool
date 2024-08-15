@@ -46,64 +46,66 @@ SearchParams = namedtuple(
 )
 
 # Keyword dictionary and their search params
-keyword_dict = (
-    KeywordSearch(
-        # no keyword + coordinate search params
-        is_icbc=SearchParams(
-            target_coordinates=(
-                409.97900390625,
-                63.84881591796875,
-                576.0,
-                83.7454833984375,
-            ),
+keyword_dict = KeywordSearch(
+    # no keyword + coordinate search params
+    is_icbc=SearchParams(
+        target_coordinates=(
+            409.97900390625,
+            63.84881591796875,
+            576.0,
+            83.7454833984375,
         ),
-        customer_copy_pages=SearchParams(
-            target_coordinates=(
-                498.43798828125,
-                751.9528198242188,
-                578.1806640625,
-                769.977294921875,
-            ),
+    ),
+    customer_copy_pages=SearchParams(
+        target_coordinates=(
+            498.43798828125,
+            751.9528198242188,
+            578.1806640625,
+            769.977294921875,
         ),
-        # keyword + index search params
-        transaction_timestamp=SearchParams(
-            target_keyword="Transaction Timestamp", first_index=0, second_index=0
+    ),
+    # keyword + index search params
+    transaction_timestamp=SearchParams(
+        target_keyword="Transaction Timestamp", first_index=0, second_index=0
+    ),
+    agency_number=SearchParams(
+        target_keyword="Agency Number", first_index=0, second_index=0
+    ),
+    insured_name=SearchParams(
+        target_keyword="Name of Insured (surname followed by given name(s))",
+        first_index=0,
+        second_index=1,
+    ),
+    owner_name=SearchParams(target_keyword="Owner ", first_index=0, second_index=1),
+    applicant_name=SearchParams(
+        target_keyword="Applicant", first_index=0, second_index=1
+    ),
+    top=SearchParams(
+        target_keyword="Temporary Operation Permit and Owner’s Certificate of Insurance",
+        first_index=0,
+        second_index=0,
+    ),
+    # regex keyword + index search params
+    licence_plate=SearchParams(
+        target_keyword=re.compile(r"(?<!Previous )\bLicence Plate Number\b"),
+        first_index=0,
+        second_index=0,
+    ),
+    # keyword + coordinates search params
+    validation_stamp=SearchParams(
+        target_keyword="NOT VALID UNLESS STAMPED BY",
+        target_coordinates=(
+            -4.247998046875011,
+            13.768768310546875,
+            1.5807250976562273,
+            58.947509765625,
         ),
-        agency_number=SearchParams(
-            target_keyword="Agency Number", first_index=0, second_index=0
-        ),
-        insured_name=SearchParams(
-            target_keyword="Name of Insured (surname followed by given name(s))",
-            first_index=0,
-            second_index=1,
-        ),
-        owner_name=SearchParams(target_keyword="Owner ", first_index=0, second_index=1),
-        applicant_name=SearchParams(
-            target_keyword="Applicant", first_index=0, second_index=1
-        ),
-        top=SearchParams(target_keyword="Temporary Operation Permit and Owner’s Certificate of Insurance",
-                         first_index=0, second_index=0),
-        # regex keyword + index search params
-        licence_plate=SearchParams(
-            target_keyword=re.compile(r"(?<!Previous )\bLicence Plate Number\b"),
-            first_index=0,
-            second_index=0,
-        ),
-        # keyword + coordinates search params
-        validation_stamp=SearchParams(
-            target_keyword="NOT VALID UNLESS STAMPED BY",
-            target_coordinates=(
-                -4.247998046875011,
-                13.768768310546875,
-                1.5807250976562273,
-                58.947509765625,
-            ),
-        ),
-        time_of_validation=SearchParams(
-            target_keyword="TIME OF VALIDATION",
-            target_coordinates=(0.0, 10.354278564453125, 0.0, 40),
-        ),
-    )._asdict())
+    ),
+    time_of_validation=SearchParams(
+        target_keyword="TIME OF VALIDATION",
+        target_coordinates=(0.0, 10.354278564453125, 0.0, 40),
+    ),
+)._asdict()
 
 
 # <=========================================Helper Functions=========================================>
@@ -149,8 +151,12 @@ def progressbar(it, prefix="", size=60, out=sys.stdout):  # Python3.6+
         remaining = ((time.time() - start) / j) * (count - j)
         mins, sec = divmod(remaining, 60)  # limited to minutes
         time_str = f"{int(mins):02}:{sec:03.1f}"
-        print(f"{prefix}[{u'█' * x}{('.' * (size - x))}] {j}/{count} Est wait {time_str}", end='\r', file=out,
-              flush=True)
+        print(
+            f"{prefix}[{u'█' * x}{('.' * (size - x))}] {j}/{count} Est wait {time_str}",
+            end="\r",
+            file=out,
+            flush=True,
+        )
 
     if len(it) > 0:
         show(0.1)  # avoid div/0
@@ -175,7 +181,7 @@ def get_excel_data():
         "agency_name": "",
         "broker_number": "",
         "toggle_timestamp": "Timestamp",
-        "toggle_customer_copy": "No"
+        "toggle_customer_copy": "No",
     }
     root_dir = Path(__file__).parent.parent
     excel_path = root_dir / "BM3KXR.xlsx"
@@ -187,14 +193,21 @@ def get_excel_data():
         df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
         data = {
             # special if statement in case user enters a string
-            "number_of_pdfs": defaults["number_of_pdfs"] if isinstance(
-                find_excel_values(df_excel, 2, defaults["number_of_pdfs"]), str) else find_excel_values(df_excel, 2,
-                                                                                                        defaults[
-                                                                                                            "number_of_pdfs"]),
+            "number_of_pdfs": (
+                defaults["number_of_pdfs"]
+                if isinstance(
+                    find_excel_values(df_excel, 2, defaults["number_of_pdfs"]), str
+                )
+                else find_excel_values(df_excel, 2, defaults["number_of_pdfs"])
+            ),
             "agency_name": find_excel_values(df_excel, 4, defaults["agency_name"]),
             "agency_number": find_excel_values(df_excel, 6, defaults["broker_number"]),
-            "toggle_timestamp": find_excel_values(df_excel, 8, defaults["toggle_timestamp"]),
-            "toggle_customer_copy": find_excel_values(df_excel, 10, defaults["toggle_customer_copy"]),
+            "toggle_timestamp": find_excel_values(
+                df_excel, 8, defaults["toggle_timestamp"]
+            ),
+            "toggle_customer_copy": find_excel_values(
+                df_excel, 10, defaults["toggle_customer_copy"]
+            ),
         }
     except KeyError:
         return defaults
@@ -225,14 +238,14 @@ sorted_input_dir = get_sorted_input_dir()
 
 # output directory
 icbc_e_stamp_copies_dir = (
-        Path.home() / "Desktop" / "ICBC E-Stamp Copies (this folder can be deleted)"
+    Path.home() / "Desktop" / "ICBC E-Stamp Copies (this folder can be deleted)"
 )
 icbc_e_stamp_copies_dir.mkdir(exist_ok=True)
 unsorted_e_stamp_copies_dir = (
-        Path.home()
-        / "Desktop"
-        / "ICBC E-Stamp Copies (this folder can be deleted)"
-        / "Unsorted E-Stamp Copies"
+    Path.home()
+    / "Desktop"
+    / "ICBC E-Stamp Copies (this folder can be deleted)"
+    / "Unsorted E-Stamp Copies"
 )
 if toggle_customer_copy == "No":
     unsorted_e_stamp_copies_dir.mkdir(exist_ok=True)
@@ -257,9 +270,7 @@ def sub_folder_filename(df):
 
 # open the first page of the pdf and scan a set coordinate to determine if it is an ICBC doc
 def identify_icbc_pdf(doc):
-    page_one = doc[0].get_text(
-        "text", clip=keyword_dict["is_icbc"].target_coordinates
-    )
+    page_one = doc[0].get_text("text", clip=keyword_dict["is_icbc"].target_coordinates)
     if "Transaction Timestamp " in page_one:
         return True
 
@@ -291,9 +302,9 @@ def locate_keywords(all_text):
                 try:
                     # This if statement list with [page number, (coordinates)] for the validation stamp position
                     if (
-                            params.target_keyword
-                            and params.target_coordinates
-                            and any(params.target_keyword in s for s in text_single_page[0])
+                        params.target_keyword
+                        and params.target_coordinates
+                        and any(params.target_keyword in s for s in text_single_page[0])
                     ):
                         coordinates = tuple(
                             x + y
@@ -307,20 +318,23 @@ def locate_keywords(all_text):
 
                     # This if statement is used to find keywords other than license plate number
                     elif isinstance(params.target_keyword, str) and any(
-                            params.target_keyword in s for s in text_single_page[0]
+                        params.target_keyword in s for s in text_single_page[0]
                     ):
-                        keyword = all_text[page_num][text_index + params.first_index][0][
-                            params.second_index
-                        ]
+                        keyword = all_text[page_num][text_index + params.first_index][
+                            0
+                        ][params.second_index]
                         if keyword and keyword not in field_dict[params_key]:
                             field_dict[params_key].append(keyword)
 
                     #  This if statement is used to find the license plate number
                     elif isinstance(params.target_keyword, re.Pattern):
-                        keyword = all_text[page_num][text_index + params.first_index][0][
-                            params.second_index
-                        ]
-                        if re.search(params.target_keyword, keyword) and keyword not in field_dict[params_key]:
+                        keyword = all_text[page_num][text_index + params.first_index][
+                            0
+                        ][params.second_index]
+                        if (
+                            re.search(params.target_keyword, keyword)
+                            and keyword not in field_dict[params_key]
+                        ):
                             field_dict[params_key].append(keyword)
                 except IndexError:
                     continue
@@ -345,8 +359,11 @@ def format_keywords(matching_keywords):
     else:
         filter_keywords("licence_plate", r"Licence Plate Number ")
 
-    if len(matching_keywords["top"]) > 0 and "Temporary Operation Permit and Owner’s Certificate of Insurance" in \
-            matching_keywords["top"][0]:
+    if (
+        len(matching_keywords["top"]) > 0
+        and "Temporary Operation Permit and Owner’s Certificate of Insurance"
+        in matching_keywords["top"][0]
+    ):
         field_dict["top"] = True
     else:
         field_dict["top"] = False
@@ -360,8 +377,8 @@ def format_keywords(matching_keywords):
 
 # find matching transaction timestamps in the input and output folder
 def check_if_matching_transaction_timestamp(
-        processed_timestamps,
-        icbc_file_name,
+    processed_timestamps,
+    icbc_file_name,
 ):
     # used to find matching transaction timestamps in output folder
     def find_matching_paths(paths):
@@ -377,12 +394,9 @@ def check_if_matching_transaction_timestamp(
                     "text",
                     clip=keyword_dict["is_icbc"].target_coordinates,
                 )
-                match = int(
-                    re.match(re.compile(r".*?(\d+)"), target_transaction_id).group(
-                        1
-                    )
-                )
-                processed_timestamps.add(match)
+                match = re.search(re.compile(r".*?(\d+)"), target_transaction_id)
+                if match:
+                    processed_timestamps.add(int(match.group(1)))
     return processed_timestamps
 
 
@@ -395,9 +409,7 @@ def find_stamp_location(stamp_location, timestamp_date, page, agency_number):
     global stamp_does_not_fit
     font_size = 9
     font = "SpaceMono"
-    fonts = {
-        "SpaceMono": ["spacemo", "spacembo"]
-    }
+    fonts = {"SpaceMono": ["spacemo", "spacembo"]}
     fontname = fonts[font][0]
     fontname_bold = fonts[font][1]
     agency_name_coordinates = (3, 7, -3, 0)
@@ -483,10 +495,10 @@ def find_time_of_validation_location(time_location, timestamp_date, page):
 
 # finds the pages that need to be stamped
 def stamp_policy(
-        timestamp,
-        matching_keywords,
-        doc,
-        agency_number,
+    timestamp,
+    matching_keywords,
+    doc,
+    agency_number,
 ):
     timestamp_date = format_transaction_timestamp(timestamp)
     ValidationStamp = namedtuple("ValidationStamp", ["page_num", "coordinates"])
@@ -526,7 +538,7 @@ def copy_policy(df, doc):
             del pages[-1]
         return list(reversed(pages))
 
-    non_customer_copy = (not_customer_copy_page_numbers())
+    non_customer_copy = not_customer_copy_page_numbers()
     root_folder_output_path = icbc_e_stamp_copies_dir / root_folder_filename(df)
     sub_folder_output_path = unsorted_e_stamp_copies_dir / sub_folder_filename(df)
 
@@ -558,7 +570,9 @@ def main():
     # Stores the timestamps in input and output folder to avoid duplicate copies of the same pdf
     processed_timestamps = set()
     # Step 1: open the specified number of pdfs in the input directory (downloads folder)
-    for pdf in progressbar(sorted_input_dir[:number_of_pdfs], prefix="Progress: ", size=40):
+    for pdf in progressbar(
+        sorted_input_dir[:number_of_pdfs], prefix="Progress: ", size=40
+    ):
         loop_counter += 1
         with fitz.open(pdf) as doc:
             # Step 2 open each pdf and identify if it is an ICBC policy doc
@@ -578,14 +592,16 @@ def main():
             timestamp_str = df["transaction_timestamp"].at[0]
             timestamp_int = int(df["transaction_timestamp"].at[0])
             check_if_matching_transaction_timestamp(
-                processed_timestamps,
-                root_folder_filename(df)
+                processed_timestamps, root_folder_filename(df)
             )
             if timestamp_int in processed_timestamps:
                 continue
             # Used when user uses the broker_number in the Excel sheet
-            agency_number_or_broker_number = df["agency_number"].at[0] if len(
-                str(broker_number)) == 0 else broker_number
+            agency_number_or_broker_number = (
+                df["agency_number"].at[0]
+                if len(str(broker_number)) == 0
+                else broker_number
+            )
             # Step 8 Stamp ICBC
             stamp_policy(
                 timestamp_str,
@@ -602,7 +618,7 @@ def main():
             copy_counter += 1
     if stamp_does_not_fit:
         print("Agency name is over the 17 character limit")
-        os.system('pause')
+        os.system("pause")
         return
     elif scan_counter > 0:
         print(f"Scanned: {scan_counter} out of {loop_counter} documents")
