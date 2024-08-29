@@ -3,4 +3,5 @@ auto-py-to-exe
 pandas
 Pyarrow
 pymupdf
+pymupdf-fonts
 openpyxl
