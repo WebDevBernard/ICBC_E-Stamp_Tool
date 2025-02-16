@@ -46,7 +46,7 @@ python -m auto_py_to_exe
 6. An optional Excel file "BM3KXR.xlsx" is available for additional customization. You can leave this Excel sheet blank
    if you don't need any customizations.
 
-### Usage
+## Usage
 
 After processing a Policy Centre transaction, double-click the "icbc_e-stamp_tool.exe - Shortcut". This will create a
 folder on your desktop called "ICBC E-Stamp Copies (this folder can be deleted)" with the stamped policy documents.
