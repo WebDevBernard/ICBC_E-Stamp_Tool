@@ -1,6 +1,6 @@
 <h1 align="center">ICBC E-Stamp Tool</h1>
 
-I work as an insurance broker. The purpose of this script is to provide the end user with a one-click solution to
+I work as an insurance broker. The purpose of this script is to provide the broker a one-click solution to
 stamp an ICBC policy document and email it directly to the client.
 
 I wanted to create a project around how an end user would use such a tool. For example, some users may not delete  
