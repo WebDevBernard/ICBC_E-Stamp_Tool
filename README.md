@@ -3,10 +3,6 @@
 I work as an insurance broker. The purpose of this script is to provide the broker a one-click solution to
 stamp an ICBC policy document and email it directly to the client.
 
-I wanted to create a project around how an end user would use such a tool. For example, some users may not delete  
-anything in their Downloads folder, so this script will only stamp a set number of PDFs. Users may also never delete
-the output folder, so the script will check for duplicates using the transaction timestamp.
-
 <table align="center">
   <tr>
     <td><img src="https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/images/redacted_before.png" alt="Unstamped Policy Document" /></td>
