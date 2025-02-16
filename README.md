@@ -19,7 +19,7 @@ the output folder, so the script will check for duplicates using the transaction
 
 ## Quick Setup
 
-1. You can run this script in your terminal or create an .exe by cloning this repository on to your local machine. I
+1. You can run this script in your terminal or create an exe by cloning this repository on to your local machine. I
    recommend creating the exe for users who do not have Python installed on their system.
 
 ```bash
