@@ -48,6 +48,8 @@ After processing a Policy Centre transaction, double-click the "icbc_e-stamp_too
 folder on your desktop called "ICBC E-Stamp Copies (this folder can be deleted)" with the stamped policy documents.
 The "Unsorted E-Stamp Copies" sub-folder allows you to print the stamped agent copy.
 
+## Bonus
+
 <table align="center">
   <tr>
     <td><img src="https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/images/transaction_timestamp.png" alt="Transaction Timestamp Area" /></td>
@@ -56,3 +58,57 @@ The "Unsorted E-Stamp Copies" sub-folder allows you to print the stamped agent c
     <td align="center">The highlighted area shows where the script checks if it is an ICBC policy.</td>
   </tr>
 </table>
+
+If you are trying to build something similar, I've included a script to help you find where all the coordinates are.
+Just install tabulate and run the script at the end here.
+
+```bash
+pip install tabulate
+```
+
+```python
+import fitz
+from pathlib import Path
+from tabulate import tabulate
+
+input_dir = Path.home() / "Downloads"
+pdf_files = input_dir.glob("*.pdf")
+output_dir = Path.home() / "Desktop" / "Coordinates"
+output_dir.mkdir(parents=True, exist_ok=True)
+
+
+def get_text(doc, mode="blocks"):
+    field_dict = {}
+    for page_number in range(doc.page_count):
+        page = doc[page_number]
+        wlist = page.get_text(mode)
+        field_dict[page_number + 1] = [
+            [list(filter(None, item[4].split("\n"))), item[:4]] for item in wlist
+        ]
+    return field_dict
+
+
+def write_txt_to_file(dir_path, field_dict):
+    with open(dir_path, "w", encoding="utf-8") as file:
+        for page, data in field_dict.items():
+            file.write(f"Page: {page}\n")
+            try:
+                file.write(
+                    f"{tabulate(data, ['Keywords', 'Coordinates'], tablefmt='grid', maxcolwidths=[50, None])}\n"
+                )
+            except IndexError:
+                continue
+
+
+def main():
+    for pdf in pdf_files:
+        with fitz.open(pdf) as doc:
+            write_txt_to_file(output_dir / f"(Block Coordinates) {pdf.stem}.txt", get_text(doc))
+            write_txt_to_file(output_dir / f"(Word Coordinates) {pdf.stem}.txt", get_text(doc, "words"))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+
