@@ -60,10 +60,11 @@ The "Unsorted E-Stamp Copies" sub-folder allows you to print the stamped agent c
 </table>
 
 If you are trying to build something similar, I've included a script that will write all the coordinates into a txt
-file. Just install tabulate and run the script at the end here.
+file. Just install tabulate, pymupdf and run the script at the end here. This script will scan all the pdfs in your
+Downloads folder. If you would like it to read from a different folder, change the input_dir to your preferred folder.
 
 ```bash
-pip install tabulate
+pip install tabulate pymupdf
 ```
 
 ```python
