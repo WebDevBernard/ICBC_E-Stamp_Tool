@@ -55,13 +55,12 @@ The "Unsorted E-Stamp Copies" sub-folder allows you to print the stamped agent c
     <td><img src="https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/images/transaction_timestamp.png" alt="Transaction Timestamp Area" /></td>
   </tr>
   <tr>
-    <td align="center">The highlighted area shows where the script checks if it is an ICBC policy.</td>
+    <td align="center">The highlighted area shows where the script checks if it is an ICBC policy document.</td>
   </tr>
 </table>
 
 If you are trying to build something similar, I've included a script that will write all the coordinates into a txt
-file. Just install tabulate, pymupdf and run the script at the end here. This script will scan all the pdfs in your
-Downloads folder. If you would like it to read from a different folder, change the input_dir to your preferred folder.
+file. Just install tabulate, pymupdf and run the script at the end here.
 
 ```bash
 pip install tabulate pymupdf
