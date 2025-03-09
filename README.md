@@ -59,8 +59,8 @@ The "Unsorted E-Stamp Copies" sub-folder allows you to print the stamped agent c
   </tr>
 </table>
 
-If you are trying to build something similar, I've included a script to help you find where all the coordinates are.
-Just install tabulate and run the script at the end here.
+If you are trying to build something similar, I've included a script that will write all the coordinates into a txt
+file. Just install tabulate and run the script at the end here.
 
 ```bash
 pip install tabulate
