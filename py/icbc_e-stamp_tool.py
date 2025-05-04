@@ -87,9 +87,9 @@ keyword_dict = KeywordSearch(
     ),
     # regex keyword + index search params
     licence_plate=SearchParams(
-        target_keyword=re.compile(r"(?<!Previous )\bLicence Plate Number\b"),
+        target_keyword="Licence Plate Number",
         first_index=0,
-        second_index=0,
+        second_index=2,
     ),
     # keyword + coordinates search params
     validation_stamp=SearchParams(
@@ -182,6 +182,7 @@ def get_excel_data():
         "broker_number": "",
         "toggle_timestamp": "Timestamp",
         "toggle_customer_copy": "No",
+        "output_dir": ""
     }
     root_dir = Path(__file__).parent.parent
     excel_path = root_dir / "BM3KXR.xlsx"
@@ -208,6 +209,9 @@ def get_excel_data():
             "toggle_customer_copy": find_excel_values(
                 df_excel, 10, defaults["toggle_customer_copy"]
             ),
+            "output_dir": find_excel_values(
+                df_excel, 12, defaults["output_dir"]
+            ),
         }
     except KeyError:
         return defaults
@@ -221,6 +225,7 @@ def get_excel_data():
     broker_number,
     toggle_timestamp,
     toggle_customer_copy,
+    output_dir
 ) = get_excel_data().values()
 
 
@@ -237,15 +242,23 @@ def get_sorted_input_dir():
 sorted_input_dir = get_sorted_input_dir()
 
 # output directory
-icbc_e_stamp_copies_dir = (
-    Path.home() / "Desktop" / "ICBC E-Stamp Copies (this folder can be deleted)"
-)
+blank_dir = output_dir
+output_dir = Path(output_dir)
+if blank_dir != "" and output_dir.is_dir():
+    icbc_e_stamp_copies_dir = (
+        output_dir / "ICBC E-Stamp Copies (this folder can be deleted)"
+    )
+elif output_dir.is_dir():
+    icbc_e_stamp_copies_dir = (
+        Path.home() / "Desktop" / "ICBC E-Stamp Copies (this folder can be deleted)"
+    )
+else:
+    icbc_e_stamp_copies_dir = (
+        Path.cwd() / "ICBC E-Stamp Copies (this folder can be deleted)"
+    )
 icbc_e_stamp_copies_dir.mkdir(exist_ok=True)
 unsorted_e_stamp_copies_dir = (
-    Path.home()
-    / "Desktop"
-    / "ICBC E-Stamp Copies (this folder can be deleted)"
-    / "Unsorted E-Stamp Copies"
+        icbc_e_stamp_copies_dir / "Unsorted E-Stamp Copies"
 )
 if toggle_customer_copy == "No":
     unsorted_e_stamp_copies_dir.mkdir(exist_ok=True)
@@ -279,7 +292,7 @@ def identify_icbc_pdf(doc):
 def get_all_text(doc):
     field_dict = {}
     for page_num in range(len(doc)):
-        page = doc[page_num - 1]
+        page = doc[page_num]
         wlist = page.get_text("blocks")
         text_boxes = [
             list(filter(None, inner_list[4].split("\n"))) for inner_list in wlist
@@ -313,10 +326,10 @@ def locate_keywords(all_text):
                                 params.target_coordinates,
                             )
                         )
-                        page_and_coordinates = [page_num - 1, coordinates]
+                        page_and_coordinates = [page_num, coordinates]
                         field_dict[params_key].append(page_and_coordinates)
 
-                    # This if statement is used to find keywords other than license plate number
+                    # This if statement is used to find keywords
                     elif isinstance(params.target_keyword, str) and any(
                         params.target_keyword in s for s in text_single_page[0]
                     ):
@@ -324,17 +337,6 @@ def locate_keywords(all_text):
                             0
                         ][params.second_index]
                         if keyword and keyword not in field_dict[params_key]:
-                            field_dict[params_key].append(keyword)
-
-                    #  This if statement is used to find the license plate number
-                    elif isinstance(params.target_keyword, re.Pattern):
-                        keyword = all_text[page_num][text_index + params.first_index][
-                            0
-                        ][params.second_index]
-                        if (
-                            re.search(params.target_keyword, keyword)
-                            and keyword not in field_dict[params_key]
-                        ):
                             field_dict[params_key].append(keyword)
                 except IndexError:
                     continue
@@ -584,6 +586,7 @@ def main():
             all_text = get_all_text(doc)
             # Step 4 Search for keywords using the keyword dictionary
             matching_keywords = locate_keywords(all_text)
+
             # Step 5 Remove white space and irrelevant words in keywords
             formatted_keywords = format_keywords(make_string_to_list(matching_keywords))
             # Step 6 Save into a Pandas DF, data analysis to find matching transaction timestamp
