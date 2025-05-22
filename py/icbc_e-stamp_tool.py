@@ -87,9 +87,9 @@ keyword_dict = KeywordSearch(
     ),
     # regex keyword + index search params
     licence_plate=SearchParams(
-        target_keyword="Licence Plate Number",
+        target_keyword=re.compile(r"(?<!Previous )\bLicence Plate Number\b"),
         first_index=0,
-        second_index=2,
+        second_index=0,
     ),
     # keyword + coordinates search params
     validation_stamp=SearchParams(
@@ -333,10 +333,22 @@ def locate_keywords(all_text):
                     elif isinstance(params.target_keyword, str) and any(
                         params.target_keyword in s for s in text_single_page[0]
                     ):
+
                         keyword = all_text[page_num][text_index + params.first_index][
                             0
                         ][params.second_index]
                         if keyword and keyword not in field_dict[params_key]:
+                            field_dict[params_key].append(keyword)
+                    
+                    #  This if statement is used to find the license plate number
+                    elif isinstance(params.target_keyword, re.Pattern):
+                        keyword = all_text[page_num][text_index + params.first_index][
+                            0
+                        ][params.second_index]
+                        if (
+                            re.search(params.target_keyword, keyword)
+                            and keyword not in field_dict[params_key]
+                        ):
                             field_dict[params_key].append(keyword)
                 except IndexError:
                     continue
@@ -586,7 +598,6 @@ def main():
             all_text = get_all_text(doc)
             # Step 4 Search for keywords using the keyword dictionary
             matching_keywords = locate_keywords(all_text)
-
             # Step 5 Remove white space and irrelevant words in keywords
             formatted_keywords = format_keywords(make_string_to_list(matching_keywords))
             # Step 6 Save into a Pandas DF, data analysis to find matching transaction timestamp
