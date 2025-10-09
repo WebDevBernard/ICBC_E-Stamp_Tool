@@ -46,8 +46,8 @@ python -m auto_py_to_exe
 ## Usage
 
 After processing a Policy Centre transaction, double-click the "icbc_e-stamp_tool.exe - Shortcut". This will create a
-folder on your desktop called "ICBC E-Stamp Copies (this folder can be deleted)" with the stamped policy documents.
-The "Unsorted E-Stamp Copies" sub-folder allows you to print the stamped agent copy.
+folder on your desktop called "ICBC E-Stamp Copies" with the stamped policy documents.
+The "ICBC Batch Copies" sub-folder allows you to print the stamped agent copy.
 
 ## Bonus
 
