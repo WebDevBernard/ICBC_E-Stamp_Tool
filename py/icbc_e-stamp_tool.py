@@ -166,6 +166,15 @@ def progressbar(it, prefix="", size=60, out=sys.stdout):  # Python3.6+
         print(flush=True, file=out)
 
 
+def reverse_name_order(name: str, strip_char: str = None) -> str:
+    if strip_char:
+        name = name.replace(strip_char, "")
+    parts = name.split()
+    if len(parts) > 1:
+        return " ".join(parts[1:] + [parts[0]])
+    return name
+
+
 # <=========================================Main Functions=========================================>
 
 
@@ -182,7 +191,7 @@ def get_excel_data():
         "broker_number": "",
         "toggle_timestamp": "Timestamp",
         "toggle_customer_copy": "No",
-        "output_dir": ""
+        "output_dir": "",
     }
     root_dir = Path(__file__).parent.parent
     excel_path = root_dir / "BM3KXR.xlsx"
@@ -209,9 +218,7 @@ def get_excel_data():
             "toggle_customer_copy": find_excel_values(
                 df_excel, 10, defaults["toggle_customer_copy"]
             ),
-            "output_dir": find_excel_values(
-                df_excel, 12, defaults["output_dir"]
-            ),
+            "output_dir": find_excel_values(df_excel, 12, defaults["output_dir"]),
         }
     except KeyError:
         return defaults
@@ -225,7 +232,7 @@ def get_excel_data():
     broker_number,
     toggle_timestamp,
     toggle_customer_copy,
-    output_dir
+    output_dir,
 ) = get_excel_data().values()
 
 
@@ -245,21 +252,13 @@ sorted_input_dir = get_sorted_input_dir()
 blank_dir = output_dir
 output_dir = Path(output_dir)
 if blank_dir != "" and output_dir.is_dir():
-    icbc_e_stamp_copies_dir = (
-        output_dir / "ICBC E-Stamp Copies (this folder can be deleted)"
-    )
+    icbc_e_stamp_copies_dir = output_dir / "ICBC E-Stamp Copies"
 elif output_dir.is_dir():
-    icbc_e_stamp_copies_dir = (
-        Path.home() / "Desktop" / "ICBC E-Stamp Copies (this folder can be deleted)"
-    )
+    icbc_e_stamp_copies_dir = Path.home() / "Desktop" / "ICBC E-Stamp Copies"
 else:
-    icbc_e_stamp_copies_dir = (
-        Path.cwd() / "ICBC E-Stamp Copies (this folder can be deleted)"
-    )
+    icbc_e_stamp_copies_dir = Path.cwd() / "ICBC E-Stamp Copies"
 icbc_e_stamp_copies_dir.mkdir(exist_ok=True)
-unsorted_e_stamp_copies_dir = (
-        icbc_e_stamp_copies_dir / "Unsorted E-Stamp Copies"
-)
+unsorted_e_stamp_copies_dir = icbc_e_stamp_copies_dir / "ICBC Batch Copies"
 if toggle_customer_copy == "No":
     unsorted_e_stamp_copies_dir.mkdir(exist_ok=True)
 
@@ -339,17 +338,12 @@ def locate_keywords(all_text):
                         ][params.second_index]
                         if keyword and keyword not in field_dict[params_key]:
                             field_dict[params_key].append(keyword)
-                    
+
                     #  This if statement is used to find the license plate number
                     elif isinstance(params.target_keyword, re.Pattern):
-                        keyword = all_text[page_num][text_index + params.first_index][
-                            0
-                        ][params.second_index]
-                        if (
-                            re.search(params.target_keyword, keyword)
-                            and keyword not in field_dict[params_key]
-                        ):
-                            field_dict[params_key].append(keyword)
+                        block_text = " ".join(all_text[page_num][text_index][0])
+                        if re.search(params.target_keyword, block_text):
+                            field_dict[params_key].append(block_text)
                 except IndexError:
                     continue
     return field_dict
@@ -357,35 +351,61 @@ def locate_keywords(all_text):
 
 # Removes whitespace and non-relevant words
 def format_keywords(matching_keywords):
-    # Returns the first match to a keyword
+    """
+    Returns a dictionary with formatted keyword matches.
+    Handles licence plate extraction, top flag, and name fields.
+    """
+
     def filter_keywords(key, regex=None, strip_char=None):
+        if not matching_keywords.get(key):
+            return
+
         for items in matching_keywords[key]:
+            value = items[0] if isinstance(items, list) else items
             if regex:
-                items[0] = re.sub(re.compile(regex), "", items[0])
+                value = re.sub(re.compile(regex), "", value)
+
             if strip_char:
-                field_dict["insured_name"] = items[0].rstrip(strip_char)
+                value = value.rstrip(strip_char)
+
+            if key in {"insured_name", "owner_name", "applicant_name"}:
+                field_dict[key] = reverse_name_order(value)
             else:
-                field_dict[key] = items[0]
+                field_dict[key] = value
+            break  # Only process the first match
 
     field_dict = {}
-    if not matching_keywords["licence_plate"]:
+
+    # Process licence plate
+    licence_plates = matching_keywords.get("licence_plate", [])
+    if not licence_plates:
         field_dict["licence_plate"] = "NONLIC"
     else:
-        filter_keywords("licence_plate", r"Licence Plate Number ")
+        raw_text = (
+            licence_plates[0][0]
+            if isinstance(licence_plates[0], list)
+            else licence_plates[0]
+        )
+        match = re.search(
+            r"Licence Plate Number\s+([A-Z0-9]+)", raw_text, re.IGNORECASE
+        )
+        field_dict["licence_plate"] = match.group(1) if match else "NONLIC"
 
-    if (
-        len(matching_keywords["top"]) > 0
+    # Process "top" flag
+    top_entries = matching_keywords.get("top", [])
+    field_dict["top"] = (
+        len(top_entries) > 0
         and "Temporary Operation Permit and Owner’s Certificate of Insurance"
-        in matching_keywords["top"][0]
-    ):
-        field_dict["top"] = True
-    else:
-        field_dict["top"] = False
+        in top_entries[0]
+    )
+
+    # Process other keywords
     filter_keywords("transaction_timestamp", r"Transaction Timestamp ")
     filter_keywords("agency_number", r"Agency Number ")
     filter_keywords("owner_name", strip_char=".")
     filter_keywords("applicant_name", strip_char=".")
     filter_keywords("insured_name", strip_char=".")
+
     return field_dict
 
 
@@ -612,9 +632,14 @@ def main():
                 continue
             # Used when user uses the broker_number in the Excel sheet
             agency_number_or_broker_number = (
-                df["agency_number"].at[0]
-                if len(str(broker_number)) == 0
-                else broker_number
+                broker_number
+                if len(str(broker_number).strip()) > 0
+                else (
+                    df["agency_number"].at[0]
+                    if "agency_number" in df.columns
+                    and str(df["agency_number"].at[0]).strip()
+                    else "99999"
+                )
             )
             # Step 8 Stamp ICBC
             stamp_policy(

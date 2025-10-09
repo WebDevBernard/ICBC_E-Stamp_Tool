@@ -36,8 +36,9 @@ python -m auto_py_to_exe
 4. Open the folder where the exe was created and add a desktop shortcut for "icbc_e-stamp_tool.exe".
 
 5. In Microsoft Edge, open settings at `edge://settings/downloads`:
-    - Set downloads to "C:\Users\\<your_username>\Downloads"
-    - Toggle off "Ask me what to do with each download".
+
+   - Set downloads to "C:\Users\\<your_username>\Downloads"
+   - Toggle off "Ask me what to do with each download".
 
 6. An optional Excel file "BM3KXR.xlsx" is available for additional customization. You can leave this Excel sheet blank
    if you don't need any customizations.
@@ -71,7 +72,7 @@ import fitz
 from pathlib import Path
 from tabulate import tabulate
 
-input_dir = Path.home() / "Downloads"
+input_dir = Path.home() / "Downloads"[py](py)
 pdf_files = input_dir.glob("*.pdf")
 output_dir = Path.home() / "Desktop" / "Coordinates"
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -110,5 +111,3 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-
