@@ -265,20 +265,18 @@ def main():
             continue
         ts = info["transaction_timestamp"]
         if ts in find_existing_timestamps(DEFAULTS["output_dir"]):
-            continue  # Already stamped, skip
+            continue
 
         ts_dt = format_transaction_timestamp(ts)
         try:
             doc = fitz.open(path)
 
-            # Apply only validation and time-of-validation stamps
+
             doc = validation_annot(doc, info, ts_dt)
             doc = stamp_time_of_validation(doc, info, ts_dt)
 
-            # Save batch copy WITHOUT top timestamp
             save_batch_copy(doc, info, DEFAULTS["output_dir"])
 
-            # Create customer copy WITHOUT top timestamp
             create_customer_copy(doc, info, DEFAULTS["output_dir"])
 
             stamped_counter += 1
