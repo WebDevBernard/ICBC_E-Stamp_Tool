@@ -10,11 +10,7 @@ import time
 # -------------------- Defaults -------------------- #
 DEFAULTS = {
     "number_of_pdfs": 10,
-    "output_dir": str(
-        (Path.home() / "Desktop" / "ICBC E-Stamp Copies")
-        if (Path.home() / "Desktop").exists()
-        else (Path(__file__).parent.parent / "ICBC E-Stamp Copies")
-    ),
+    "output_dir": str(Path.cwd() / "ICBC E-Stamp Copies"),
     "input_dir": str(Path.home() / "Downloads"),
 }
 
@@ -349,6 +345,11 @@ def icbc_e_stamp_tool():
     print(f"\nTotal PDFs scanned: {total_scanned}")
     print(f"Total PDFs stamped: {stamped_counter}")
     print(f"✅ Total script execution time: {end_total - start_total:.2f} seconds")
+    print("\nExiting in ", end="")
+    for i in range(3, 0, -1):
+        print(f"{i} ", end="", flush=True)
+        time.sleep(1)
+    print("\n")
 
 
 if __name__ == "__main__":
