@@ -1,7 +1,6 @@
 <h1 align="center">ICBC E-Stamp Tool</h1>
 
-I work as an insurance broker. The purpose of this script is to provide the broker a one-click solution to
-stamp an ICBC policy document and email it directly to the client.
+This script provides a one-click solution for applying a digital validation stamp to most ICBC policy documents. It scans your Downloads folder, applies the stamp, and generates two PDF files: one customer copy and one batch copy.
 
 <table align="center">
   <tr>
@@ -30,21 +29,19 @@ pip install -r requirements.txt
 python -m auto_py_to_exe
 ```
 
-3. In the GUI, select the script location under `/py/icbc_e-stamp_tool.py`. Browse Icon in `/py/icon.ico`. Now select
+3. In the GUI, select the script location under `/py/icbc_e-stamp_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico`. Now select
    `Convert .PY To .EXE`
 
-4. Open the folder where the exe was created and add a desktop shortcut for "icbc_e-stamp_tool.exe".
-
-5. In Microsoft Edge, open settings at `edge://settings/downloads`:
+4. In Microsoft Edge, open settings at `edge://settings/downloads`:
 
    - Set downloads to "C:\Users\\<your_username>\Downloads"
    - Toggle off "Ask me what to do with each download".
 
 ## Usage
 
-After processing a Policy Centre transaction, double-click the "icbc_e-stamp_tool.exe - Shortcut". This will create a
-folder on your desktop called "ICBC E-Stamp Copies" with the stamped policy documents.
-The "ICBC Batch Copies" sub-folder allows you to print the stamped agent copy.
+After processing a Policy Centre transaction, double-click “icbc_e-stamp_tool.exe”. This will create a folder named “ICBC E-Stamp Copies” in the same location as the executable file, containing the stamped policy documents.
+
+Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped agent copy for batching.
 
 ## Bonus
 
@@ -57,7 +54,9 @@ The "ICBC Batch Copies" sub-folder allows you to print the stamped agent copy.
   </tr>
 </table>
 
-### ✅ Changes October 14, 2025:
+### ✅ Changes October 15, 2025:
 
-1. Full rewrite; Made leaner and faster
-2. Removed Excel customizations, now scan up to 10 copies at a time
+1. Full rewrite; Made leaner and faster.
+2. Removed Excel customizations, now scan up to 10 copies at a time.
+3. Fixed issue with stamping standalone Payment Plan Agreements.
+4. Is now a single exe from 200 MB to 30 MB.
