@@ -60,4 +60,4 @@ The "ICBC Batch Copies" sub-folder allows you to print the stamped agent copy.
 ### ✅ Changes October 14, 2025:
 
 1. Full rewrite; Made leaner and faster
-2. Removed of Excel customizations, now scan up to 10 copies at a time
+2. Removed Excel customizations, now scan up to 10 copies at a time
