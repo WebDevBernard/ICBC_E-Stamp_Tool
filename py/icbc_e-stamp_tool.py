@@ -74,9 +74,15 @@ def format_timestamp_mmmddyyyy_from_dt(dt):
     return dt.strftime("%b%d%Y")
 
 
-def find_existing_timestamps(folder):
+def find_existing_timestamps(base_name, folder):
     timestamps = set()
-    for pdf_file in Path(folder).rglob("*.pdf"):
+    base_name = base_name.strip().upper()
+
+    for pdf_file in Path(folder).glob("*.pdf"):
+        filename = pdf_file.stem.upper()
+        if not filename.startswith(base_name):
+            continue
+
         try:
             with fitz.open(pdf_file) as doc:
                 if doc.page_count > 0:
@@ -85,8 +91,9 @@ def find_existing_timestamps(folder):
                     )
                     if ts_match:
                         timestamps.add(ts_match.group(1))
-        except:
+        except Exception:
             continue
+
     return timestamps
 
 
@@ -102,7 +109,6 @@ def unique_file_name(path):
 def reverse_insured_name(name):
     if not name:
         return ""
-
     name = re.sub(r"\s+", " ", name.strip())
     if name.endswith(("Ltd", "Inc")):
         return name
@@ -172,25 +178,21 @@ def stamp_time_of_validation(doc, info, ts_dt):
 
 
 def get_base_name(info):
-    transaction_timestamp = info.get("transaction_timestamp", "")
+    transaction_timestamp = info.get("transaction_timestamp") or ""
     license_plate = (info.get("license_plate") or "").strip().upper()
     insured_name = (info.get("insured_name") or "").strip()
-
-    # Clean insured_name
     insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
     insured_name = re.sub(r"\s+", " ", insured_name).strip()
     insured_name = insured_name.title() if insured_name else ""
-
-    # Determine base name
-    if license_plate == "NONLIC":
-        return insured_name or transaction_timestamp or "UNKNOWN"
     if license_plate:
-        return license_plate
-    if insured_name:
-        return insured_name
-    if transaction_timestamp:
-        return transaction_timestamp
-    return "UNKNOWN"
+        base_name = license_plate
+    elif insured_name:
+        base_name = insured_name
+    elif transaction_timestamp:
+        base_name = transaction_timestamp
+    else:
+        base_name = "UNKNOWN"
+    return base_name
 
 
 def save_batch_copy(doc, info, output_dir):
@@ -233,11 +235,10 @@ def icbc_e_stamp_tool():
     )[:max_docs]
 
     icbc_data = {}
-    existing_timestamps = find_existing_timestamps(output_dir)
 
     # -------------------- Stage 1: Scan PDFs -------------------- #
     print("🔍 Scanning PDFs...")
-    for pdf_path in progressbar(pdf_files, prefix="Scanning PDFs: ", size=40):
+    for pdf_path in progressbar(pdf_files, prefix="Scanning PDFs: ", size=10):
         try:
             with fitz.open(pdf_path) as doc:
                 if doc.page_count == 0:
@@ -249,11 +250,6 @@ def icbc_e_stamp_tool():
                 payment_text = first_page.get_text(clip=payment_plan_rect)
 
                 ts_match = timestamp_pattern.search(ts_text)
-                timestamp = (
-                    ts_match.group(1)
-                    if ts_match and ts_match.group(1) not in existing_timestamps
-                    else None
-                )
 
                 if payment_plan_pattern.search(payment_text):
                     continue
@@ -276,6 +272,23 @@ def icbc_e_stamp_tool():
                 agency_match = agency_number_pattern.search(full_text_first_page)
                 agency_number = (
                     agency_match.group(1).strip() if agency_match else "UNKNOWN"
+                )
+
+                # --- determine base name first
+                info_preview = {
+                    "transaction_timestamp": ts_match.group(1) if ts_match else "",
+                    "license_plate": license_plate,
+                    "insured_name": insured_name,
+                }
+                base_name = get_base_name(info_preview)
+
+                # --- check only matching PDFs in batch folder
+                existing_timestamps = find_existing_timestamps(base_name, output_dir)
+
+                timestamp = (
+                    ts_match.group(1)
+                    if ts_match and ts_match.group(1) not in existing_timestamps
+                    else None
                 )
 
                 customer_copy_pages = []
@@ -311,20 +324,25 @@ def icbc_e_stamp_tool():
     total_scanned = len(pdf_files)
 
     # -------------------- Stage 2: Process PDFs -------------------- #
-    print("\n✍️ Processing PDFs...")
+    print("✍️ Processing PDFs...")
     stamped_counter = 0
+
     for path, info in progressbar(
-        list(icbc_data.items()), prefix="Processing PDFs: ", size=40
+        list(icbc_data.items()), prefix="Processing PDFs: ", size=10
     ):
-        if not info["transaction_timestamp"]:
+        ts = info.get("transaction_timestamp")
+        if not ts:
             continue
-        ts = info["transaction_timestamp"]
-        if ts in find_existing_timestamps(output_dir):
+
+        base_name = get_base_name(info)
+        existing_timestamps = find_existing_timestamps(base_name, output_dir)
+        if ts in existing_timestamps:
             continue
 
         ts_dt = format_transaction_timestamp(ts)
 
         try:
+
             doc_batch = fitz.open(path)
             doc_customer = fitz.open(path)
 
@@ -349,7 +367,6 @@ def icbc_e_stamp_tool():
     for i in range(3, 0, -1):
         print(f"{i} ", end="", flush=True)
         time.sleep(1)
-    print("\n")
 
 
 if __name__ == "__main__":
