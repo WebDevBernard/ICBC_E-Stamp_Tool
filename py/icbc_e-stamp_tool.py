@@ -212,7 +212,7 @@ def save_customer_copy(doc, info, output_dir):
     for page_num in reversed(pages_to_delete):
         doc.delete_page(page_num)
     base_name = get_base_name(info)
-    customer_copy_name = f"{base_name} (Customer Copies).pdf"
+    customer_copy_name = f"{base_name} (Customer Copy).pdf"
     customer_copy_path = Path(output_dir) / customer_copy_name
     customer_copy_path = Path(unique_file_name(customer_copy_path))
     doc.save(customer_copy_path, garbage=4, deflate=True)
