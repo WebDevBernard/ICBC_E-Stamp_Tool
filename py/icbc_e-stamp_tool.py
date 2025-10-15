@@ -176,21 +176,25 @@ def stamp_time_of_validation(doc, info, ts_dt):
 
 
 def get_base_name(info):
-    transaction_timestamp = info.get("transaction_timestamp") or ""
+    transaction_timestamp = info.get("transaction_timestamp", "")
     license_plate = (info.get("license_plate") or "").strip().upper()
     insured_name = (info.get("insured_name") or "").strip()
+
+    # Clean insured_name
     insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
     insured_name = re.sub(r"\s+", " ", insured_name).strip()
     insured_name = insured_name.title() if insured_name else ""
+
+    # Determine base name
+    if license_plate == "NONLIC":
+        return insured_name or transaction_timestamp or "UNKNOWN"
     if license_plate:
-        base_name = license_plate
-    elif insured_name:
-        base_name = insured_name
-    elif transaction_timestamp:
-        base_name = transaction_timestamp
-    else:
-        base_name = "UNKNOWN"
-    return base_name
+        return license_plate
+    if insured_name:
+        return insured_name
+    if transaction_timestamp:
+        return transaction_timestamp
+    return "UNKNOWN"
 
 
 def save_batch_copy(doc, info, output_dir):
