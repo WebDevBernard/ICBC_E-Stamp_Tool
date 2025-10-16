@@ -1,6 +1,6 @@
 <h1 align="center">ICBC E-Stamp Tool</h1>
 
-This script provides a one-click solution for applying a digital validation stamp to most ICBC policy documents. It scans your Downloads folder, applies the stamp, and generates two PDF files: one customer copy and one batch copy.
+This script provides a one-click solution to apply the digital validation stamp to most ICBC policy documents. It scans your Downloads folder, applies the stamp, and generates two PDF files: one customer copy and one batch copy.
 
 <table align="center">
   <tr>
@@ -57,6 +57,6 @@ Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped a
 ### ✅ Changes October 15, 2025:
 
 1. Full rewrite; Made leaner and faster.
-2. Removed Excel customizations, now scan up to 10 copies at a time.
+2. Removed Excel customizations, now scan up to 10 pdfs at a time.
 3. Fixed issue with stamping standalone Payment Plan Agreements.
 4. Is now a single exe from 200 MB to 30 MB.
