@@ -282,7 +282,7 @@ def icbc_e_stamp_tool():
                 }
                 base_name = get_base_name(info_preview)
 
-                # --- check only matching PDFs in batch folder
+                # --- check only matching PDFs in the root folder
                 existing_timestamps = find_existing_timestamps(base_name, output_dir)
 
                 timestamp = (
@@ -328,7 +328,9 @@ def icbc_e_stamp_tool():
     stamped_counter = 0
 
     for path, info in progressbar(
-        list(icbc_data.items()), prefix="Processing PDFs: ", size=10
+        list(reversed(list(icbc_data.items()))),
+        prefix="Processing PDFs: ",
+        size=10,
     ):
         ts = info.get("transaction_timestamp")
         if not ts:
