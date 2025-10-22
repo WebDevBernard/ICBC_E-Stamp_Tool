@@ -60,3 +60,13 @@ Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped a
 2. Removed Excel customizations, now scan up to 10 pdfs at a time.
 3. Fixed issue with stamping standalone Payment Plan Agreements.
 4. Is now a single exe from 200 MB to 30 MB.
+
+## License
+
+This project is licensed under the [AGPL-3.0 License](LICENSE).
+
+It uses [PyMuPDF](https://pymupdf.readthedocs.io/) (based on [MuPDF](https://mupdf.com/)),
+both licensed under the GNU Affero General Public License v3.0.
+
+If you modify or redistribute this project, you must also make your source
+code available under the same license.
