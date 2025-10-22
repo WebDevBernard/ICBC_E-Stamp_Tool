@@ -63,7 +63,7 @@ Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped a
 
 ## License
 
-This project is licensed under the [AGPL-3.0 License](LICENSE).
+This project is licensed under the [AGPL-3.0 License](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/LICENSE.txt).
 
 It uses [PyMuPDF](https://pymupdf.readthedocs.io/) (based on [MuPDF](https://mupdf.com/)),
 both licensed under the GNU Affero General Public License v3.0.
