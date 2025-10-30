@@ -33,11 +33,9 @@ DEFAULTS = {
 
 # -------------------- Patterns and Rectangles -------------------- #
 timestamp_rect = (409.979, 63.8488, 576.0, 83.7455)
-payment_plan_rect = (425.402, 35.9664, 557.916, 48.3001)
 customer_copy_rect = (498.438, 751.953, 578.181, 769.977)
 
 timestamp_pattern = re.compile(r"Transaction Timestamp\s*(\d+)")
-payment_plan_pattern = re.compile(r"Payment Plan Agreement", re.IGNORECASE)
 license_plate_pattern = re.compile(
     r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
 )
@@ -264,12 +262,8 @@ def icbc_e_stamp_tool():
                 first_page = doc[0]
                 full_text_first_page = "\n".join([first_page.get_text("text")])
                 ts_text = first_page.get_text(clip=timestamp_rect)
-                payment_text = first_page.get_text(clip=payment_plan_rect)
 
                 ts_match = timestamp_pattern.search(ts_text)
-
-                if payment_plan_pattern.search(payment_text):
-                    continue
 
                 license_plate_match = license_plate_pattern.search(full_text_first_page)
                 license_plate = (
@@ -291,7 +285,6 @@ def icbc_e_stamp_tool():
                     agency_match.group(1).strip() if agency_match else "UNKNOWN"
                 )
 
-                # --- determine base name first
                 info_preview = {
                     "transaction_timestamp": ts_match.group(1) if ts_match else "",
                     "license_plate": license_plate,
@@ -299,7 +292,6 @@ def icbc_e_stamp_tool():
                 }
                 base_name = get_base_name(info_preview)
 
-                # --- check only matching PDFs in the root folder
                 existing_timestamps = find_existing_timestamps(base_name, output_dir)
 
                 timestamp = (
@@ -351,6 +343,9 @@ def icbc_e_stamp_tool():
     ):
         ts = info.get("transaction_timestamp")
         if not ts:
+            continue
+
+        if not info.get("validation_stamp_coords"):
             continue
 
         base_name = get_base_name(info)
