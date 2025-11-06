@@ -29,7 +29,7 @@ pip install -r requirements.txt
 python -m auto_py_to_exe
 ```
 
-3. In the GUI, select the script location under `/py/icbc_e-stamp_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico`. Now select
+3. In the GUI, select the script location under `/py/icbc_e-stamp_tool_standalone.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico`. Now select
    `Convert .PY To .EXE`
 
 4. In Microsoft Edge, open settings at `edge://settings/downloads`:
@@ -57,9 +57,8 @@ Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped a
 ### ✅ Changes Nov 05, 2025:
 
 1. Full rewrite; Made leaner and faster.
-2. icbc_e-stamp_and_copy_tool is a modified version that will also copy a blank policy document to a preferred network drive and seperate by producer
-3. the config.xlsx file contains the path name and producers name
-4. if you get this error "[WinError 3] The system cannot find the path specified", it means either the name of the producer folder or the root path does not exists
+2. icbc_e-stamp_and_copy_tool is a modified version that will also copy a blank policy document to a storage drive and sort the file by producer.
+3. The config.xlsx file contains the path name and producers name.
 
 ## License
 

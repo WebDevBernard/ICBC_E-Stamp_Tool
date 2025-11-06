@@ -39,7 +39,7 @@ import fitz
 import re
 from pathlib import Path
 from datetime import datetime
-from copy_rename_icbc import (
+from py.copy_icbc import (
     scan_icbc_pdfs,
     load_producer_mapping,
     copy_pdfs,

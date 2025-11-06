@@ -15,6 +15,7 @@ and applies a digital validation stamp.
 How it works:
 - Checks the 10 most recently modified PDF files in your Downloads folder.
 - Stamps any file that resembles an ICBC policy document.
+- If you are using ICBC E-Stamp and Copy Tool, fill out the excel sheet to copy a blank policy document to another folder.
 
 Requirements:
 - ICBC policy documents must be saved in your Downloads folder for the script to work.
