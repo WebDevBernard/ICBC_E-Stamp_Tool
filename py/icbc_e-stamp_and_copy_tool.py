@@ -40,8 +40,13 @@ DEFAULTS = {
 # Path to your Excel mapping file
 mapping_path = Path.cwd() / "config.xlsx"
 
-# Load producer mapping
-root_folder, producer_mapping = load_producer_mapping(mapping_path)
+# If Excel mapping file doesn't exist, use current directory as output
+if not mapping_path.exists():
+    DEFAULTS["output_dir"] = str(Path.cwd() / "ICBC E-Stamp Copies")
+    root_folder, producer_mapping = (None, {})
+else:
+    # Load producer mapping
+    root_folder, producer_mapping = load_producer_mapping(mapping_path)
 
 # Scan PDFs in the folder
 scanned_data = scan_icbc_pdfs(
@@ -381,7 +386,7 @@ def icbc_e_stamp_tool():
             print(f"❌ Error processing {path}: {e}")
 
     # -------------------- Stage 3: Copy PDFs -------------------- #
-    if root_folder:
+    if root_folder and producer_mapping:
         copied_count = copy_pdfs(
             scanned_data,
             root_folder,

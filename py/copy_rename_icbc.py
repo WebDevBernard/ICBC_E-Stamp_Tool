@@ -263,7 +263,6 @@ def copy_pdfs(icbc_data, root_folder, producer_mapping=None):
     """Copy scanned PDFs to organized folders."""
     root_folder = Path(root_folder)
     if not root_folder.exists():
-        print(f"⚠️ Root folder '{root_folder}' does not exist. Aborting copy.")
         return 0
     producer_mapping = producer_mapping or {}
     copied_count = 0
