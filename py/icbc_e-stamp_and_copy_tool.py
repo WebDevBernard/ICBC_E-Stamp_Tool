@@ -31,7 +31,6 @@ Features:
 Dependencies:
     - PyMuPDF (fitz)
     - openpyxl (for Excel mapping)
-    - copy_rename_icbc.py (script)
 """
 
 
@@ -410,7 +409,6 @@ def icbc_e_stamp_tool():
                 f"⚠️ Root folder '{root_folder}' does not exist. Skipping copy operation."
             )
         else:
-            # Check if at least one mapped subfolder exists
             missing_subfolders = [
                 folder
                 for folder in producer_mapping.values()
@@ -423,7 +421,7 @@ def icbc_e_stamp_tool():
 
             copied_count = copy_pdfs(scanned_data, root_folder, producer_mapping)
     else:
-        print("ℹ️ Excel mapping file not found — skipping copy step.")
+        print("ℹ️ config.xlsx file not found — skipping copy step.")
 
     # -------------------- Summary -------------------- #
     end_total = timeit.default_timer()
