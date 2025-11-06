@@ -87,7 +87,6 @@ def search_insured_name(full_text_first_page):
 
 
 def scan_icbc_pdfs(input_dir, max_docs=None):
-    """Scan PDFs in a folder and extract metadata."""
     input_dir = Path(input_dir)
     icbc_data = {}
     docs = sorted(
@@ -163,10 +162,6 @@ def scan_icbc_pdfs(input_dir, max_docs=None):
 
 # --- Excel loader function ---
 def load_producer_mapping(mapping_path):
-    """
-    Load root folder path and producer-to-folder mapping from Excel.
-    Returns (root_folder: Path or None, producer_mapping: dict).
-    """
     mapping_path = Path(mapping_path)
     producer_mapping = {}
     root_folder = None
@@ -259,33 +254,30 @@ def pdf_transaction_timestamp(pdf_path):
 
 
 # --- PDF copy function ---
-def copy_pdfs(icbc_data, root_folder, producer_mapping=None):
-    """Copy scanned PDFs to organized folders."""
-    root_folder = Path(root_folder)
-    if not root_folder.exists():
+def copy_pdfs(icbc_data, output_root_dir, producer_mapping=None):
+    output_root_dir = Path(output_root_dir)
+    if not output_root_dir.exists():
         return 0
     producer_mapping = producer_mapping or {}
     copied_count = 0
 
-    # Create a reversed list of items for iteration
     items_to_process = list(reversed(list(icbc_data.items())))
 
     for path, info in progressbar(items_to_process, prefix="Copying PDFs: ", size=10):
         producer_name = info.get("producer_name")
         if producer_name and producer_name in producer_mapping:
             producer_folder_name = safe_filename(producer_mapping[producer_name])
-            subfolder_path = root_folder / producer_folder_name
+            subfolder_path = output_root_dir / producer_folder_name
         else:
-            subfolder_path = root_folder
+            subfolder_path = output_root_dir
 
         base_name = get_base_name(info)
         base_name = safe_filename(base_name)
         prefix_name = base_name.split(" ")[0]
         dest_file = subfolder_path / f"{base_name}{path.suffix}"
 
-        # Duplicate check
         duplicate_found = False
-        for existing_file in subfolder_path.rglob(f"{prefix_name}*.pdf"):
+        for existing_file in output_root_dir.rglob(f"{prefix_name}*.pdf"):
             existing_ts = pdf_transaction_timestamp(existing_file)
             if existing_ts == info.get("transaction_timestamp"):
                 duplicate_found = True

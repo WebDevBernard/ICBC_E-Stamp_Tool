@@ -57,18 +57,14 @@ DEFAULTS = {
     "input_dir": str(Path.home() / "Downloads"),
 }
 
-# Path to your Excel mapping file
 mapping_path = Path.cwd() / "config.xlsx"
 
-# If Excel mapping file doesn't exist, use current directory as output
 if not mapping_path.exists():
     DEFAULTS["output_dir"] = str(Path.cwd() / "ICBC E-Stamp Copies")
     root_folder, producer_mapping = (None, {})
 else:
-    # Load producer mapping
     root_folder, producer_mapping = load_producer_mapping(mapping_path)
 
-# Scan PDFs in the folder
 scanned_data = scan_icbc_pdfs(
     DEFAULTS["input_dir"], max_docs=DEFAULTS["number_of_pdfs"]
 )
