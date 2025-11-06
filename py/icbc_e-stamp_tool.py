@@ -199,7 +199,7 @@ def get_base_name(info):
     insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
     insured_name = re.sub(r"\s+", " ", insured_name).strip()
     insured_name = insured_name.title() if insured_name else ""
-    if license_plate:
+    if license_plate and license_plate != "NONLIC":
         base_name = license_plate
     elif insured_name:
         base_name = insured_name
