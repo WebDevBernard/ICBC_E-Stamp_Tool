@@ -1,19 +1,39 @@
-# This file is part of ICBC E-Stamp Tool.
+# -------------------------------------------------------------------------
+#  This file is part of the ICBC E-Stamp Tool.
 #
-# ICBC E-Stamp Tool is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#  ICBC E-Stamp Tool is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published
+#  by the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
 #
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# This program uses PyMuPDF (MuPDF) under AGPLv3.
+#  This tool uses PyMuPDF (MuPDF) under the AGPLv3 license.
+# -------------------------------------------------------------------------
+
+"""
+ICBC E-Stamp Tool
+-----------------
+Automates the detection, stamping, and copying of ICBC PDF forms.
+
+Features:
+- Scans ICBC insurance PDFs for key fields.
+- Stamps validation and time-of-validation data.
+- Saves both batch and customer copies.
+- Optionally copies stamped PDFs into mapped producer folders.
+
+Dependencies:
+    - PyMuPDF (fitz)
+    - openpyxl (for Excel mapping)
+    - copy_rename_icbc.py (script)
+"""
+
 
 import fitz
 import re
@@ -386,20 +406,35 @@ def icbc_e_stamp_tool():
             print(f"❌ Error processing {path}: {e}")
 
     # -------------------- Stage 3: Copy PDFs -------------------- #
+    copied_count = None
+
     if root_folder and producer_mapping:
-        copied_count = copy_pdfs(
-            scanned_data,
-            root_folder,
-            producer_mapping,
-        )
+        if not Path(root_folder).exists():
+            print(
+                f"⚠️ Root folder '{root_folder}' does not exist. Skipping copy operation."
+            )
+        else:
+            # Check if at least one mapped subfolder exists
+            missing_subfolders = [
+                folder
+                for folder in producer_mapping.values()
+                if not Path(root_folder, folder).exists()
+            ]
+            if missing_subfolders:
+                print(f"⚠️ The following subfolders do not exist under '{root_folder}':")
+                for folder in missing_subfolders:
+                    print(f"   - {folder}")
+
+            copied_count = copy_pdfs(scanned_data, root_folder, producer_mapping)
     else:
-        copied_count = 0
+        print("ℹ️ Excel mapping file not found — skipping copy step.")
 
     # -------------------- Summary -------------------- #
     end_total = timeit.default_timer()
     print(f"\nTotal PDFs scanned: {total_scanned}")
     print(f"Total PDFs stamped: {stamped_counter}")
-    print(f"Total PDFs copied: {copied_count}")
+    if copied_count is not None:
+        print(f"Total PDFs copied: {copied_count}")
     print(f"✅ Total script execution time: {end_total - start_total:.2f} seconds")
     print("\nExiting in ", end="")
     for i in range(3, 0, -1):
