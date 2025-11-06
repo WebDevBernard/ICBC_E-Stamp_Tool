@@ -178,7 +178,7 @@ def load_producer_mapping(mapping_path):
         if root_cell:
             root_folder = Path(root_cell).expanduser()
 
-        for row in ws.iter_rows(min_row=2, values_only=True):
+        for row in ws.iter_rows(min_row=3, values_only=True):
             producer, folder = row
             if producer and folder:
                 producer_mapping[str(producer).upper()] = str(folder)
