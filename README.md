@@ -54,12 +54,12 @@ Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped a
   </tr>
 </table>
 
-### ✅ Changes October 15, 2025:
+### ✅ Changes Nov 05, 2025:
 
 1. Full rewrite; Made leaner and faster.
-2. Removed Excel customizations, now scan up to 10 pdfs at a time.
-3. Fixed issue with stamping standalone Payment Plan Agreements.
-4. Is now a single exe from 200 MB to 30 MB.
+2. icbc_e-stamp_and_copy_tool is a modified version that will also copy a blank policy document to a preferred network drive and seperate by producer
+3. the config.xlsx file contains the path name and producers name
+4. if you get this error "[WinError 3] The system cannot find the path specified", it means either the name of the producer folder or the root path does not exists
 
 ## License
 
