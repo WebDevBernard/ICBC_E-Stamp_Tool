@@ -1,5 +1,10 @@
 /venv
-.idea/
-/idea
+/py
 /py/output
 /output
+/py/config.xlsx
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
