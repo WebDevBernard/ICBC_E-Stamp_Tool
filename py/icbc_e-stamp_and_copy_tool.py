@@ -1,90 +1,35 @@
-# -------------------------------------------------------------------------
-#  This file is part of the ICBC E-Stamp Tool.
-#
-#  ICBC E-Stamp Tool is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published
-#  by the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This tool uses PyMuPDF (MuPDF) under the AGPLv3 license.
-# -------------------------------------------------------------------------
-
-"""
-ICBC E-Stamp Tool
------------------
-Automates the detection, stamping, and copying of ICBC PDF forms.
-
-Features:
-- Scans ICBC insurance PDFs for key fields.
-- Stamps validation and time-of-validation data.
-- Saves both batch and customer copies.
-- Optionally copies stamped PDFs into mapped producer folders.
-
-Dependencies:
-    - PyMuPDF (fitz)
-    - openpyxl (for Excel mapping)
-"""
-
-
 import fitz
-import re
 from pathlib import Path
 from datetime import datetime
-from copy_icbc import (
+from utils import (
+    get_base_name,
+    unique_file_name,
+    progressbar,
+    search_insured_name,
+    reverse_insured_name,
+    find_existing_timestamps,
+)
+from constants import ICBC_PATTERNS, PAGE_RECTS
+from utils import (
     scan_icbc_pdfs,
-    load_producer_mapping,
+    load_excel_mapping,
     copy_pdfs,
 )
 import timeit
-import os
-import sys
 import time
 
+# -------------------- Local Constants -------------------- #
 
-# -------------------- Defaults -------------------- #
-DEFAULTS = {
-    "number_of_pdfs": 10,
-    "output_dir": str(Path.cwd().parent / "ICBC E-Stamp Copies"),
-    "input_dir": str(Path.home() / "Downloads"),
-}
+timestamp_pattern = ICBC_PATTERNS["timestamp"]
+license_plate_pattern = ICBC_PATTERNS["license_plate"]
+temporary_permit_pattern = ICBC_PATTERNS["temporary_permit"]
+agency_number_pattern = ICBC_PATTERNS["agency_number"]
+customer_copy_pattern = ICBC_PATTERNS["customer_copy"]
+validation_stamp_pattern = ICBC_PATTERNS["validation_stamp"]
+time_of_validation_pattern = ICBC_PATTERNS["time_of_validation"]
 
-mapping_path = Path.cwd() / "config.xlsx"
-
-if not mapping_path.exists():
-    DEFAULTS["output_dir"] = str(Path.cwd() / "ICBC E-Stamp Copies")
-    root_folder, producer_mapping = (None, {})
-else:
-    root_folder, producer_mapping = load_producer_mapping(mapping_path)
-
-scanned_data = scan_icbc_pdfs(
-    DEFAULTS["input_dir"], max_docs=DEFAULTS["number_of_pdfs"]
-)
-
-# -------------------- Patterns and Rectangles -------------------- #
-timestamp_rect = (409.979, 63.8488, 576.0, 83.7455)
-customer_copy_rect = (498.438, 751.953, 578.181, 769.977)
-
-timestamp_pattern = re.compile(r"Transaction Timestamp\s*(\d+)")
-license_plate_pattern = re.compile(
-    r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
-)
-temporary_permit_pattern = re.compile(
-    r"Temporary Operation Permit and Owner’s Certificate of Insurance", re.IGNORECASE
-)
-agency_number_pattern = re.compile(
-    r"Agency Number\s*[:#]?\s*([A-Z0-9]+)", re.IGNORECASE
-)
-customer_copy_pattern = re.compile(r"customer copy", re.IGNORECASE)
-validation_stamp_pattern = re.compile(r"NOT VALID UNLESS STAMPED BY", re.IGNORECASE)
-time_of_validation_pattern = re.compile(r"TIME OF VALIDATION", re.IGNORECASE)
+timestamp_rect = PAGE_RECTS["timestamp"]
+customer_copy_rect = PAGE_RECTS["customer_copy"]
 
 validation_stamp_coords_box_offset = (-4.25, 23.77, 1.58, 58.95)
 time_of_validation_offset = (0.0, 10.35, 0.0, 40)
@@ -92,100 +37,27 @@ time_stamp_offset = (0, 13, 0, 0)
 time_of_validation_am_offset = (0, -0.6, 0, 0)
 time_of_validation_pm_offset = (0, 21.2, 0, 0)
 
+# -------------------- Defaults -------------------- #
 
-# -------------------- Utility Functions -------------------- #
-def progressbar(it, prefix="", size=60, out=sys.stdout):
-    count = len(it)
-    start = time.time()
+desktop_or_root = Path.home() / "Desktop"
 
-    def show(j):
-        x = int(size * j / count)
-        remaining = ((time.time() - start) / j) * (count - j) if j else 0
-        mins, sec = divmod(remaining, 60)
-        time_str = f"{int(mins):02}:{sec:03.1f}"
-        print(
-            f"{prefix}[{'█' * x}{'.' * (size - x)}] {j}/{count} Est wait {time_str}",
-            end="\r",
-            file=out,
-            flush=True,
-        )
+if not desktop_or_root.exists():
+    print("⚠️ Desktop Directory not found, using root directory instead.")
+    desktop_or_root = Path.cwd()
 
-    if len(it) > 0:
-        show(0.1)
-        for i, item in enumerate(it):
-            yield item
-            show(i + 1)
-        print(flush=True, file=out)
+output_dir = desktop_or_root / "ICBC E-Stamp Copies"
+output_dir.mkdir(parents=True, exist_ok=True)
 
-
-def format_transaction_timestamp(timestamp_str):
-    return datetime.strptime(timestamp_str, "%Y%m%d%H%M%S")
-
-
-def format_timestamp_mmmddyyyy_from_dt(dt):
-    return dt.strftime("%b%d%Y")
-
-
-def find_existing_timestamps(base_name, folder):
-    timestamps = set()
-    base_name = base_name.strip().upper()
-
-    for pdf_file in Path(folder).glob("*.pdf"):
-        filename = pdf_file.stem.upper()
-        if not filename.startswith(base_name):
-            continue
-
-        try:
-            with fitz.open(pdf_file) as doc:
-                if doc.page_count > 0:
-                    ts_match = timestamp_pattern.search(
-                        doc[0].get_text(clip=timestamp_rect)
-                    )
-                    if ts_match:
-                        timestamps.add(ts_match.group(1))
-        except Exception:
-            continue
-
-    return timestamps
-
-
-def unique_file_name(path):
-    filename, extension = os.path.splitext(path)
-    counter = 1
-    while Path(path).is_file():
-        path = filename + " (" + str(counter) + ")" + extension
-        counter += 1
-    return path
-
-
-def reverse_insured_name(name):
-    if not name:
-        return ""
-    name = re.sub(r"\s+", " ", name.strip())
-    if name.endswith(("Ltd", "Inc")):
-        return name
-    name = name.replace(",", "")
-    parts = name.split(" ")
-    if len(parts) == 1:
-        return name
-    return " ".join(parts[1:] + [parts[0]])
-
-
-def search_insured_name(full_text_first_page):
-    match = re.search(
-        r"(?:Owner\s|Applicant|Name of Insured \(surname followed by given name\(s\)\))\s*\n([^\n]+)",
-        full_text_first_page,
-        re.IGNORECASE,
-    )
-    if match:
-        name = match.group(1)
-        name = re.sub(r"[.:/\\*?\"<>|]", "", name)
-        name = re.sub(r"\s+", " ", name).strip().title()
-        return name
-    return None
+DEFAULTS = {
+    "number_of_pdfs": 10,
+    "output_dir": str(output_dir),
+    "input_dir": str(Path.home() / "Downloads"),
+}
 
 
 # -------------------- PDF Stamping Functions -------------------- #
+
+
 def validation_stamp(doc, info, ts_dt):
     for page_num, coords in info.get("validation_stamp_coords", []):
         page = doc[page_num]
@@ -227,24 +99,6 @@ def stamp_time_of_validation(doc, info, ts_dt):
             time_rect, ts_dt.strftime("%I:%M"), fontname="helv", fontsize=6, align=2
         )
     return doc
-
-
-def get_base_name(info):
-    transaction_timestamp = info.get("transaction_timestamp") or ""
-    license_plate = (info.get("license_plate") or "").strip().upper()
-    insured_name = (info.get("insured_name") or "").strip()
-    insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
-    insured_name = re.sub(r"\s+", " ", insured_name).strip()
-    insured_name = insured_name.title() if insured_name else ""
-    if license_plate and license_plate != "NONLIC":
-        base_name = license_plate
-    elif insured_name:
-        base_name = insured_name
-    elif transaction_timestamp:
-        base_name = transaction_timestamp
-    else:
-        base_name = "UNKNOWN"
-    return base_name
 
 
 def save_batch_copy(doc, info, output_dir):
@@ -325,7 +179,9 @@ def icbc_e_stamp_tool():
                     "insured_name": insured_name,
                 }
                 base_name = get_base_name(info_preview)
-                existing_timestamps = find_existing_timestamps(base_name, output_dir)
+                existing_timestamps = find_existing_timestamps(
+                    base_name, timestamp_pattern, timestamp_rect, output_dir
+                )
                 timestamp = (
                     ts_match.group(1)
                     if ts_match and ts_match.group(1) not in existing_timestamps
@@ -377,11 +233,13 @@ def icbc_e_stamp_tool():
             continue
 
         base_name = get_base_name(info)
-        existing_timestamps = find_existing_timestamps(base_name, output_dir)
+        existing_timestamps = find_existing_timestamps(
+            base_name, timestamp_pattern, timestamp_rect, output_dir
+        )
         if ts in existing_timestamps:
             continue
 
-        ts_dt = format_transaction_timestamp(ts)
+        ts_dt = datetime.strptime(ts, "%Y%m%d%H%M%S")
 
         try:
             doc_batch = fitz.open(path)
@@ -403,21 +261,42 @@ def icbc_e_stamp_tool():
     # -------------------- Stage 3: Copy PDFs -------------------- #
     copied_count = None
 
-    if root_folder and producer_mapping:
-        if not Path(root_folder).exists():
-            print(f"⚠️ Path '{root_folder}' does not exist. Skipping copy operation.")
+    mapping_path = Path.cwd() / "config.xlsx"
+    mapping_data = load_excel_mapping(mapping_path, ws_index="active")
+    input_folder = DEFAULTS["input_dir"]
+    output_folder = mapping_data.get("output_folder")
+    producer_mapping = mapping_data.get("producer_mapping", {})
+
+    copy_data = scan_icbc_pdfs(
+        input_dir=DEFAULTS["input_dir"],
+        regex_patterns=ICBC_PATTERNS,
+        page_rects=PAGE_RECTS,
+        max_docs=DEFAULTS["number_of_pdfs"],
+        suffix_mode=True,
+    )
+
+    if output_folder and producer_mapping:
+        if not Path(output_folder).exists():
+            print(f"⚠️ Path '{output_folder}' does not exist. Skipping copy operation.")
         else:
             missing_subfolders = [
                 folder
                 for folder in producer_mapping.values()
-                if not Path(root_folder, folder).exists()
+                if not Path(output_folder, folder).exists()
             ]
             if missing_subfolders:
-                print(f"⚠️ The following subfolders do not exist under '{root_folder}':")
+                print(
+                    f"⚠️ The following subfolders do not exist under '{output_folder}':"
+                )
                 for folder in missing_subfolders:
                     print(f"   - {folder}")
+            copied_count = copy_pdfs(
+                icbc_data=copy_data,
+                output_root_dir=output_folder,
+                producer_mapping=producer_mapping,
+                create_subfolders=False,
+            )
 
-            copied_count = copy_pdfs(scanned_data, root_folder, producer_mapping)
     else:
         print("ℹ️ config.xlsx file not found — skipping copy step.")
 
