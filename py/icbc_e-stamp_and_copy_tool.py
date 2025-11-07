@@ -38,7 +38,7 @@ import fitz
 import re
 from pathlib import Path
 from datetime import datetime
-from py.copy_icbc import (
+from copy_icbc import (
     scan_icbc_pdfs,
     load_producer_mapping,
     copy_pdfs,
@@ -405,9 +405,7 @@ def icbc_e_stamp_tool():
 
     if root_folder and producer_mapping:
         if not Path(root_folder).exists():
-            print(
-                f"⚠️ Root folder '{root_folder}' does not exist. Skipping copy operation."
-            )
+            print(f"⚠️ Path '{root_folder}' does not exist. Skipping copy operation.")
         else:
             missing_subfolders = [
                 folder
