@@ -59,6 +59,7 @@ Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped a
 1. Full rewrite; Made leaner and faster.
 2. icbc_e-stamp_and_copy_tool is a modified version that will also copy a blank policy document to a storage drive and sort the file by producer.
 3. The config.xlsx file contains the path name and producers name.
+4. Bulk copy ICBC pdfs can be used to organize many pdfs at once without stamping.
 
 ## License
 
