@@ -1,6 +1,10 @@
 <h1 align="center">ICBC E-Stamp Tool</h1>
 
-This script provides a one-click solution to apply the digital validation stamp to most ICBC policy documents. It scans your Downloads folder, applies the stamp, and generates two PDF files: one customer copy and one batch copy.
+This script offers a one-click solution to apply a digital validation stamp to most ICBC policy documents. For your convenience, it will automatically find the pdf that looks like a policy document and apply the ICBC digital validation stamp.
+
+In addition to stamping, the script includes a fillable Excel sheet that can copy and rename an unmodified or blank policy document to a shared drive or other backup location. It will preserve the metadata such as the modified date and can sort into seperate folders based on the name code in "Producer 2".
+
+There are two scripts included: `icbc_e-stamp_and_copy_tool` and the `bulk_copy_icbc_tool`. The `bulk_copy_icbc_tool` is a tool that can do the copy step without limiting how many pdfs to scan. This allows you to create a central store with all your policy documents renamed for easy identification.
 
 <table align="center">
   <tr>
@@ -29,7 +33,7 @@ pip install -r requirements.txt
 python -m auto_py_to_exe
 ```
 
-3. In the GUI, select the script location under `/py/icbc_e-stamp_tool_standalone.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico`. Now select
+3. In the GUI, select the script location under `/py/icbc_e-stamp_and_copy_tool.py` or `/py/bulk_copy_icbc_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico` or `grayscale.ico`. Now select
    `Convert .PY To .EXE`
 
 4. In Microsoft Edge, open settings at `edge://settings/downloads`:
@@ -39,9 +43,15 @@ python -m auto_py_to_exe
 
 ## Usage
 
-After processing a Policy Centre transaction, double-click “icbc_e-stamp_tool.exe”. This will create a folder named “ICBC E-Stamp Copies” in the same location as the executable file, containing the stamped policy documents.
+After processing a Policy Centre transaction, double-click **icbc_e-stamp_and_copy_tool.exe**. This will create a folder named **ICBC E-Stamp Copies** on Desktop, containing the stamped policy documents.
 
-Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped agent copy for batching.
+There is another folder that gets generated inside this folder called "ICBC Batch Copies". This contains the stamped agent copy for batching.
+
+**The `icbc_e-stamp_and_copy_tool` will check for duplicates, it is not necessary to delete the output folder. Stamping is limited to 10 pdfs.**
+
+The Excel sheet is only needed for copying blank policy documents to a backup location; the script works without it. icbc_e-stamp_and_copy_tool requires an existing folder path; subfolders must exist or files will copy to the root. This prevents accidental folder creation from typos.
+
+The `bulk_copy_icbc_tool` does not require an output folder or any subfolder to exist already. It will automatically create the output folder and any producer folder. After the script completes, it will generate a log.txt in the script folder with all the pdfs that could not be copied.
 
 ## Bonus
 
@@ -53,13 +63,6 @@ Inside this folder, the “ICBC Batch Copies” subfolder contains the stamped a
     <td align="center">The highlighted area shows where the script checks if it is an ICBC policy document.</td>
   </tr>
 </table>
-
-### ✅ Changes Nov 05, 2025:
-
-1. Full rewrite; Made leaner and faster.
-2. icbc_e-stamp_and_copy_tool is a modified version that will also copy a blank policy document to a storage drive and sort the file by producer.
-3. The config.xlsx file contains the path name and producers name.
-4. Bulk copy ICBC pdfs can be used to organize many pdfs at once without stamping.
 
 ## License
 

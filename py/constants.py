@@ -28,6 +28,8 @@ ICBC_PATTERNS = {
     "rental_vehicle_policy": re.compile(r"Rental Vehicle Policy"),
     "special_risk_own_damage_policy": re.compile(r"Special Risk Own Damage Policy"),
     "garage_vehicle_certificate": re.compile(r"Garage Vehicle Certificate"),
+    "payment_plan": re.compile(r"Payment Plan Agreement"),
+    "payment_plan_receipt": re.compile(r"Payment Plan Receipt"),
 }
 
 # -----------------------------

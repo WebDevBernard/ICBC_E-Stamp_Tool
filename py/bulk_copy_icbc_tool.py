@@ -11,7 +11,7 @@ from utils import (
 from constants import ICBC_PATTERNS, PAGE_RECTS
 
 DEFAULTS = {
-    "create_subfolders": False,
+    "create_subfolders": True,
     "use_alt_name": True,
 }
 
@@ -59,7 +59,7 @@ def bulk_copy_icbc_tool():
         regex_patterns=ICBC_PATTERNS,
         page_rects=PAGE_RECTS,
         max_docs=None,
-        suffix_mode=True,
+        copy_mode=True,
     )
 
     report_path = Path.cwd() / "log.txt"
