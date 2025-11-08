@@ -45,7 +45,7 @@ def format_name(name, lessor=False):
     parts = name.split(" ")
 
     if (len(name) == 27 and len(parts) >= 4) or re.search(
-        r"(Inc\.?|Ltd\.?)$", name, re.IGNORECASE
+        r"(Inc\.?|Ltd\.?|Corp\.?)$", name, re.IGNORECASE
     ):
         return name
 
