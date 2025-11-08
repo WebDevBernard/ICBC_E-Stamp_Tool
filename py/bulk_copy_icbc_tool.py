@@ -64,7 +64,7 @@ def bulk_copy_icbc_tool():
 
     report_path = Path.cwd() / "log.txt"
     with open(report_path, "w", encoding="utf-8") as f:
-        f.write("Documents Not Copied\n")
+        f.write("PDFs Not Copied\n")
         f.write("=" * 50 + "\n\n")
         for file_path in non_icbc_files:
             f.write(file_path + "\n")

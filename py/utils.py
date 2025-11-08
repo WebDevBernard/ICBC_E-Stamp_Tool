@@ -45,7 +45,7 @@ def format_name(name, lessor=False):
     parts = name.split(" ")
 
     if (len(name) == 27 and len(parts) >= 4) or re.search(
-        r"(Inc\.?|Ltd\.?)$", name, re.IGNORECASE
+        r"(Inc\.?|Ltd\.?|Corp\.?)$", name, re.IGNORECASE
     ):
         return name
 
@@ -255,6 +255,7 @@ def scan_icbc_pdfs(
                         "payment_plan_receipt" in regex_patterns
                         and regex_patterns["payment_plan_receipt"].search(full_text)
                     ):
+                        non_icbc_file_paths.append(str(pdf_path))
                         continue
                 # ======================================================
                 # 🔴 PRIMARY SEARCH
