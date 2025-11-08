@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 import fitz
 import openpyxl
-from collections import defaultdict
 
 
 # -------------------- Progress Bar -------------------- #
@@ -225,7 +224,7 @@ def scan_icbc_pdfs(
     page_rects=None,
     max_docs=None,
     stamping_mode=False,
-    suffix_mode=False,
+    copy_mode=False,
 ):
     input_dir = Path(input_dir)
     icbc_data = {}
@@ -253,8 +252,18 @@ def scan_icbc_pdfs(
 
                 full_text = text()
 
+                # Temporary workaround to not copy payment plan and payment plan receipts
+                if not stamping_mode:
+                    if (
+                        "payment_plan" in regex_patterns
+                        and regex_patterns["payment_plan"].search(full_text)
+                    ) or (
+                        "payment_plan_receipt" in regex_patterns
+                        and regex_patterns["payment_plan_receipt"].search(full_text)
+                    ):
+                        continue
                 # ======================================================
-                # 🟢 SHARED
+                # 🟢 PRIMARY SEARCH
                 # ======================================================
                 ts_match = regex_patterns["timestamp"].search(full_text)
                 if not ts_match:
@@ -329,9 +338,10 @@ def scan_icbc_pdfs(
                     )
 
                 # ======================================================
-                # 🔹 SUFFIX MODE
+                # 🔹 COPY MODE
                 # ======================================================
-                if suffix_mode:
+                if copy_mode:
+
                     producer_name = None
                     if "producer" in regex_patterns:
                         producer_match = regex_patterns["producer"].search(
@@ -412,7 +422,7 @@ def copy_pdfs(
     items_to_process = list(reversed(list(icbc_data.items())))
 
     for path, info in progressbar(items_to_process, prefix="Copying PDFs: ", size=10):
-        # Skip if timestamp regex or rect is missing
+
         if not regex_patterns or "timestamp" not in regex_patterns:
             continue
         if not page_rects or "timestamp" not in page_rects:
@@ -427,6 +437,9 @@ def copy_pdfs(
 
         if create_subfolders:
             subfolder_path.mkdir(parents=True, exist_ok=True)
+        else:
+            if not subfolder_path.exists():
+                subfolder_path = output_root_dir
 
         base_name = get_base_name(info, use_alt_name)
         base_name = safe_filename(base_name)

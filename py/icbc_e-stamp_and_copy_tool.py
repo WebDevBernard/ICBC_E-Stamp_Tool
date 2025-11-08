@@ -128,7 +128,7 @@ def icbc_e_stamp_tool():
         page_rects=PAGE_RECTS,
         max_docs=DEFAULTS["number_of_pdfs"],
         stamping_mode=True,
-        suffix_mode=False,
+        copy_mode=False,
     )
     total_scanned = len(icbc_data)
 
@@ -181,10 +181,10 @@ def icbc_e_stamp_tool():
         regex_patterns=ICBC_PATTERNS,
         page_rects=PAGE_RECTS,
         max_docs=DEFAULTS["number_of_pdfs"],
-        suffix_mode=True,
+        copy_mode=True,
     )
 
-    if output_folder and producer_mapping:
+    if output_folder:
         if not Path(output_folder).exists():
             print(f"⚠️ Path '{output_folder}' does not exist. Skipping copy operation.")
         else:
@@ -216,8 +216,7 @@ def icbc_e_stamp_tool():
     end_total = timeit.default_timer()
     print(f"\nTotal PDFs scanned: {total_scanned}")
     print(f"Total PDFs stamped: {stamped_counter}")
-    if copied_count is not None:
-        print(f"Total PDFs copied: {copied_count}")
+    print(f"Total PDFs copied:  {copied_count}")
     print(f"✅ Total script execution time: {end_total - start_total:.2f} seconds")
     print("\nExiting in ", end="")
     for i in range(3, 0, -1):
