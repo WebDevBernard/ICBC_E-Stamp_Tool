@@ -391,6 +391,7 @@ def scan_icbc_pdfs(
 
         except Exception as e:
             print(f"⚠️  Error processing {pdf_path.name}: {e}")
+            non_icbc_file_paths.append(str(pdf_path))
 
     return icbc_data, non_icbc_file_paths
 
