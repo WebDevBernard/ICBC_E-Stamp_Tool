@@ -194,11 +194,10 @@ def icbc_e_stamp_tool():
                 if not Path(output_folder, folder).exists()
             ]
             if missing_subfolders:
-                print(
-                    f"⚠️ The following subfolders do not exist under '{output_folder}':"
-                )
+                print(f"⚠️ Missing subfolders:")
                 for folder in missing_subfolders:
                     print(f"   - {folder}")
+                print(f"Copying files into '{output_folder}'")
             copied_count = copy_pdfs(
                 icbc_data=copy_data,
                 output_root_dir=output_folder,
