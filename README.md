@@ -49,7 +49,7 @@ There is another folder that gets generated inside this folder called "ICBC Batc
 
 **This script will check for duplicates, it is not necessary to delete the output folder. Scanning is limited to 10 pdfs.**
 
-The Excel sheet is only for copying blank policy documents to a backup drive. The script can work without it. Important to note, `icbc_e-stamp_and_copy_tool` requires a "Path" with the folder name of a path that already exists. Meaning you have to create this folder first before it can copy over. This is the same for any subfolders defined in the Excel sheet. If the subfolder does not exist, it will just copy into the root folder. The intent of this design is so it will not erroneously create folders if the user mispells a folder name in the Excel Sheet.
+The Excel sheet is only needed for copying blank policy documents to a backup location; the script works without it. icbc_e-stamp_and_copy_tool requires an existing folder path; subfolders must exist or files will copy to the root. This prevents accidental folder creation from typos.
 
 The `bulk_copy_icbc_tool` does not require an output folder or any subfolder to exist already. It will automatically create the output folder and any producer folder. After the script completes, it will generate a log.txt in the script folder with all the pdfs that could not be copied.
 
