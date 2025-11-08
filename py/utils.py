@@ -38,12 +38,15 @@ def reverse_insured_name(name):
     if not name:
         return ""
     name = re.sub(r"\s+", " ", name.strip())
-    if name.endswith(("Ltd", "Inc")):
+    if re.search(r"\b(?:Ltd?|Inc)\b$", name, re.IGNORECASE):
         return name
+
     name = name.replace(",", "")
     parts = name.split(" ")
+
     if len(parts) == 1:
         return name
+
     return " ".join(parts[1:] + [parts[0]])
 
 
@@ -60,7 +63,7 @@ def search_insured_name(full_text_first_page):
         name = None
 
     lessor_match = re.search(
-        r"\(LESSOR\)\s*(.*?)\s*\(LESSEE\)",
+        r"\((?:LESSOR|LSR)\)\s*(.*?)\s*\((?:LESSEE|LSE)\)",
         full_text_first_page,
         re.IGNORECASE | re.DOTALL,
     )
