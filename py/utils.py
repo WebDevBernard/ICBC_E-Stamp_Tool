@@ -255,6 +255,7 @@ def scan_icbc_pdfs(
                         "payment_plan_receipt" in regex_patterns
                         and regex_patterns["payment_plan_receipt"].search(full_text)
                     ):
+                        non_icbc_file_paths.append(str(pdf_path))
                         continue
                 # ======================================================
                 # 🔴 PRIMARY SEARCH

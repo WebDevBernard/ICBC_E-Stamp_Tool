@@ -114,7 +114,7 @@ def save_customer_copy(doc, info, output_dir):
 
 # -------------------- Main Function -------------------- #
 def icbc_e_stamp_tool():
-    print("📄 ICBC E-Stamp & Copy Tool")
+    print("📄 ICBC E-Stamp & Copy Tool\n")
     start_total = timeit.default_timer()
 
     input_dir = DEFAULTS["input_dir"]
@@ -136,7 +136,7 @@ def icbc_e_stamp_tool():
 
     for path, info in progressbar(
         list(reversed(list(icbc_data.items()))),
-        prefix="🖋️Stamping PDFs: ",
+        prefix="🖋️Stamping PDFs:",
         size=10,
     ):
         ts = info.get("transaction_timestamp")
