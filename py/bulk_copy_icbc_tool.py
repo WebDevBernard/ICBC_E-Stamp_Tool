@@ -84,7 +84,7 @@ def bulk_copy_icbc_tool():
     print(f"Total PDFs copied:  {copied_count}")
     print(f"\n📝 ICBC copy report written to: {report_path}")
     print("\nExiting in ", end="", flush=True)
-    for i in range(3, 0, -1):
+    for i in range(7, 0, -1):
         print(f"{i} ", end="", flush=True)
         time.sleep(1)
     print("\n👋 Done.")
