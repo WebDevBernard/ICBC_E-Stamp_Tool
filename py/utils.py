@@ -136,21 +136,21 @@ def get_base_name(info, use_alt_name=False):
             base_name = "UNKNOWN"
 
     if top:
-        base_name = f"{base_name} TOP"
+        base_name = f"{base_name} - TOP"
     elif storage:
-        base_name = f"{base_name} Storage Policy"
+        base_name = f"{base_name} - Storage Policy"
     elif cancellation:
         base_name = f"{base_name} Cancel"
     elif rental:
-        base_name = f"{base_name} Rental Vehicle Policy"
+        base_name = f"{base_name} - Rental Vehicle Policy"
     elif special_risk:
-        base_name = f"{base_name} Special Own Risk Damage"
+        base_name = f"{base_name} - Special Own Risk Damage"
     elif garage:
-        base_name = f"{base_name} Garage Policy"
+        base_name = f"{base_name} - Garage Policy"
     elif transaction_type == "Change":
         base_name = f"{base_name} Change"
     elif license_plate == "NONLIC":
-        base_name = f"{base_name} Registration"
+        base_name = f"{base_name} - Registration"
 
     return base_name
 
