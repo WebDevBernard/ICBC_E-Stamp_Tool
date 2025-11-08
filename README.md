@@ -33,7 +33,7 @@ pip install -r requirements.txt
 python -m auto_py_to_exe
 ```
 
-3. In the GUI, select the script location under `/py/icbc_e-stamp_and_copy_tool.py` or `/py/bulk_copy_icbc_tool`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico` or `grayscale.ico`. Now select
+3. In the GUI, select the script location under `/py/icbc_e-stamp_and_copy_tool.py` or `/py/bulk_copy_icbc_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico` or `grayscale.ico`. Now select
    `Convert .PY To .EXE`
 
 4. In Microsoft Edge, open settings at `edge://settings/downloads`:
@@ -43,11 +43,11 @@ python -m auto_py_to_exe
 
 ## Usage
 
-After processing a Policy Centre transaction, double-click **icbc_e-stamp_tool.exe**. This will create a folder named **ICBC E-Stamp Copies** on Desktop, containing the stamped policy documents.
+After processing a Policy Centre transaction, double-click **icbc_e-stamp_and_copy_tool.exe**. This will create a folder named **ICBC E-Stamp Copies** on Desktop, containing the stamped policy documents.
 
 There is another folder that gets generated inside this folder called "ICBC Batch Copies". This contains the stamped agent copy for batching.
 
-**This script will check for duplicates, it is not necessary to delete the output folder. Scanning is limited to 10 pdfs.**
+**The `icbc_e-stamp_and_copy_tool` will check for duplicates, it is not necessary to delete the output folder. Stamping is limited to 10 pdfs.**
 
 The Excel sheet is only needed for copying blank policy documents to a backup location; the script works without it. icbc_e-stamp_and_copy_tool requires an existing folder path; subfolders must exist or files will copy to the root. This prevents accidental folder creation from typos.
 
