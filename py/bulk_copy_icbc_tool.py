@@ -38,7 +38,7 @@ def bulk_copy_icbc_tool():
     else:
         if output_folder.parent.exists():
             output_folder.mkdir(exist_ok=True)
-            print(f"✅ Output folder ready: {output_folder}")
+            print(f"✅ Output folder path: {output_folder}")
         else:
             print(
                 f"⚠️ Parent path '{output_folder.parent}' does not exist. Cannot create output folder."

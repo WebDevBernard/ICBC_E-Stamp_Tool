@@ -117,7 +117,7 @@ def get_base_name(info, use_alt_name=False):
     garage = info.get("garage", False)
 
     if use_alt_name and insured_name:
-        if license_plate and license_plate not in ("NONLIC", "STORAGE"):
+        if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
             base_name = f"{insured_name} - {license_plate}"
         elif insured_name:
             base_name = insured_name
@@ -126,7 +126,7 @@ def get_base_name(info, use_alt_name=False):
         else:
             base_name = "UNKNOWN"
     else:
-        if license_plate and license_plate not in ("NONLIC", "STORAGE"):
+        if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
             base_name = license_plate
         elif insured_name:
             base_name = insured_name
@@ -144,7 +144,7 @@ def get_base_name(info, use_alt_name=False):
     elif rental:
         base_name = f"{base_name} - Rental Vehicle Policy"
     elif special_risk:
-        base_name = f"{base_name} - Special Own Risk Damage"
+        base_name = f"{base_name} - Special Risk Own Damage"
     elif garage:
         base_name = f"{base_name} - Garage Policy"
     elif transaction_type == "Change":
@@ -257,6 +257,7 @@ def scan_icbc_pdfs(
                     ):
                         non_icbc_file_paths.append(str(pdf_path))
                         continue
+
                 # ======================================================
                 # 🔴 PRIMARY SEARCH
                 # ======================================================
