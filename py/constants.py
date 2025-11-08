@@ -10,9 +10,6 @@ ICBC_PATTERNS = {
     "license_plate": re.compile(
         r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
     ),
-    "policy_number": re.compile(
-        r"Policy Number\s*([A-Z0-9]{2}\.[A-Z0-9]{3})", re.IGNORECASE
-    ),
     "temporary_permit": re.compile(
         r"Temporary Operation Permit and Owner’s Certificate of Insurance",
         re.IGNORECASE,

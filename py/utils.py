@@ -105,7 +105,6 @@ def unique_file_name(path: str) -> str:
 def get_base_name(info, use_alt_name=False):
     transaction_timestamp = info.get("transaction_timestamp") or ""
     license_plate = (info.get("license_plate") or "").strip().upper()
-    policy_number = (info.get("policy_number") or "").strip().upper()
     insured_name = (info.get("insured_name") or "").strip()
     insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
     insured_name = re.sub(r"\s+", " ", insured_name).strip()
@@ -122,8 +121,6 @@ def get_base_name(info, use_alt_name=False):
     if use_alt_name and insured_name:
         if license_plate and license_plate not in ("NONLIC", "STORAGE"):
             base_name = f"{insured_name} - {license_plate}"
-        elif policy_number:
-            base_name = f"{insured_name} - {policy_number}"
         elif insured_name:
             base_name = insured_name
         elif transaction_timestamp:
@@ -285,14 +282,9 @@ def scan_icbc_pdfs(
 
                 insured_name = search_insured_name(full_text)
 
-                policy_match = regex_patterns["policy_number"].search(full_text)
-                policy_number = (
-                    policy_match.group(1).strip().upper() if policy_match else None
-                )
                 icbc_data[pdf_path] = {
                     "transaction_timestamp": timestamp,
                     "license_plate": license_plate,
-                    "policy_number": policy_number,
                     "insured_name": insured_name,
                     "producer_name": None,
                 }
