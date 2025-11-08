@@ -178,14 +178,6 @@ def find_existing_timestamps(base_name, timestamp_pattern, timestamp_rect, folde
     return timestamps
 
 
-from pathlib import Path
-import openpyxl
-
-
-from pathlib import Path
-import openpyxl
-
-
 def load_excel_mapping(mapping_path, sheet_index=0, start_row=3):
     mapping_path = Path(mapping_path)
     if not mapping_path.exists():
@@ -238,7 +230,7 @@ def scan_icbc_pdfs(
     if max_docs:
         pdfs = pdfs[:max_docs]
 
-    for pdf_path in progressbar(pdfs, prefix="Reading PDFs: ", size=10):
+    for pdf_path in progressbar(pdfs, prefix="🔍Reading PDFs: ", size=10):
         try:
             with fitz.open(pdf_path) as doc:
                 if doc.page_count == 0:
@@ -265,7 +257,7 @@ def scan_icbc_pdfs(
                     ):
                         continue
                 # ======================================================
-                # 🟢 PRIMARY SEARCH
+                # 🔴 PRIMARY SEARCH
                 # ======================================================
                 ts_match = regex_patterns["timestamp"].search(full_text)
                 if not ts_match:
@@ -288,7 +280,7 @@ def scan_icbc_pdfs(
                 }
 
                 # ======================================================
-                # 🟢 STAMPING MODE
+                # 🟡 STAMPING MODE
                 # ======================================================
                 if stamping_mode:
                     agency_number = None
@@ -335,7 +327,7 @@ def scan_icbc_pdfs(
                     )
 
                 # ======================================================
-                # 🔹 COPY MODE
+                # 🟢 COPY MODE
                 # ======================================================
                 if copy_mode:
 
@@ -418,7 +410,7 @@ def copy_pdfs(
 
     items_to_process = list(reversed(list(icbc_data.items())))
 
-    for path, info in progressbar(items_to_process, prefix="Copying PDFs: ", size=10):
+    for path, info in progressbar(items_to_process, prefix="🧾Copying PDFs: ", size=10):
 
         if not regex_patterns or "timestamp" not in regex_patterns:
             continue

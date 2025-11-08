@@ -41,6 +41,8 @@ python -m auto_py_to_exe
    - Set downloads to "C:\Users\\<your_username>\Downloads"
    - Toggle off "Ask me what to do with each download".
 
+5. In the config.xlsx, fill in the path and folder names for each producer for the script you need work done on.
+
 ## Usage
 
 After processing a Policy Centre transaction, double-click **icbc_e-stamp_and_copy_tool.exe**. This will create a folder named **ICBC E-Stamp Copies** on Desktop, containing the stamped policy documents.
@@ -49,7 +51,7 @@ There is another folder that gets generated inside this folder called "ICBC Batc
 
 **The `icbc_e-stamp_and_copy_tool` will check for duplicates, it is not necessary to delete the output folder. Stamping is limited to 10 pdfs.**
 
-The Excel sheet is only needed for copying blank policy documents to a backup location; the script works without it. icbc_e-stamp_and_copy_tool requires an existing folder path; subfolders must exist or files will copy to the root. This prevents accidental folder creation from typos.
+The Excel sheet is only needed for copying blank policy documents to a backup location. You can delete the Excel sheet and the script will still work. icbc_e-stamp_and_copy_tool requires an existing folder path to work. Subfolders must also exist or files will copy to the root. This is designed to prevent users from creating new folders from misspellings in the Excel Sheet.
 
 The `bulk_copy_icbc_tool` does not require an output folder or any subfolder to exist already. It will automatically create the output folder and any producer folder. After the script completes, it will generate a log.txt in the script folder with all the pdfs that could not be copied.
 
