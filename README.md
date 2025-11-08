@@ -4,7 +4,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 In addition to stamping, the script includes a fillable Excel sheet that can copy and rename an unmodified or blank policy document to a shared drive or other backup location. It will preserve the metadata such as the modified date and can sort into seperate folders based on the name code in "Producer 2".
 
-There are two scripts included: `icbc_e-stamp_and_copy_tool` and the `bulk_copy_icbc_tool`. The `bulk_copy_icbc_tool` is a tool that can do the copy step without limiting how many pdfs to scan. This allows you to create a central store .
+There are two scripts included: `icbc_e-stamp_and_copy_tool` and the `bulk_copy_icbc_tool`. The `bulk_copy_icbc_tool` is a tool that can do the copy step without limiting how many pdfs to scan. This allows you to create a central store with all your policy documents renamed for easy identification.
 
 <table align="center">
   <tr>
