@@ -34,47 +34,51 @@ def progressbar(it, prefix="", size=60, out=sys.stdout):
 
 
 # -------------------- Name Utilities -------------------- #
-def reverse_insured_name(name):
-    if not name:
-        return ""
-    name = re.sub(r"\s+", " ", name.strip())
-    if re.search(r"\b(?:Ltd?|Inc)\b$", name, re.IGNORECASE):
-        return name
+def clean_name(name):
+    name = re.sub(r"[.:/\\*?\"<>|]", "", name)
+    name = re.sub(r"\s+", " ", name).strip().title()
+    return name
 
-    name = name.replace(",", "")
+
+def format_name(name, lessor=False):
+    name = clean_name(name)
     parts = name.split(" ")
 
-    if len(parts) == 1:
+    # Return as-is if 27 chars with ≥4 words, or ends with Inc/Ltd
+    if (len(name) == 27 and len(parts) >= 4) or re.search(
+        r"(Inc\.?|Ltd\.?)$", name, re.IGNORECASE
+    ):
         return name
 
+    if lessor:
+        # Reverse short lessor names (<4 words and <27 chars)
+        if len(parts) < 4 and len(name) < 27:
+            return " ".join(parts[::-1])
+        # Otherwise, truncate to first 3 words
+        return " ".join(parts[:3])
+
+    # Non-lessor names
+    if len(parts) == 1:
+        return name
     return " ".join(parts[1:] + [parts[0]])
 
 
 def search_insured_name(full_text_first_page):
-    match = re.search(
-        r"(?:Owner\s|Applicant|Name of Insured \(surname followed by given name\(s\)\))\s*\n([^\n]+)",
-        full_text_first_page,
-        re.IGNORECASE,
-    )
-
-    if match:
-        name = match.group(1)
-    else:
-        name = None
-
     lessor_match = re.search(
         r"\((?:LESSOR|LSR)\)\s*(.*?)\s*\((?:LESSEE|LSE)\)",
         full_text_first_page,
         re.IGNORECASE | re.DOTALL,
     )
-
     if lessor_match:
-        name = lessor_match.group(1)
+        return format_name(lessor_match.group(1), lessor=True)
 
-    if name:
-        name = re.sub(r"[.:/\\*?\"<>|]", "", name)
-        name = re.sub(r"\s+", " ", name).strip().title()
-        return name
+    match = re.search(
+        r"(?:Owner\s|Applicant|Name of Insured \(surname followed by given name\(s\)\))\s*\n([^\n]+)",
+        full_text_first_page,
+        re.IGNORECASE,
+    )
+    if match:
+        return format_name(match.group(1))
 
     return None
 
@@ -279,7 +283,7 @@ def scan_icbc_pdfs(
                     license_match.group(1).strip().upper() if license_match else None
                 )
 
-                insured_name = reverse_insured_name(search_insured_name(full_text))
+                insured_name = search_insured_name(full_text)
 
                 policy_match = regex_patterns["policy_number"].search(full_text)
                 policy_number = (
