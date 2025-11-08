@@ -44,17 +44,15 @@ def format_name(name, lessor=False):
     name = clean_name(name)
     parts = name.split(" ")
 
-    # Return as-is if 27 chars with ≥4 words, or ends with Inc/Ltd
     if (len(name) == 27 and len(parts) >= 4) or re.search(
         r"(Inc\.?|Ltd\.?)$", name, re.IGNORECASE
     ):
         return name
 
     if lessor:
-        # Reverse short lessor names (<4 words and <27 chars)
         if len(parts) < 4 and len(name) < 27:
-            return " ".join(parts[::-1])
-        # Otherwise, truncate to first 3 words
+            return " ".join(parts[1:] + [parts[0]])
+
         return " ".join(parts[:3])
 
     # Non-lessor names
@@ -144,7 +142,7 @@ def get_base_name(info, use_alt_name=False):
     elif cancellation:
         base_name = f"{base_name} Cancel"
     elif rental:
-        base_name = f"{base_name} Rental Policy"
+        base_name = f"{base_name} Rental Vehicle Policy"
     elif special_risk:
         base_name = f"{base_name} Special Own Risk Damage"
     elif garage:
