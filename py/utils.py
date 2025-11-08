@@ -54,11 +54,26 @@ def search_insured_name(full_text_first_page):
         full_text_first_page,
         re.IGNORECASE,
     )
+
     if match:
         name = match.group(1)
+    else:
+        name = None
+
+    lessor_match = re.search(
+        r"\(LESSOR\)\s*(.*?)\s*\(LESSEE\)",
+        full_text_first_page,
+        re.IGNORECASE | re.DOTALL,
+    )
+
+    if lessor_match:
+        name = lessor_match.group(1)
+
+    if name:
         name = re.sub(r"[.:/\\*?\"<>|]", "", name)
         name = re.sub(r"\s+", " ", name).strip().title()
         return name
+
     return None
 
 
@@ -81,9 +96,10 @@ def unique_file_name(path: str) -> str:
     return path
 
 
-def get_base_name(info, add_suffix=False):
+def get_base_name(info, use_alt_name=False):
     transaction_timestamp = info.get("transaction_timestamp") or ""
     license_plate = (info.get("license_plate") or "").strip().upper()
+    policy_number = (info.get("policy_number") or "").strip().upper()
     insured_name = (info.get("insured_name") or "").strip()
     insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
     insured_name = re.sub(r"\s+", " ", insured_name).strip()
@@ -97,43 +113,54 @@ def get_base_name(info, add_suffix=False):
     special_risk = info.get("special_risk", False)
     garage = info.get("garage", False)
 
-    if license_plate and license_plate not in ("NONLIC", "STORAGE"):
-        base_name = license_plate
-    elif insured_name:
-        base_name = insured_name
-    elif transaction_timestamp:
-        base_name = transaction_timestamp
+    if use_alt_name and insured_name:
+        if license_plate and license_plate not in ("NONLIC", "STORAGE"):
+            base_name = f"{insured_name} - {license_plate}"
+        elif policy_number:
+            base_name = f"{insured_name} - {policy_number}"
+        elif insured_name:
+            base_name = insured_name
+        elif transaction_timestamp:
+            base_name = transaction_timestamp
+        else:
+            base_name = "UNKNOWN"
     else:
-        base_name = "UNKNOWN"
+        if license_plate and license_plate not in ("NONLIC", "STORAGE"):
+            base_name = license_plate
+        elif insured_name:
+            base_name = insured_name
+        elif transaction_timestamp:
+            base_name = transaction_timestamp
+        else:
+            base_name = "UNKNOWN"
 
-    if add_suffix:
-        if top:
-            base_name = f"{base_name} TOP"
-        elif storage:
-            base_name = f"{base_name} Storage Policy"
-        elif cancellation:
-            base_name = f"{base_name} Cancel"
-        elif rental:
-            base_name = f"{base_name} Rental Policy"
-        elif special_risk:
-            base_name = f"{base_name} Special Own Risk Damage"
-        elif garage:
-            base_name = f"{base_name} Garage Policy"
-        elif transaction_type == "Change":
-            base_name = f"{base_name} Change"
-        elif license_plate == "NONLIC":
-            base_name = f"{base_name} Registration"
+    if top:
+        base_name = f"{base_name} TOP"
+    elif storage:
+        base_name = f"{base_name} Storage Policy"
+    elif cancellation:
+        base_name = f"{base_name} Cancel"
+    elif rental:
+        base_name = f"{base_name} Rental Policy"
+    elif special_risk:
+        base_name = f"{base_name} Special Own Risk Damage"
+    elif garage:
+        base_name = f"{base_name} Garage Policy"
+    elif transaction_type == "Change":
+        base_name = f"{base_name} Change"
+    elif license_plate == "NONLIC":
+        base_name = f"{base_name} Registration"
 
     return base_name
 
 
 def find_existing_timestamps(base_name, timestamp_pattern, timestamp_rect, folder_dir):
     timestamps = set()
-    base_name = base_name.strip().upper()
+    base_name = base_name.split(" ")[0].upper()
 
-    for pdf_file in Path(folder_dir).glob("*.pdf"):
-        filename = pdf_file.stem.upper()
-        if not filename.startswith(base_name):
+    for pdf_file in Path(folder_dir).glob(f"{base_name}*.pdf"):
+        filename = pdf_file.stem.upper().split(" ")[0]
+        if filename != base_name:
             continue
 
         try:
@@ -158,57 +185,47 @@ from pathlib import Path
 import openpyxl
 
 
-def load_excel_mapping(mapping_path, ws_index=None):
+def load_excel_mapping(mapping_path, sheet_index=0, start_row=3):
     mapping_path = Path(mapping_path)
-    producer_mapping = {}
-    input_folder = None
-    output_folder = None
-
     if not mapping_path.exists():
-        return {
-            "input_folder": input_folder,
-            "output_folder": output_folder,
-            "producer_mapping": producer_mapping,
-        }
+        return {"b1": None, "b2": None, "producer_mapping": {}}
 
     wb = openpyxl.load_workbook(mapping_path)
-    ws = (
-        wb.active
-        if ws_index is None or ws_index == "active"
-        else wb.worksheets[ws_index]
+    ws = wb.worksheets[sheet_index]
+
+    input_folder = (
+        Path(ws.cell(row=1, column=2).value).expanduser()
+        if ws.cell(row=1, column=2).value
+        else None
+    )
+    output_folder = (
+        Path(ws.cell(row=2, column=2).value).expanduser()
+        if ws.cell(row=2, column=2).value
+        else None
     )
 
-    # Set input folder from cell B1
-    root_cell_value = ws.cell(row=1, column=2).value
-    if root_cell_value:
-        input_folder = Path(root_cell_value).expanduser()
-
-    # Set output folder only if ws_index == 1 (from cell B2)
-    if ws_index == 1:
-        output_cell_value = ws.cell(row=2, column=2).value
-        if output_cell_value:
-            output_folder = Path(output_cell_value).expanduser()
-
-    # Decide starting row based on ws_index
-    min_row = 4 if ws_index == 1 else 3
-
-    # Populate producer mapping
-    for row in ws.iter_rows(min_row=min_row, values_only=True):
-        producer, folder = row[:2]
-        if producer and folder:
-            producer_mapping[str(producer).upper()] = str(folder)
+    producer_mapping = {
+        str(row[0]).upper(): str(row[1])
+        for row in ws.iter_rows(min_row=start_row, values_only=True)
+        if row[0] and row[1]
+    }
 
     return {
-        "input_folder": input_folder,
-        "output_folder": output_folder,
+        "b1": input_folder,
+        "b2": output_folder,
         "producer_mapping": producer_mapping,
     }
 
 
 # -------------------- Scan PDFs -------------------- #
-# This function is used for copying pdfs
+# This is the main function that checks for ICBC documents
 def scan_icbc_pdfs(
-    input_dir, regex_patterns, page_rects=None, max_docs=None, suffix_mode=False
+    input_dir,
+    regex_patterns,
+    page_rects=None,
+    max_docs=None,
+    stamping_mode=False,
+    suffix_mode=False,
 ):
     input_dir = Path(input_dir)
     icbc_data = {}
@@ -236,7 +253,9 @@ def scan_icbc_pdfs(
 
                 full_text = text()
 
-                # Mandatory fields
+                # ======================================================
+                # 🟢 SHARED
+                # ======================================================
                 ts_match = regex_patterns["timestamp"].search(full_text)
                 if not ts_match:
                     non_icbc_file_paths.append(str(pdf_path))
@@ -250,15 +269,69 @@ def scan_icbc_pdfs(
 
                 insured_name = reverse_insured_name(search_insured_name(full_text))
 
+                policy_match = regex_patterns["policy_number"].search(full_text)
+                policy_number = (
+                    policy_match.group(1).strip().upper() if policy_match else None
+                )
                 icbc_data[pdf_path] = {
                     "transaction_timestamp": timestamp,
                     "license_plate": license_plate,
+                    "policy_number": policy_number,
                     "insured_name": insured_name,
                     "producer_name": None,
                 }
 
+                # ======================================================
+                # 🟢 STAMPING MODE
+                # ======================================================
+                if stamping_mode:
+                    agency_number = None
+                    if "agency_number" in regex_patterns:
+                        agency_match = regex_patterns["agency_number"].search(full_text)
+                        agency_number = (
+                            agency_match.group(1).strip() if agency_match else "UNKNOWN"
+                        )
+
+                    customer_copy_pages = []
+                    validation_stamp_coords = []
+                    time_of_validation_coords = []
+
+                    for page_num, p in enumerate(doc):
+                        if "customer_copy" in regex_patterns:
+                            if regex_patterns["customer_copy"].search(p.get_text()):
+                                customer_copy_pages.append(page_num)
+
+                        for block in p.get_text("blocks"):
+                            x0, y0, x1, y1, block_text = *block[:4], block[4]
+                            if "validation_stamp" in regex_patterns and regex_patterns[
+                                "validation_stamp"
+                            ].search(block_text):
+                                validation_stamp_coords.append(
+                                    (page_num, (x0, y0, x1, y1))
+                                )
+                            if (
+                                "time_of_validation" in regex_patterns
+                                and regex_patterns["time_of_validation"].search(
+                                    block_text
+                                )
+                            ):
+                                time_of_validation_coords.append(
+                                    (page_num, (x0, y0, x1, y1))
+                                )
+
+                    icbc_data[pdf_path].update(
+                        {
+                            "agency_number": agency_number,
+                            "customer_copy_pages": customer_copy_pages,
+                            "validation_stamp_coords": validation_stamp_coords,
+                            "time_of_validation_coords": time_of_validation_coords,
+                        }
+                    )
+
+                # ======================================================
+                # 🔹 SUFFIX MODE
+                # ======================================================
                 if suffix_mode:
-                    # Producer name from clipped region
                     producer_name = None
                     if "producer" in regex_patterns:
                         producer_match = regex_patterns["producer"].search(
@@ -268,7 +341,6 @@ def scan_icbc_pdfs(
                             producer_match.group(1).upper() if producer_match else None
                         )
 
-                    # Transaction type
                     transaction_type = None
                     if "transaction_type" in regex_patterns:
                         trans_match = regex_patterns["transaction_type"].search(
@@ -280,39 +352,36 @@ def scan_icbc_pdfs(
                             else None
                         )
 
-                    # Boolean flags
                     icbc_data[pdf_path].update(
                         {
                             "producer_name": producer_name,
                             "transaction_type": transaction_type,
                             "top": bool(
-                                regex_patterns.get("temporary_permit", None)
+                                regex_patterns.get("temporary_permit")
                                 and regex_patterns["temporary_permit"].search(full_text)
                             ),
                             "storage": bool(
-                                regex_patterns.get("storage_policy", None)
+                                regex_patterns.get("storage_policy")
                                 and regex_patterns["storage_policy"].search(full_text)
                             ),
                             "cancellation": bool(
-                                regex_patterns.get("cancellation", None)
+                                regex_patterns.get("cancellation")
                                 and regex_patterns["cancellation"].search(full_text)
                             ),
                             "special_risk": bool(
-                                regex_patterns.get(
-                                    "special_risk_own_damage_policy", None
-                                )
+                                regex_patterns.get("special_risk_own_damage_policy")
                                 and regex_patterns[
                                     "special_risk_own_damage_policy"
                                 ].search(full_text)
                             ),
                             "rental": bool(
-                                regex_patterns.get("rental_vehicle_policy", None)
+                                regex_patterns.get("rental_vehicle_policy")
                                 and regex_patterns["rental_vehicle_policy"].search(
                                     full_text
                                 )
                             ),
                             "garage": bool(
-                                regex_patterns.get("garage_vehicle_certificate", None)
+                                regex_patterns.get("garage_vehicle_certificate")
                                 and regex_patterns["garage_vehicle_certificate"].search(
                                     full_text
                                 )
@@ -327,77 +396,68 @@ def scan_icbc_pdfs(
 
 
 # -------------------- Copy PDFs -------------------- #
-
-
 def copy_pdfs(
-    icbc_data, output_root_dir, producer_mapping=None, create_subfolders=False
+    icbc_data,
+    output_root_dir,
+    producer_mapping=None,
+    create_subfolders=False,
+    regex_patterns=None,
+    page_rects=None,
+    use_alt_name=False,
 ):
     output_root_dir = Path(output_root_dir)
     producer_mapping = producer_mapping or {}
     copied_count = 0
-    seen_transactions_global = (
-        set()
-    )  # Track all transaction timestamps copied in this batch
 
-    # --- Pre-scan output directory and organize by producer folder ---
-    existing_transactions_by_folder = defaultdict(lambda: defaultdict(set))
-    for pdf_file in output_root_dir.rglob("*.pdf"):
-        folder = pdf_file.parent
-        base_name = pdf_file.stem.split(" ")[0]  # assuming base_name logic
-        ts = find_existing_timestamps(pdf_file)
-        if ts is not None:
-            existing_transactions_by_folder[folder][base_name].add(ts)
-
-    # --- Group items by producer folder ---
-    folder_to_items = defaultdict(list)
     items_to_process = list(reversed(list(icbc_data.items())))
-    for path, info in items_to_process:
+
+    for path, info in progressbar(items_to_process, prefix="Copying PDFs: ", size=10):
+        # Skip if timestamp regex or rect is missing
+        if not regex_patterns or "timestamp" not in regex_patterns:
+            continue
+        if not page_rects or "timestamp" not in page_rects:
+            continue
+
         producer_name = info.get("producer_name")
         if producer_name and producer_name in producer_mapping:
             producer_folder_name = safe_filename(producer_mapping[producer_name])
             subfolder_path = output_root_dir / producer_folder_name
         else:
             subfolder_path = output_root_dir
-        folder_to_items[subfolder_path].append((path, info))
 
-    # --- Process each folder in input order ---
-    for subfolder_path, items in folder_to_items.items():
-        # Handle folder existence
-        if not subfolder_path.exists():
-            if create_subfolders:
-                try:
-                    subfolder_path.mkdir(parents=True, exist_ok=True)
-                except Exception as e:
-                    print(f"⚠️ Failed to create folder '{subfolder_path}': {e}")
-                    continue
-            else:
-                print(f"⚠️ Skipping folder '{subfolder_path}': does not exist.")
+        if create_subfolders:
+            subfolder_path.mkdir(parents=True, exist_ok=True)
+
+        base_name = get_base_name(info, use_alt_name)
+        base_name = safe_filename(base_name)
+        prefix_name = base_name.split(" ")[0]
+        dest_file = subfolder_path / f"{base_name}{path.suffix}"
+
+        # ----------------- Check for duplicates recursively in root folder ----------------- #
+        duplicate_found = False
+        timestamp_regex = regex_patterns["timestamp"]
+        timestamp_rect = page_rects["timestamp"]
+
+        for existing_file in output_root_dir.rglob(f"{prefix_name}*.pdf"):
+            try:
+                with fitz.open(existing_file) as doc:
+                    if doc.page_count > 0:
+                        page_text = doc[0].get_text(clip=timestamp_rect)
+                        ts_match = timestamp_regex.search(page_text)
+                        if ts_match and ts_match.group(1) == info.get(
+                            "transaction_timestamp"
+                        ):
+                            duplicate_found = True
+                            break
+            except Exception:
                 continue
 
-        for path, info in progressbar(
-            items, prefix=f"Copying PDFs to {subfolder_path}: ", size=10
-        ):
-            base_name = get_base_name(info)
-            transaction_ts = info.get("transaction_timestamp")
-            dest_file = subfolder_path / f"{base_name}{path.suffix}"
-
-            # Skip duplicates: batch or existing in this folder
-            if transaction_ts in seen_transactions_global:
-                continue
-            if transaction_ts in existing_transactions_by_folder[subfolder_path].get(
-                base_name, set()
-            ):
-                continue
-
-            # Copy the file
+        # ----------------- Copy if not duplicate ----------------- #
+        if not duplicate_found:
             dest_file = Path(unique_file_name(str(dest_file)))
             try:
                 shutil.copy2(path, dest_file)
                 copied_count += 1
-                seen_transactions_global.add(transaction_ts)
-                existing_transactions_by_folder[subfolder_path][base_name].add(
-                    transaction_ts
-                )
             except Exception as e:
                 print(f"⚠️ Failed to copy '{path.name}': {e}")
 

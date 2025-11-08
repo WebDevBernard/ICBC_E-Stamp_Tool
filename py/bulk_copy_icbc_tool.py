@@ -10,26 +10,28 @@ from utils import (
 )
 from constants import ICBC_PATTERNS, PAGE_RECTS
 
-# --- Main execution ---
-if __name__ == "__main__":
-    print("📄 ICBC Copy Tool\n")
+DEFAULTS = {
+    "create_subfolders": False,
+    "use_alt_name": True,
+}
 
-    # Load folders and producer mapping from Excel
+
+def bulk_copy_icbc_tool():
+    print("📄 Bulk Copy ICBC Tool\n")
+
     mapping_path = Path.cwd() / "config.xlsx"
-    mapping_data = load_excel_mapping(mapping_path, ws_index=1)
-    input_folder = mapping_data.get("input_folder")
-    output_folder = mapping_data.get("output_folder")
+    mapping_data = load_excel_mapping(mapping_path, sheet_index=1, start_row=4)
+
+    input_folder = mapping_data.get("b1")
+    output_folder = mapping_data.get("b2")
     producer_mapping = mapping_data.get("producer_mapping", {})
 
-    # --- Check input/output folders ---
     folders_missing = False
 
-    # Check input folder
     if not input_folder or not input_folder.exists():
         print(f"⚠️ Input folder '{input_folder}' does not exist.")
         folders_missing = True
 
-    # Check output folder
     if not output_folder:
         print(f"⚠️ Output folder path not set in config.")
         folders_missing = True
@@ -43,44 +45,51 @@ if __name__ == "__main__":
             )
             folders_missing = True
 
-    # Exit with 10-second countdown if any folder issue
     if folders_missing:
         print("Please correct the folder paths in 'config.xlsx'.")
         print("Exiting in ", end="", flush=True)
-        for i in range(10, 0, -1):
+        for i in range(7, 0, -1):
             print(f"{i} ", end="", flush=True)
             time.sleep(1)
         print("\n👋 Done.")
         sys.exit(1)
 
-    # --- Scan PDFs ---
     scanned_data, non_icbc_files = scan_icbc_pdfs(
-        input_folder, regex_patterns=ICBC_PATTERNS, page_rects=PAGE_RECTS
+        input_folder,
+        regex_patterns=ICBC_PATTERNS,
+        page_rects=PAGE_RECTS,
+        max_docs=None,
+        suffix_mode=True,
     )
 
-    # --- Report for non-ICBC documents ---
-    report_path = Path.cwd() / "report.txt"
+    report_path = Path.cwd() / "log.txt"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("Documents Not Copied\n")
         f.write("=" * 50 + "\n\n")
         for file_path in non_icbc_files:
             f.write(file_path + "\n")
 
-    # --- Copy PDFs ---
     copied_count = copy_pdfs(
         icbc_data=scanned_data,
         output_root_dir=output_folder,
         producer_mapping=producer_mapping,
-        create_subfolders=True,
+        create_subfolders=DEFAULTS["create_subfolders"],
+        regex_patterns=ICBC_PATTERNS,
+        page_rects=PAGE_RECTS,
+        use_alt_name=DEFAULTS["use_alt_name"],
     )
 
-    # --- Summary + Exit Countdown ---
     print("\n📊 Summary")
     print(f"Total PDFs scanned: {len(scanned_data)}")
     print(f"Total PDFs copied:  {copied_count}")
     print(f"\n📝 ICBC copy report written to: {report_path}")
     print("\nExiting in ", end="", flush=True)
-    for i in range(10, 0, -1):
+    for i in range(3, 0, -1):
         print(f"{i} ", end="", flush=True)
         time.sleep(1)
     print("\n👋 Done.")
+
+
+# --- Main execution ---
+if __name__ == "__main__":
+    bulk_copy_icbc_tool()

@@ -5,31 +5,16 @@ from utils import (
     get_base_name,
     unique_file_name,
     progressbar,
-    search_insured_name,
-    reverse_insured_name,
     find_existing_timestamps,
-)
-from constants import ICBC_PATTERNS, PAGE_RECTS
-from utils import (
     scan_icbc_pdfs,
     load_excel_mapping,
     copy_pdfs,
 )
+from constants import ICBC_PATTERNS, PAGE_RECTS
 import timeit
 import time
 
 # -------------------- Local Constants -------------------- #
-
-timestamp_pattern = ICBC_PATTERNS["timestamp"]
-license_plate_pattern = ICBC_PATTERNS["license_plate"]
-temporary_permit_pattern = ICBC_PATTERNS["temporary_permit"]
-agency_number_pattern = ICBC_PATTERNS["agency_number"]
-customer_copy_pattern = ICBC_PATTERNS["customer_copy"]
-validation_stamp_pattern = ICBC_PATTERNS["validation_stamp"]
-time_of_validation_pattern = ICBC_PATTERNS["time_of_validation"]
-
-timestamp_rect = PAGE_RECTS["timestamp"]
-customer_copy_rect = PAGE_RECTS["customer_copy"]
 
 validation_stamp_coords_box_offset = (-4.25, 23.77, 1.58, 58.95)
 time_of_validation_offset = (0.0, 10.35, 0.0, 40)
@@ -40,7 +25,6 @@ time_of_validation_pm_offset = (0, 21.2, 0, 0)
 # -------------------- Defaults -------------------- #
 
 desktop_or_root = Path.home() / "Desktop"
-
 if not desktop_or_root.exists():
     print("⚠️ Desktop Directory not found, using root directory instead.")
     desktop_or_root = Path.cwd()
@@ -52,8 +36,9 @@ DEFAULTS = {
     "number_of_pdfs": 10,
     "output_dir": str(output_dir),
     "input_dir": str(Path.home() / "Downloads"),
+    "create_subfolders": False,
+    "use_alt_name": True,
 }
-
 
 # -------------------- PDF Stamping Functions -------------------- #
 
@@ -134,91 +119,18 @@ def icbc_e_stamp_tool():
 
     input_dir = DEFAULTS["input_dir"]
     output_dir = DEFAULTS["output_dir"]
-    max_docs = DEFAULTS["number_of_pdfs"]
-
-    # Get PDFs to process
-    pdf_files = sorted(
-        Path(input_dir).glob("*.pdf"), key=lambda f: f.stat().st_mtime, reverse=True
-    )[:max_docs]
-
-    icbc_data = {}
 
     # -------------------- Stage 1: Scan PDFs -------------------- #
     print("🔍 Scanning PDFs...")
-    for pdf_path in progressbar(pdf_files, prefix="Scanning PDFs: ", size=10):
-        try:
-            with fitz.open(pdf_path) as doc:
-                if doc.page_count == 0:
-                    continue
-
-                first_page = doc[0]
-                full_text_first_page = first_page.get_text("text")
-                ts_text = first_page.get_text(clip=timestamp_rect)
-
-                ts_match = timestamp_pattern.search(ts_text)
-                license_plate_match = license_plate_pattern.search(full_text_first_page)
-                license_plate = (
-                    license_plate_match.group(1).strip().upper()
-                    if license_plate_match
-                    else None
-                )
-                insured_name = reverse_insured_name(
-                    search_insured_name(full_text_first_page)
-                )
-                temp_permit_found = bool(
-                    temporary_permit_pattern.search(full_text_first_page)
-                )
-                agency_match = agency_number_pattern.search(full_text_first_page)
-                agency_number = (
-                    agency_match.group(1).strip() if agency_match else "UNKNOWN"
-                )
-
-                info_preview = {
-                    "transaction_timestamp": ts_match.group(1) if ts_match else "",
-                    "license_plate": license_plate,
-                    "insured_name": insured_name,
-                }
-                base_name = get_base_name(info_preview)
-                existing_timestamps = find_existing_timestamps(
-                    base_name, timestamp_pattern, timestamp_rect, output_dir
-                )
-                timestamp = (
-                    ts_match.group(1)
-                    if ts_match and ts_match.group(1) not in existing_timestamps
-                    else None
-                )
-
-                customer_copy_pages = []
-                validation_stamp_coords = []
-                time_of_validation_coords = []
-
-                for page_num, page in enumerate(doc):
-                    clipped_customer_copy = page.get_text(clip=customer_copy_rect)
-                    if customer_copy_pattern.search(clipped_customer_copy):
-                        customer_copy_pages.append(page_num)
-
-                    for block in page.get_text("blocks"):
-                        word_text, coords = block[4], block[:4]
-                        if validation_stamp_pattern.search(word_text):
-                            validation_stamp_coords.append((page_num, coords))
-                        if time_of_validation_pattern.search(word_text):
-                            time_of_validation_coords.append((page_num, coords))
-
-                icbc_data[pdf_path] = {
-                    "transaction_timestamp": timestamp,
-                    "license_plate": license_plate,
-                    "insured_name": insured_name,
-                    "temporary_operation_permit": temp_permit_found,
-                    "agency_number": agency_number,
-                    "customer_copy_pages": customer_copy_pages,
-                    "validation_stamp_coords": validation_stamp_coords,
-                    "time_of_validation_coords": time_of_validation_coords,
-                }
-
-        except Exception as e:
-            print(f"❌ Error scanning {pdf_path}: {e}")
-
-    total_scanned = len(pdf_files)
+    icbc_data, _ = scan_icbc_pdfs(
+        input_dir=input_dir,
+        regex_patterns=ICBC_PATTERNS,
+        page_rects=PAGE_RECTS,
+        max_docs=DEFAULTS["number_of_pdfs"],
+        stamping_mode=True,
+        suffix_mode=False,
+    )
+    total_scanned = len(icbc_data)
 
     # -------------------- Stage 2: Process PDFs -------------------- #
     stamped_counter = 0
@@ -234,7 +146,7 @@ def icbc_e_stamp_tool():
 
         base_name = get_base_name(info)
         existing_timestamps = find_existing_timestamps(
-            base_name, timestamp_pattern, timestamp_rect, output_dir
+            base_name, ICBC_PATTERNS["timestamp"], PAGE_RECTS["timestamp"], output_dir
         )
         if ts in existing_timestamps:
             continue
@@ -260,14 +172,11 @@ def icbc_e_stamp_tool():
 
     # -------------------- Stage 3: Copy PDFs -------------------- #
     copied_count = None
-
     mapping_path = Path.cwd() / "config.xlsx"
-    mapping_data = load_excel_mapping(mapping_path, ws_index="active")
-    input_folder = DEFAULTS["input_dir"]
-    output_folder = mapping_data.get("output_folder")
+    mapping_data = load_excel_mapping(mapping_path, sheet_index=0, start_row=3)
+    output_folder = mapping_data.get("b1")
     producer_mapping = mapping_data.get("producer_mapping", {})
-
-    copy_data = scan_icbc_pdfs(
+    copy_data, _ = scan_icbc_pdfs(
         input_dir=DEFAULTS["input_dir"],
         regex_patterns=ICBC_PATTERNS,
         page_rects=PAGE_RECTS,
@@ -294,7 +203,10 @@ def icbc_e_stamp_tool():
                 icbc_data=copy_data,
                 output_root_dir=output_folder,
                 producer_mapping=producer_mapping,
-                create_subfolders=False,
+                create_subfolders=DEFAULTS["create_subfolders"],
+                regex_patterns=ICBC_PATTERNS,
+                page_rects=PAGE_RECTS,
+                use_alt_name=DEFAULTS["use_alt_name"],
             )
 
     else:
