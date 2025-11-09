@@ -9,6 +9,7 @@ from utils import (
     scan_icbc_pdfs,
     load_excel_mapping,
     copy_pdfs,
+    move_pdfs,
 )
 from constants import ICBC_PATTERNS, PAGE_RECTS
 import timeit
@@ -170,10 +171,10 @@ def icbc_e_stamp_tool():
             print(f"❌ Error processing {path}: {e}")
 
     # -------------------- Stage 3: Copy PDFs -------------------- #
-    copied_count = None
     mapping_path = Path.cwd() / "config.xlsx"
     mapping_data = load_excel_mapping(mapping_path, sheet_index=0, start_row=3)
     output_folder = mapping_data.get("b1")
+    mover_toggle = str(mapping_data.get("c1", "")).strip().lower()  # Added mover toggle
     producer_mapping = mapping_data.get("producer_mapping", {})
     copy_data, _ = scan_icbc_pdfs(
         input_dir=DEFAULTS["input_dir"],
@@ -182,7 +183,6 @@ def icbc_e_stamp_tool():
         max_docs=DEFAULTS["number_of_pdfs"],
         copy_mode=True,
     )
-
     if output_folder:
         if not Path(output_folder).exists():
             print(f"⚠️ Path '{output_folder}' does not exist. Skipping copy operation.")
@@ -197,7 +197,7 @@ def icbc_e_stamp_tool():
                 for folder in missing_subfolders:
                     print(f"   - {folder}")
                 print(f"Copying files into '{output_folder}'")
-            copied_count = copy_pdfs(
+            copied_files = copy_pdfs(
                 icbc_data=copy_data,
                 output_root_dir=output_folder,
                 producer_mapping=producer_mapping,
@@ -206,7 +206,9 @@ def icbc_e_stamp_tool():
                 page_rects=PAGE_RECTS,
                 use_alt_name=DEFAULTS["use_alt_name"],
             )
-
+            if mover_toggle in ("Move empty producer 2 files into subfolders",):
+                moved_files = move_pdfs(copied_files)
+                print(f"Total files moved: {len(moved_files)}")
     else:
         print("ℹ️ config.xlsx file not found — skipping copy step.")
 
@@ -214,7 +216,7 @@ def icbc_e_stamp_tool():
     end_total = timeit.default_timer()
     print(f"\nTotal PDFs scanned: {total_scanned}")
     print(f"Total PDFs stamped: {stamped_counter}")
-    print(f"Total PDFs copied:  {copied_count}")
+    print(f"Total PDFs copied:  {len(copied_files)}")
     print(f"✅ Total script execution time: {end_total - start_total:.2f} seconds")
     print("\nExiting in ", end="")
     for i in range(3, 0, -1):
