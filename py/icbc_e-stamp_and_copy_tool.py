@@ -42,8 +42,9 @@ DEFAULTS = {
     "copy_with_no_producer_two": True,
 }
 
-
 # -------------------- PDF Stamping Functions -------------------- #
+
+
 def validation_stamp(doc, info, ts_dt):
     for page_num, coords in info.get("validation_stamp_coords", []):
         page = doc[page_num]
