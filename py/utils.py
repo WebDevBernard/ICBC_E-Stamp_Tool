@@ -92,12 +92,18 @@ def unique_file_name(path: str) -> str:
     directory = os.path.dirname(path)
     filename, extension = os.path.splitext(os.path.basename(path))
     filename = safe_filename(filename)
-    path = os.path.join(directory, filename + extension)
+
+    # Remove existing trailing (n)
+    base_name = re.sub(r"\s*\(\d+\)$", "", filename)
+
     counter = 1
-    while Path(path).is_file():
-        path = os.path.join(directory, f"{filename} ({counter}){extension}")
+    new_path = os.path.join(directory, f"{base_name}{extension}")
+
+    while Path(new_path).is_file():
+        new_path = os.path.join(directory, f"{base_name} ({counter}){extension}")
         counter += 1
-    return path
+
+    return new_path
 
 
 def get_base_name(info, use_alt_name=False):
