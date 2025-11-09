@@ -435,7 +435,11 @@ def copy_pdfs(
 
         base_name = get_base_name(info, use_alt_name)
         base_name = safe_filename(base_name)
-        prefix_name = base_name.split(" ")[0]
+        prefix_name = (
+            base_name.split("-", 1)[0].strip()
+            if use_alt_name
+            else base_name.split(" ")[0]
+        )
         dest_file = subfolder_path / f"{base_name}{path.suffix}"
 
         # Check for duplicates
