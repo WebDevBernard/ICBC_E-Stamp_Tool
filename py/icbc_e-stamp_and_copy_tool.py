@@ -39,11 +39,11 @@ DEFAULTS = {
     "input_dir": str(Path.home() / "Downloads"),
     "create_subfolders": False,
     "use_alt_name": True,
+    "copy_with_no_producer_two": True,
 }
 
+
 # -------------------- PDF Stamping Functions -------------------- #
-
-
 def validation_stamp(doc, info, ts_dt):
     for page_num, coords in info.get("validation_stamp_coords", []):
         page = doc[page_num]
@@ -174,7 +174,6 @@ def icbc_e_stamp_tool():
     mapping_path = Path.cwd() / "config.xlsx"
     mapping_data = load_excel_mapping(mapping_path, sheet_index=0, start_row=3)
     output_folder = mapping_data.get("b1")
-    mover_toggle = str(mapping_data.get("c1", "")).strip().lower()  # Added mover toggle
     producer_mapping = mapping_data.get("producer_mapping", {})
     copy_data, _ = scan_icbc_pdfs(
         input_dir=DEFAULTS["input_dir"],
@@ -206,9 +205,11 @@ def icbc_e_stamp_tool():
                 page_rects=PAGE_RECTS,
                 use_alt_name=DEFAULTS["use_alt_name"],
             )
-            if mover_toggle in ("Move empty producer 2 files into subfolders",):
-                moved_files = move_pdfs(copied_files)
-                print(f"Total files moved: {len(moved_files)}")
+            moved_files = move_pdfs(
+                copied_files,
+                copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
+            )
+            print(f"Total files moved: {len(moved_files)}")
     else:
         print("ℹ️ config.xlsx file not found — skipping copy step.")
 

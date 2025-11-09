@@ -136,21 +136,21 @@ def get_base_name(info, use_alt_name=False):
             base_name = "UNKNOWN"
 
     if top:
-        base_name = f"{base_name} TOP"
+        base_name = f"{base_name} - TOP"
     elif storage:
-        base_name = f"{base_name} Storage Policy"
+        base_name = f"{base_name} - Storage"
     elif cancellation:
         base_name = f"{base_name} Cancel"
     elif rental:
-        base_name = f"{base_name} Rental Vehicle Policy"
+        base_name = f"{base_name} - Rental"
     elif special_risk:
-        base_name = f"{base_name} Special Risk Own Damage"
+        base_name = f"{base_name} - Special Risk"
     elif garage:
-        base_name = f"{base_name} Garage Policy"
+        base_name = f"{base_name} - Garage"
     elif transaction_type == "Change":
         base_name = f"{base_name} Change"
     elif license_plate == "NONLIC":
-        base_name = f"{base_name} Registration"
+        base_name = f"{base_name} - Registration"
 
     return base_name
 
@@ -203,13 +203,10 @@ def load_excel_mapping(mapping_path, sheet_index=0, start_row=3):
         if row[0] and row[1]
     }
 
-    move_file_toggle = ws.cell(row=1, column=3).value
-
     return {
         "b1": input_folder,
         "b2": output_folder,
         "producer_mapping": producer_mapping,
-        "c1": move_file_toggle,
     }
 
 
@@ -473,16 +470,19 @@ def copy_pdfs(
 
 
 # ----------------- Move files to similar folder (this only works with use_alt_name) ----------------- #
-def move_pdfs(files_to_move):
+def move_pdfs(files_to_move, copy_with_no_producer_two):
+    if not copy_with_no_producer_two:
+        return []
+
     moved_files = []
 
     for src in progressbar(files_to_move, prefix="📦Moving PDFs:  ", size=10):
         src = Path(src)
         filename = src.name
+        if "-" not in filename:
+            continue
 
-        base_name = re.split(r"\s*\(.*?\)", filename)[0]
-        base_name = re.sub(r"\b(cancel|change)\b", "", base_name, flags=re.IGNORECASE)
-        base_name = base_name.strip().lower()
+        base_name = filename.split("-", 1)[0].strip()
         matches = []
 
         for subdir, _, files in os.walk(src.parent):
