@@ -14,6 +14,7 @@ from constants import ICBC_PATTERNS, PAGE_RECTS
 DEFAULTS = {
     "create_subfolders": True,
     "use_alt_name": True,
+    "copy_with_no_producer_two": True,
 }
 
 
@@ -26,7 +27,6 @@ def bulk_copy_icbc_tool():
     input_folder = mapping_data.get("b1")
     output_folder = mapping_data.get("b2")
     producer_mapping = mapping_data.get("producer_mapping", {})
-    mover_toggle = str(mapping_data.get("toggle", "")).strip().lower()  # C1 toggle
 
     folders_missing = False
 
@@ -65,7 +65,6 @@ def bulk_copy_icbc_tool():
         copy_mode=True,
     )
 
-    # Copy PDFs and get list of actual copied file paths
     copied_files = copy_pdfs(
         icbc_data=scanned_data,
         output_root_dir=output_folder,
@@ -80,8 +79,9 @@ def bulk_copy_icbc_tool():
 
     # ------------------- ICBC File Mover -------------------
     moved_files = []
-    if mover_toggle in ("move empty producer 2 files into subfolders",):
-        moved_files = move_pdfs(copied_files)
+    moved_files = move_pdfs(
+        copied_files, copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"]
+    )
 
     # ------------------- Consolidated Log -------------------
     log_path = Path.cwd() / "log.txt"
@@ -90,14 +90,14 @@ def bulk_copy_icbc_tool():
         log.write(f"Total PDFs scanned: {len(scanned_data)}\n")
         log.write(f"Total PDFs copied:  {copied_count}\n\n")
 
-        log.write("=== PDFs not copied to output ===\n")
+        log.write("=== PDFs not copied to output folder ===\n")
         for file_path in non_icbc_files:
             log.write(str(file_path) + "\n")
         log.write("\n")
 
-        log.write("=== PDFs moved to correct subfolder ===\n")
-        for filename, dest_path in moved_files:
-            log.write(f"{filename} -> {dest_path}\n")
+        log.write("=== PDFs moved to subfolder with no producer two ===\n")
+        for file_path in moved_files:
+            log.write(str(file_path) + "\n")
 
     print(f"\n📝 Log saved to: {log_path}")
 
