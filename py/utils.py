@@ -118,7 +118,7 @@ def get_base_name(info, use_alt_name=False):
 
     if use_alt_name and insured_name:
         if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
-            base_name = f"{insured_name} {license_plate} -"
+            base_name = f"{insured_name} - {license_plate}"
         elif insured_name:
             base_name = insured_name
         elif transaction_timestamp:
@@ -140,7 +140,7 @@ def get_base_name(info, use_alt_name=False):
     elif storage:
         base_name = f"{base_name} Storage Policy"
     elif cancellation:
-        base_name = f"{base_name} (Cancel)"
+        base_name = f"{base_name} Cancel"
     elif rental:
         base_name = f"{base_name} Rental Vehicle Policy"
     elif special_risk:
@@ -479,10 +479,10 @@ def move_pdfs(files_to_move):
     for src in progressbar(files_to_move, prefix="📦Moving PDFs:  ", size=10):
         src = Path(src)
         filename = src.name
-        if "-" not in filename:
-            continue
 
-        base_name = filename.split("-", 1)[0].strip()
+        base_name = re.split(r"\s*\(.*?\)", filename)[0]
+        base_name = re.sub(r"\b(cancel|change)\b", "", base_name, flags=re.IGNORECASE)
+        base_name = base_name.strip().lower()
         matches = []
 
         for subdir, _, files in os.walk(src.parent):
