@@ -7,6 +7,7 @@ from utils import (
     load_excel_mapping,
     scan_icbc_pdfs,
     copy_pdfs,
+    move_pdfs,
 )
 from constants import ICBC_PATTERNS, PAGE_RECTS
 
@@ -25,6 +26,7 @@ def bulk_copy_icbc_tool():
     input_folder = mapping_data.get("b1")
     output_folder = mapping_data.get("b2")
     producer_mapping = mapping_data.get("producer_mapping", {})
+    mover_toggle = str(mapping_data.get("toggle", "")).strip().lower()  # C1 toggle
 
     folders_missing = False
 
@@ -54,6 +56,7 @@ def bulk_copy_icbc_tool():
         print("\n👋 Done.")
         sys.exit(1)
 
+    # ------------------- PDF Scanning and Copy -------------------
     scanned_data, non_icbc_files = scan_icbc_pdfs(
         input_folder,
         regex_patterns=ICBC_PATTERNS,
@@ -62,14 +65,8 @@ def bulk_copy_icbc_tool():
         copy_mode=True,
     )
 
-    report_path = Path.cwd() / "log.txt"
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write("PDFs Not Copied\n")
-        f.write("=" * 50 + "\n\n")
-        for file_path in non_icbc_files:
-            f.write(file_path + "\n")
-
-    copied_count = copy_pdfs(
+    # Copy PDFs and get list of actual copied file paths
+    copied_files = copy_pdfs(
         icbc_data=scanned_data,
         output_root_dir=output_folder,
         producer_mapping=producer_mapping,
@@ -79,12 +76,33 @@ def bulk_copy_icbc_tool():
         use_alt_name=DEFAULTS["use_alt_name"],
     )
 
-    print("\n📊 Summary")
-    print(f"Total PDFs scanned: {len(scanned_data)}")
-    print(f"Total PDFs copied:  {copied_count}")
-    print(f"\n📝 ICBC copy report written to: {report_path}")
+    copied_count = len(copied_files)
+
+    # ------------------- ICBC File Mover -------------------
+    moved_files = []
+    if mover_toggle in ("move empty producer 2 files into subfolders",):
+        moved_files = move_pdfs(copied_files)
+
+    # ------------------- Consolidated Log -------------------
+    log_path = Path.cwd() / "log.txt"
+    with open(log_path, "w", encoding="utf-8") as log:
+        log.write("=== PDF Copy Summary ===\n")
+        log.write(f"Total PDFs scanned: {len(scanned_data)}\n")
+        log.write(f"Total PDFs copied:  {copied_count}\n\n")
+
+        log.write("=== PDFs not copied to output ===\n")
+        for file_path in non_icbc_files:
+            log.write(str(file_path) + "\n")
+        log.write("\n")
+
+        log.write("=== PDFs moved to correct subfolder ===\n")
+        for filename, dest_path in moved_files:
+            log.write(f"{filename} -> {dest_path}\n")
+
+    print(f"\n📝 Log saved to: {log_path}")
+
     print("\nExiting in ", end="", flush=True)
-    for i in range(7, 0, -1):
+    for i in range(3, 0, -1):
         print(f"{i} ", end="", flush=True)
         time.sleep(1)
     print("\n👋 Done.")

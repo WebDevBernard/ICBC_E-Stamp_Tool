@@ -118,7 +118,7 @@ def get_base_name(info, use_alt_name=False):
 
     if use_alt_name and insured_name:
         if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
-            base_name = f"{insured_name} - {license_plate}"
+            base_name = f"{insured_name} {license_plate} -"
         elif insured_name:
             base_name = insured_name
         elif transaction_timestamp:
@@ -136,21 +136,21 @@ def get_base_name(info, use_alt_name=False):
             base_name = "UNKNOWN"
 
     if top:
-        base_name = f"{base_name} - TOP"
+        base_name = f"{base_name} TOP"
     elif storage:
-        base_name = f"{base_name} - Storage Policy"
+        base_name = f"{base_name} Storage Policy"
     elif cancellation:
-        base_name = f"{base_name} Cancel"
+        base_name = f"{base_name} (Cancel)"
     elif rental:
-        base_name = f"{base_name} - Rental Vehicle Policy"
+        base_name = f"{base_name} Rental Vehicle Policy"
     elif special_risk:
-        base_name = f"{base_name} - Special Risk Own Damage"
+        base_name = f"{base_name} Special Risk Own Damage"
     elif garage:
-        base_name = f"{base_name} - Garage Policy"
+        base_name = f"{base_name} Garage Policy"
     elif transaction_type == "Change":
         base_name = f"{base_name} Change"
     elif license_plate == "NONLIC":
-        base_name = f"{base_name} - Registration"
+        base_name = f"{base_name} Registration"
 
     return base_name
 
@@ -203,10 +203,13 @@ def load_excel_mapping(mapping_path, sheet_index=0, start_row=3):
         if row[0] and row[1]
     }
 
+    move_file_toggle = ws.cell(row=1, column=3).value
+
     return {
         "b1": input_folder,
         "b2": output_folder,
         "producer_mapping": producer_mapping,
+        "c1": move_file_toggle,
     }
 
 
@@ -409,7 +412,7 @@ def copy_pdfs(
 ):
     output_root_dir = Path(output_root_dir)
     producer_mapping = producer_mapping or {}
-    copied_count = 0
+    copied_files = []  # <-- collect actual copied files
 
     items_to_process = list(reversed(list(icbc_data.items())))
 
@@ -438,7 +441,7 @@ def copy_pdfs(
         prefix_name = base_name.split(" ")[0]
         dest_file = subfolder_path / f"{base_name}{path.suffix}"
 
-        # ----------------- Check for duplicates recursively in root folder ----------------- #
+        # Check for duplicates
         duplicate_found = False
         timestamp_regex = regex_patterns["timestamp"]
         timestamp_rect = page_rects["timestamp"]
@@ -457,13 +460,53 @@ def copy_pdfs(
             except Exception:
                 continue
 
-        # ----------------- Copy if not duplicate ----------------- #
+        # Copy if not duplicate
         if not duplicate_found:
             dest_file = Path(unique_file_name(str(dest_file)))
             try:
                 shutil.copy2(path, dest_file)
-                copied_count += 1
+                copied_files.append(dest_file)  # <-- track actual copied file
             except Exception as e:
                 print(f"⚠️ Failed to copy '{path.name}': {e}")
 
-    return copied_count
+    return copied_files  # <-- return paths
+
+
+# ----------------- Move files to similar folder (this only works with use_alt_name) ----------------- #
+def move_pdfs(files_to_move):
+    moved_files = []
+
+    for src in progressbar(files_to_move, prefix="📦Moving PDFs:  ", size=10):
+        src = Path(src)
+        filename = src.name
+        if "-" not in filename:
+            continue
+
+        base_name = filename.split("-", 1)[0].strip()
+        matches = []
+
+        for subdir, _, files in os.walk(src.parent):
+            if subdir == str(src.parent):
+                continue
+
+            for subfile in files:
+                if subfile.lower().startswith(base_name.lower()):
+                    full_path = os.path.join(subdir, subfile)
+                    modified_time = os.path.getmtime(full_path)
+                    matches.append((subdir, modified_time))
+                    break
+
+        if not matches:
+            continue
+
+        best_match = max(matches, key=lambda x: x[1])[0]
+        dest = os.path.join(best_match, filename)
+        dest = unique_file_name(dest)
+
+        try:
+            shutil.move(src, dest)
+            moved_files.append((filename, dest))
+        except Exception as e:
+            print(f"⚠️ Failed to move '{filename}': {e}")
+
+    return moved_files
