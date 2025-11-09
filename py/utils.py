@@ -115,6 +115,7 @@ def get_base_name(info, use_alt_name=False):
     rental = info.get("rental", False)
     special_risk = info.get("special_risk", False)
     garage = info.get("garage", False)
+    manuscript = info.get("manuscript", False)
 
     if use_alt_name and insured_name:
         if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
@@ -147,6 +148,8 @@ def get_base_name(info, use_alt_name=False):
         base_name = f"{base_name} - Special Risk"
     elif garage:
         base_name = f"{base_name} - Garage"
+    elif manuscript:
+        base_name = f"{base_name} - Manuscript"
     elif transaction_type == "Change":
         base_name = f"{base_name} Change"
     elif license_plate == "NONLIC":
@@ -387,6 +390,10 @@ def scan_icbc_pdfs(
                                     full_text
                                 )
                             ),
+                            "manuscript": bool(
+                                regex_patterns.get("manuscript")
+                                and regex_patterns["manuscript"].search(full_text)
+                            ),
                         }
                     )
 
@@ -473,37 +480,83 @@ def copy_pdfs(
     return copied_files  # <-- return paths
 
 
-# ----------------- Move files to similar folder (this only works with use_alt_name) ----------------- #
+# ----------------- Move files to similar folder ----------------- #
 def move_pdfs(files_to_move, copy_with_no_producer_two):
     if not copy_with_no_producer_two:
         return []
 
     moved_files = []
+    excluded_terms = {
+        "TOP",
+        "STORAGE",
+        "CANCEL",
+        "RENTAL",
+        "SPECIAL RISK",
+        "GARAGE",
+        "MANUSCRIPT",
+        "CHANGE",
+        "REGISTRATION",
+    }
 
     for src in progressbar(files_to_move, prefix="📦Moving PDFs:  ", size=10):
         src = Path(src)
         filename = src.name
-        if "-" not in filename:
-            continue
 
-        base_name = filename.split("-", 1)[0].strip()
+        # Split into base name (left of -) and the rest
+        parts = re.split(r"\s*-\s*", filename, 1)
+        base_name = parts[0].strip().upper()
+        license_plate = ""
+
+        # Extract first word right of dash (license plate)
+        if len(parts) > 1:
+            # Take everything right of dash, then only the first non-space sequence
+            match = re.match(r"([A-Z0-9]+)", parts[1].strip().upper())
+            if match:
+                license_plate = match.group(1)
+
         matches = []
 
+        # Search subdirectories for matching base name
         for subdir, _, files in os.walk(src.parent):
             if subdir == str(src.parent):
                 continue
 
             for subfile in files:
-                if subfile.lower().startswith(base_name.lower()):
+                subfile_base = re.split(r"\s*-\s*", subfile, 1)[0].strip().upper()
+                if subfile_base == base_name:
                     full_path = os.path.join(subdir, subfile)
                     modified_time = os.path.getmtime(full_path)
-                    matches.append((subdir, modified_time))
-                    break
+                    matches.append((subdir, subfile, modified_time))
+                    break  # only one per subdir
 
         if not matches:
             continue
 
-        best_match = max(matches, key=lambda x: x[1])[0]
+        # If multiple base-name matches, refine by license plate
+        if len(matches) > 1 and license_plate and license_plate not in excluded_terms:
+            refined = []
+            for subdir, subfile, modified_time in matches:
+                # Extract subfile's first word right of dash
+                sub_parts = re.split(r"\s*-\s*", subfile, 1)
+                if len(sub_parts) > 1:
+                    sub_match = re.match(r"([A-Z0-9]+)", sub_parts[1].strip().upper())
+                    sub_plate = sub_match.group(1) if sub_match else ""
+                else:
+                    sub_plate = ""
+
+                if sub_plate == license_plate:
+                    refined.append((subdir, subfile, modified_time))
+
+            if refined:
+                matches = refined
+
+        # If still multiple, pick most recently modified
+        if len(matches) > 1:
+            best_match = max(matches, key=lambda x: x[2])[0]
+        else:
+            best_match = matches[0][0]
+
+        # Move file to destination
         dest = os.path.join(best_match, filename)
         dest = unique_file_name(dest)
 

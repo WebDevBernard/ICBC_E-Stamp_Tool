@@ -27,6 +27,7 @@ ICBC_PATTERNS = {
     "garage_vehicle_certificate": re.compile(r"Garage Vehicle Certificate"),
     "payment_plan": re.compile(r"Payment Plan Agreement"),
     "payment_plan_receipt": re.compile(r"Payment Plan Receipt"),
+    "manuscript": re.compile(r"Manuscript Certificate/Manuscript Policy"),
 }
 
 # -----------------------------
