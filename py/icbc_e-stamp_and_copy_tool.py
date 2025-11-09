@@ -122,6 +122,8 @@ def icbc_e_stamp_tool():
     input_dir = DEFAULTS["input_dir"]
     output_dir = DEFAULTS["output_dir"]
 
+    copied_files = []
+    moved_files = []
     # -------------------- Stage 1: Scan PDFs -------------------- #
     icbc_data, _ = scan_icbc_pdfs(
         input_dir=input_dir,
@@ -210,7 +212,7 @@ def icbc_e_stamp_tool():
                 copied_files,
                 copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
             )
-            print(f"Total files moved: {len(moved_files)}")
+            print(f"Total files moved: {len(moved_files) if moved_files else 0}")
     else:
         print("ℹ️ config.xlsx file not found — skipping copy step.")
 
@@ -218,7 +220,7 @@ def icbc_e_stamp_tool():
     end_total = timeit.default_timer()
     print(f"\nTotal PDFs scanned: {total_scanned}")
     print(f"Total PDFs stamped: {stamped_counter}")
-    print(f"Total PDFs copied:  {len(copied_files)}")
+    print(f"Total PDFs copied:  {len(copied_files) if copied_files else 0}")
     print(f"✅ Total script execution time: {end_total - start_total:.2f} seconds")
     print("\nExiting in ", end="")
     for i in range(3, 0, -1):
