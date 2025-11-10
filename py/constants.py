@@ -35,8 +35,6 @@ ICBC_PATTERNS = {
 # -----------------------------
 PAGE_RECTS = {
     "timestamp": fitz.Rect(409.979, 63.8488, 576.0, 83.7455),
-    "payment_plan": fitz.Rect(425.402, 35.9664, 557.916, 48.3001),
-    "payment_plan_receipt": fitz.Rect(461.071, 37.423, 575.922, 48.423),
-    "producer": fitz.Rect(198.0, 761.04, 255.011, 769.977),
+    "producer": fitz.Rect(198.0, 752.729736328125, 255.011, 769.977),
     "customer_copy": fitz.Rect(498.438, 751.953, 578.181, 769.977),
 }
