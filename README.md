@@ -16,7 +16,38 @@ There are two scripts included: `icbc_e-stamp_and_copy_tool` and the `bulk_copy_
   </tr>
 </table>
 
-## Quick Setup
+## How to use
+
+For Microsoft Edge, open settings at `edge://settings/downloads`:
+
+- Set downloads to "C:\Users\\<your_username>\Downloads"
+- Toggle off "Ask me what to do with each download".
+
+### ICBC E-stamp Tool
+
+After processing a Policy Centre transaction, double-click **icbc_e-stamp_and_copy_tool.exe**. This will create a folder named **ICBC E-Stamp Copies** on Desktop, containing the stamped policy documents.
+
+There is another folder that gets generated inside this folder called "ICBC Batch Copies". This contains the stamped agent copy for batching.
+
+It is limited to checking and stamping the last 10 pdfs modified in the Downloads folder.
+
+### Bulk Copy ICBC Tool
+
+If you are using the copy function (copies an unmodified copy to a backup location), you will need to fill out the config.xlsx sheet. The `bulk_copy_icbc_tool` does not require an output folder or any subfolder to exist already. Just the correct path name.
+
+An admin user should first use the `bulk_copy_icbc_tool` to copy the existing backup folder to another folder. A log.txt file gets generated after running `bulk_copy_icbc_tool`, in the script folder. This will list all the pdfs that could not be copied and all the pdfs that were moved to a producer because there was no producer code 2.
+
+Now for each computer with the `icbc_e-stamp_and_copy_tool`, fill out the Excel sheet with the new path to the backup folder and names of producer code/folder names.
+
+So everytime a user runs the `icbc_e-stamp_and_copy_tool`, it will generate the stamp folder and copy the blank copy to the new backup folder.
+
+**The copy function in both the `icbc_e-stamp_and_copy_tool` and `bulk_copy_icbc_tool` will check for duplicates, copy files based on the producer 2 code and if there is at least one file in a producer folder, with the same client name, it will move that file to the matching folder.**
+
+### Extra
+
+The Excel sheet is only needed for copying blank policy documents to a backup location. You can delete the Excel sheet and the `icbc_e-stamp_and_copy_tool` will still work. `icbc_e-stamp_and_copy_tool` requires an existing folder path to work. Subfolders must also exist or files will copy to the root. This is designed to prevent users from creating new folders from misspellings in the Excel Sheet.
+
+## Manual Setup
 
 1. You can run this script in your terminal or create an exe by cloning this repository on to your local machine. I
    recommend creating the exe for users who do not have Python installed on their system.
@@ -36,26 +67,7 @@ python -m auto_py_to_exe
 3. In the GUI, select the script location under `/py/icbc_e-stamp_and_copy_tool.py` or `/py/bulk_copy_icbc_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico` or `grayscale.ico`. Now select
    `Convert .PY To .EXE`
 
-4. In Microsoft Edge, open settings at `edge://settings/downloads`:
-
-   - Set downloads to "C:\Users\\<your_username>\Downloads"
-   - Toggle off "Ask me what to do with each download".
-
-5. In the config.xlsx, fill in the path and folder names for each producer for the script you need work done on.
-
-## Usage
-
-After processing a Policy Centre transaction, double-click **icbc_e-stamp_and_copy_tool.exe**. This will create a folder named **ICBC E-Stamp Copies** on Desktop, containing the stamped policy documents.
-
-There is another folder that gets generated inside this folder called "ICBC Batch Copies". This contains the stamped agent copy for batching.
-
-**The `icbc_e-stamp_and_copy_tool` will check for duplicates, it is not necessary to delete the output folder. Stamping is limited to 10 pdfs.**
-
-The Excel sheet is only needed for copying blank policy documents to a backup location. You can delete the Excel sheet and the script will still work. icbc_e-stamp_and_copy_tool requires an existing folder path to work. Subfolders must also exist or files will copy to the root. This is designed to prevent users from creating new folders from misspellings in the Excel Sheet.
-
-The `bulk_copy_icbc_tool` does not require an output folder or any subfolder to exist already. It will automatically create the output folder and any producer folder. After the script completes, it will generate a log.txt in the script folder with all the pdfs that could not be copied.
-
-## Bonus
+## How it works?
 
 <table align="center">
   <tr>
