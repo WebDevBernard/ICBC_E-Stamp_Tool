@@ -89,6 +89,7 @@ def bulk_copy_icbc_tool():
         log.write("=== PDF Copy Summary ===\n")
         log.write(f"Total PDFs scanned: {len(scanned_data)}\n")
         log.write(f"Total PDFs copied:  {copied_count}\n\n")
+        log.write(f"Total PDFs scanned: {len(moved_files)}\n")
 
         log.write("=== PDFs not copied to output folder ===\n")
         for file_path in non_icbc_files:
