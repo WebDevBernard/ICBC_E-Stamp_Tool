@@ -2,10 +2,6 @@
 
 This script offers a one-click solution to apply a digital validation stamp to most ICBC policy documents. For your convenience, it will automatically find the pdf that looks like a policy document and apply the ICBC digital validation stamp.
 
-In addition to stamping, the script includes a fillable Excel sheet that can copy and rename an unmodified policy document to a shared drive or other backup location. It will preserve the metadata such as the modified date and can sort into seperate folders based on the name code in "Producer 2".
-
-There are two scripts included: `icbc_e-stamp_and_copy_tool` and the `bulk_copy_icbc_tool`. The `bulk_copy_icbc_tool` is a tool that can do the copy step without limiting how many pdfs to scan. This allows you to create a central store with all your policy documents renamed for easy identification.
-
 <table align="center">
   <tr>
     <td><img src="https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/images/redacted_before.png" alt="Unstamped Policy Document" /></td>
@@ -16,38 +12,40 @@ There are two scripts included: `icbc_e-stamp_and_copy_tool` and the `bulk_copy_
   </tr>
 </table>
 
-## How to use
+## Features
 
-For Microsoft Edge, open settings at `edge://settings/downloads`:
+- Stamps a customer copy and batch copy ICBC policy document
+- Will check for duplicates, will not overide or delete anything other than empty folders
+- Will copy an unmodified copy into a shared backup folder
+- Will sort into the backup drive folder based on the producer two code
+- Will match files without producer code two into a root-level folder, if a folder with the same name contains at least one file
+- Auto archives all files more than two years from the current year, as long any user runs the `icbc_e-stamp_and_copy_tool`
+- All files archived will get reincremented as well (e.g., ABC 123 (3) → ABC 123)
+- When you run the `bulk_copy_ICBC_tool`, it will also generate a log of all the files that could not be copied and files with no producer code 2 that were moved
+- Free to share and use
+
+# FAQ
+
+### It's not doing anything...
+
+Make sure you have downloads set properly in Microsoft Edge, open settings at `edge://settings/downloads`:
 
 - Set downloads to "C:\Users\\<your_username>\Downloads"
 - Toggle off "Ask me what to do with each download".
 
-### ICBC E-stamp Tool
+Make sure the pathnames are correct in the Excel Sheet, `config.xlsx`, and you have all the corresponding producer two code + subfolder name filled out. The Excel sheet also has to be in the same directory as the script. If you just need stamping, you can delete the Excel sheet.
 
-After processing a Policy Centre transaction, double-click **icbc_e-stamp_and_copy_tool.exe**. This will create a folder named **ICBC E-Stamp Copies** on Desktop, containing the stamped policy documents.
+### Where are my ICBC stamp copies?
 
-There is another folder that gets generated inside this folder called "ICBC Batch Copies". This contains the stamped agent copy for batching.
+- Either on your Desktop or inside the script folder if you are using OneDrive Desktop. Stamping is limited to the 10 last modified pdfs.
 
-It is limited to checking and stamping the last 10 pdfs modified in the Downloads folder.
+### Why are some files copying to the wrong folder?
 
-### Bulk Copy ICBC Tool
+- If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called root/archive/2023/sub1/abc123.pdf, and the file being copied is also called abc123.pdf, it will copy that file to root/sub1/abc123.pdf. This is why you should not manually create folders inside the shared folder.
 
-If you are using the copy function (copies an unmodified copy to a backup location), you will need to fill out the config.xlsx sheet. The `bulk_copy_icbc_tool` does not require an output folder or any subfolder to exist already. Just the correct path name.
+- To fix this problem, move the file without producer two code back out of the producer folder (including all the archived producer folders). Next time, the file with the same name will get copy into the root (correct) folder.
 
-An admin user should first use the `bulk_copy_icbc_tool` to copy the existing backup folder to another folder. A log.txt file gets generated after running `bulk_copy_icbc_tool`, in the script folder. This will list all the pdfs that could not be copied and all the pdfs that were moved to a producer because there was no producer code 2.
-
-Now for each computer with the `icbc_e-stamp_and_copy_tool`, fill out the Excel sheet with the new path to the backup folder and names of producer code/folder names.
-
-So everytime a user runs the `icbc_e-stamp_and_copy_tool`, it will generate the stamp folder and copy the blank copy to the new backup folder.
-
-**The copy function in both the `icbc_e-stamp_and_copy_tool` and `bulk_copy_icbc_tool` will check for duplicates, copy files based on the producer 2 code and if there is at least one file in a producer folder, with the same client name, it will move that file to the matching folder.**
-
-### Extra
-
-The Excel sheet is only needed for copying blank policy documents to a backup location. You can delete the Excel sheet and the `icbc_e-stamp_and_copy_tool` will still work. `icbc_e-stamp_and_copy_tool` requires an existing folder path to work. Subfolders must also exist or files will copy to the root. This is designed to prevent users from creating new folders from misspellings in the Excel Sheet.
-
-## Manual Setup
+### How do I create the exe?
 
 1. You can run this script in your terminal or create an exe by cloning this repository on to your local machine. I
    recommend creating the exe for users who do not have Python installed on their system.
@@ -66,6 +64,8 @@ python -m auto_py_to_exe
 
 3. In the GUI, select the script location under `/py/icbc_e-stamp_and_copy_tool.py` or `/py/bulk_copy_icbc_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico` or `grayscale.ico`. Now select
    `Convert .PY To .EXE`
+
+4. Fill out the `config.xlsx` Excel sheet found in the /assets folder and move it into the same folder as the exe.
 
 ## How it works?
 

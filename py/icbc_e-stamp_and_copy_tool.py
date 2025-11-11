@@ -40,7 +40,7 @@ DEFAULTS = {
     "output_dir": str(output_dir),
     "input_dir": str(Path.home() / "Downloads"),
     "copy_with_no_producer_two": True,
-    "min_age_to_archive": 1,
+    "min_age_to_archive": 2,
 }
 
 # -------------------- PDF Stamping Functions -------------------- #
@@ -140,7 +140,7 @@ def icbc_e_stamp_tool():
     stamped_counter = 0
     for path, info in progressbar(
         list(reversed(list(icbc_data.items()))),
-        prefix="🖋️ Stamping PDFs:   ",
+        prefix="🖋️ Stamping PDFs:  ",
         size=10,
     ):
         ts = info.get("transaction_timestamp")

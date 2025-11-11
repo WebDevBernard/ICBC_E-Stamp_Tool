@@ -492,9 +492,6 @@ def copy_pdfs(
 # ----------------- Move files to similar folder ----------------- #
 
 
-# ----------------- Move files to similar folder ----------------- #
-
-
 def get_target_subfolder_name(file, root_folder, subfolder_cache):
     root_folder = Path(root_folder)
     if file.parent != root_folder:
