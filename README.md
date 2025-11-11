@@ -21,7 +21,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 - Will match files without producer two code into a root-level folder, if a folder with the same name contains at least one file
 - Auto archives all files more than two years from the current year, as long any user runs the `icbc_e-stamp_and_copy_tool`
 - All files archived will get reincremented as well (e.g., ABC 123 (3) → ABC 123)
-- When you run the `bulk_copy_ICBC_tool`, it will also generate a log of all the files that could not be copied and files with no producer 2 code that were moved
+- When you run the `bulk_copy_ICBC_tool`, it will also generate a log of all the files that could not be copied and files with no producer two code that were moved
 - Free to share and use
 
 ## FAQ
@@ -65,7 +65,7 @@ python -m auto_py_to_exe
 3. In the GUI, select the script location under `/py/icbc_e-stamp_and_copy_tool.py` or `/py/bulk_copy_icbc_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico` or `grayscale.ico`. Now select
    `Convert .PY To .EXE`
 
-4. Fill out the `config.xlsx` Excel sheet found in the /assets folder and move it into the same folder as the exe.
+4. Fill out the `config.xlsx` Excel sheet found in the `/assets` folder and move it into the same folder as the exe.
 
 ### How can it tell what pdfs are ICBC policy documents?
 
