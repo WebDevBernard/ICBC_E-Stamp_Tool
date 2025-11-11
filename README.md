@@ -24,7 +24,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 - When you run the `bulk_copy_ICBC_tool`, it will also generate a log of all the files that could not be copied and files with no producer code 2 that were moved
 - Free to share and use
 
-# FAQ
+## FAQ
 
 ### It's not doing anything...
 
