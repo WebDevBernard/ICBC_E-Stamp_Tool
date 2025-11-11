@@ -2,7 +2,7 @@ import fitz
 from pathlib import Path
 from datetime import datetime
 from utils import (
-    get_base_name,
+    get_stamp_name,
     unique_file_name,
     progressbar,
     find_existing_timestamps,
@@ -10,6 +10,8 @@ from utils import (
     load_excel_mapping,
     copy_pdfs,
     move_pdfs,
+    auto_archive,
+    reincrement_pdfs,
 )
 from constants import ICBC_PATTERNS, PAGE_RECTS
 import timeit
@@ -37,9 +39,8 @@ DEFAULTS = {
     "number_of_pdfs": 10,
     "output_dir": str(output_dir),
     "input_dir": str(Path.home() / "Downloads"),
-    "create_subfolders": False,
-    "use_alt_name": True,
     "copy_with_no_producer_two": True,
+    "min_age_to_archive": 1,
 }
 
 # -------------------- PDF Stamping Functions -------------------- #
@@ -91,8 +92,8 @@ def stamp_time_of_validation(doc, info, ts_dt):
 def save_batch_copy(doc, info, output_dir):
     batch_dir = Path(output_dir) / "ICBC Batch Copies"
     batch_dir.mkdir(parents=True, exist_ok=True)
-    base_name = get_base_name(info)
-    batch_copy_path = batch_dir / f"{base_name}.pdf"
+    stamp_name = get_stamp_name(info)
+    batch_copy_path = batch_dir / f"{stamp_name}.pdf"
     batch_copy_path = Path(unique_file_name(batch_copy_path))
     doc.save(batch_copy_path, garbage=4, deflate=True)
     return batch_copy_path
@@ -106,8 +107,8 @@ def save_customer_copy(doc, info, output_dir):
     pages_to_delete = [i for i in range(total_pages) if i not in customer_pages]
     for page_num in reversed(pages_to_delete):
         doc.delete_page(page_num)
-    base_name = get_base_name(info)
-    customer_copy_name = f"{base_name} (Customer Copy).pdf"
+    stamp_name = get_stamp_name(info)
+    customer_copy_name = f"{stamp_name} (Customer Copy).pdf"
     customer_copy_path = Path(output_dir) / customer_copy_name
     customer_copy_path = Path(unique_file_name(customer_copy_path))
     doc.save(customer_copy_path, garbage=4, deflate=True)
@@ -123,7 +124,7 @@ def icbc_e_stamp_tool():
     output_dir = DEFAULTS["output_dir"]
 
     copied_files = []
-    moved_files = []
+
     # -------------------- Stage 1: Scan PDFs -------------------- #
     icbc_data, _ = scan_icbc_pdfs(
         input_dir=input_dir,
@@ -137,19 +138,18 @@ def icbc_e_stamp_tool():
 
     # -------------------- Stage 2: Process PDFs -------------------- #
     stamped_counter = 0
-
     for path, info in progressbar(
         list(reversed(list(icbc_data.items()))),
-        prefix="🖋️Stamping PDFs:",
+        prefix="🖋️ Stamping PDFs:   ",
         size=10,
     ):
         ts = info.get("transaction_timestamp")
         if not ts or not info.get("validation_stamp_coords"):
             continue
 
-        base_name = get_base_name(info)
+        stamp_name = get_stamp_name(info)
         existing_timestamps = find_existing_timestamps(
-            base_name, ICBC_PATTERNS["timestamp"], PAGE_RECTS["timestamp"], output_dir
+            stamp_name, ICBC_PATTERNS["timestamp"], PAGE_RECTS["timestamp"], output_dir
         )
         if ts in existing_timestamps:
             continue
@@ -157,16 +157,12 @@ def icbc_e_stamp_tool():
         ts_dt = datetime.strptime(ts, "%Y%m%d%H%M%S")
 
         try:
-            doc_batch = fitz.open(path)
-            doc_customer = fitz.open(path)
+            doc = fitz.open(path)
 
-            doc_batch = validation_stamp(doc_batch, info, ts_dt)
-            doc_batch = stamp_time_of_validation(doc_batch, info, ts_dt)
-            doc_customer = validation_stamp(doc_customer, info, ts_dt)
-            doc_customer = stamp_time_of_validation(doc_customer, info, ts_dt)
-
-            save_batch_copy(doc_batch, info, output_dir)
-            save_customer_copy(doc_customer, info, output_dir)
+            doc = validation_stamp(doc, info, ts_dt)
+            doc = stamp_time_of_validation(doc, info, ts_dt)
+            save_batch_copy(doc, info, output_dir)
+            save_customer_copy(doc, info, output_dir)
 
             stamped_counter += 1
 
@@ -178,43 +174,37 @@ def icbc_e_stamp_tool():
     mapping_data = load_excel_mapping(mapping_path, sheet_index=0, start_row=3)
     output_folder = mapping_data.get("b1")
     producer_mapping = mapping_data.get("producer_mapping", {})
+
     copy_data, _ = scan_icbc_pdfs(
-        input_dir=DEFAULTS["input_dir"],
+        input_dir=input_dir,
         regex_patterns=ICBC_PATTERNS,
         page_rects=PAGE_RECTS,
         max_docs=DEFAULTS["number_of_pdfs"],
         copy_mode=True,
     )
-    if output_folder:
-        if not Path(output_folder).exists():
-            print(f"⚠️ Path '{output_folder}' does not exist. Skipping copy operation.")
-        else:
-            missing_subfolders = [
-                folder
-                for folder in producer_mapping.values()
-                if not Path(output_folder, folder).exists()
-            ]
-            if missing_subfolders:
-                print(f"⚠️ Missing subfolders:")
-                for folder in missing_subfolders:
-                    print(f"   - {folder}")
-                print(f"Copying files into '{output_folder}'")
-            copied_files = copy_pdfs(
-                icbc_data=copy_data,
-                output_root_dir=output_folder,
-                producer_mapping=producer_mapping,
-                create_subfolders=DEFAULTS["create_subfolders"],
-                regex_patterns=ICBC_PATTERNS,
-                page_rects=PAGE_RECTS,
-                use_alt_name=DEFAULTS["use_alt_name"],
-            )
-            moved_files = move_pdfs(
-                copied_files,
-                copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
-            )
-            print(f"Total files moved: {len(moved_files) if moved_files else 0}")
+
+    if output_folder and Path(output_folder).exists():
+        copied_files = copy_pdfs(
+            icbc_data=copy_data,
+            output_root_dir=output_folder,
+            producer_mapping=producer_mapping,
+            regex_patterns=ICBC_PATTERNS,
+            page_rects=PAGE_RECTS,
+        )
+        move_pdfs(
+            files=copied_files,
+            copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
+            root_folder=output_folder,
+        )
+        archived_files = auto_archive(
+            root_path=output_folder, min_age_to_archive=DEFAULTS["min_age_to_archive"]
+        )
+        if archived_files:
+            reincrement_pdfs(root_dir=output_folder)
     else:
-        print("ℹ️ config.xlsx file not found — skipping copy step.")
+        print(
+            f" ⚠️ICBC Copies folder: '{output_folder}' not found or invalid — skipping copy step."
+        )
 
     # -------------------- Summary -------------------- #
     end_total = timeit.default_timer()

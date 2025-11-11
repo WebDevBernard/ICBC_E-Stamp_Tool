@@ -3,9 +3,10 @@ import os
 import shutil
 import time
 import sys
-from pathlib import Path
 import fitz
 import openpyxl
+from pathlib import Path
+from datetime import datetime, timedelta
 
 
 # -------------------- Progress Bar -------------------- #
@@ -106,7 +107,7 @@ def unique_file_name(path: str) -> str:
     return new_path
 
 
-def get_base_name(info, use_alt_name=False):
+def get_base_name(info):
     transaction_timestamp = info.get("transaction_timestamp") or ""
     license_plate = (info.get("license_plate") or "").strip().upper()
     insured_name = (info.get("insured_name") or "").strip()
@@ -122,25 +123,14 @@ def get_base_name(info, use_alt_name=False):
     special_risk = info.get("special_risk", False)
     garage = info.get("garage", False)
     manuscript = info.get("manuscript", False)
-
-    if use_alt_name and insured_name:
-        if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
-            base_name = f"{insured_name} - {license_plate}"
-        elif insured_name:
-            base_name = insured_name
-        elif transaction_timestamp:
-            base_name = transaction_timestamp
-        else:
-            base_name = "UNKNOWN"
+    if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
+        base_name = f"{insured_name} - {license_plate}"
+    elif insured_name:
+        base_name = insured_name
+    elif transaction_timestamp:
+        base_name = transaction_timestamp
     else:
-        if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
-            base_name = license_plate
-        elif insured_name:
-            base_name = insured_name
-        elif transaction_timestamp:
-            base_name = transaction_timestamp
-        else:
-            base_name = "UNKNOWN"
+        base_name = "UNKNOWN"
 
     if top:
         base_name = f"{base_name} - TOP"
@@ -164,13 +154,38 @@ def get_base_name(info, use_alt_name=False):
     return base_name
 
 
+def get_stamp_name(info):
+    transaction_timestamp = info.get("transaction_timestamp") or ""
+    license_plate = (info.get("license_plate") or "").strip().upper()
+    insured_name = (info.get("insured_name") or "").strip()
+    insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
+    insured_name = re.sub(r"\s+", " ", insured_name).strip()
+    insured_name = insured_name.title() if insured_name else ""
+
+    if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
+        stamp_name = license_plate
+    elif insured_name:
+        stamp_name = insured_name
+    elif transaction_timestamp:
+        stamp_name = transaction_timestamp
+    return stamp_name
+
+
 def find_existing_timestamps(base_name, timestamp_pattern, timestamp_rect, folder_dir):
     timestamps = set()
-    base_name = base_name.split(" ")[0].upper()
+    if " - " in base_name:
+        clean_name = base_name.split(" - ", 1)[0]
+    elif " " in base_name:
+        clean_name = base_name.split(" ", 1)[0]
+    else:
+        clean_name = base_name
 
-    for pdf_file in Path(folder_dir).glob(f"{base_name}*.pdf"):
+    clean_name = clean_name.upper().strip()
+    clean_name = re.sub(r"[.:/\\*?\"<>|]", "", clean_name)
+
+    for pdf_file in Path(folder_dir).glob(f"{clean_name}*.pdf"):
         filename = pdf_file.stem.upper().split(" ")[0]
-        if filename != base_name:
+        if filename != clean_name:
             continue
 
         try:
@@ -239,7 +254,7 @@ def scan_icbc_pdfs(
     if max_docs:
         pdfs = pdfs[:max_docs]
 
-    for pdf_path in progressbar(pdfs, prefix="🔍Reading PDFs: ", size=10):
+    for pdf_path in progressbar(pdfs, prefix="🔍 Reading PDFs:   ", size=10):
         try:
             with fitz.open(pdf_path) as doc:
                 if doc.page_count == 0:
@@ -255,7 +270,6 @@ def scan_icbc_pdfs(
 
                 full_text = text()
 
-                # Temporary workaround to not copy payment plan and payment plan receipts
                 if not stamping_mode:
                     if (
                         "payment_plan" in regex_patterns
@@ -415,161 +429,201 @@ def copy_pdfs(
     icbc_data,
     output_root_dir,
     producer_mapping=None,
-    create_subfolders=False,
     regex_patterns=None,
     page_rects=None,
-    use_alt_name=False,
 ):
     output_root_dir = Path(output_root_dir)
     producer_mapping = producer_mapping or {}
-    copied_files = []  # <-- collect actual copied files
+    copied_files = []
+    seen_files = set()
+
+    output_dir_exists = output_root_dir.exists() and any(output_root_dir.iterdir())
 
     items_to_process = list(reversed(list(icbc_data.items())))
-
-    for path, info in progressbar(items_to_process, prefix="🧾Copying PDFs: ", size=10):
-
-        if not regex_patterns or "timestamp" not in regex_patterns:
-            continue
-        if not page_rects or "timestamp" not in page_rects:
-            continue
-
+    for path, info in progressbar(
+        items_to_process, prefix="🧾 Copying PDFs:   ", size=10
+    ):
         producer_name = info.get("producer_name")
         if producer_name and producer_name in producer_mapping:
             producer_folder_name = safe_filename(producer_mapping[producer_name])
             subfolder_path = output_root_dir / producer_folder_name
         else:
             subfolder_path = output_root_dir
-
-        if create_subfolders:
-            subfolder_path.mkdir(parents=True, exist_ok=True)
-        else:
-            if not subfolder_path.exists():
-                subfolder_path = output_root_dir
-
-        base_name = get_base_name(info, use_alt_name)
+        subfolder_path.mkdir(parents=True, exist_ok=True)
+        base_name = get_base_name(info)
         base_name = safe_filename(base_name)
-        prefix_name = (
-            base_name.split("-", 1)[0].strip()
-            if use_alt_name
-            else base_name.split(" ")[0]
-        )
+        prefix_name = base_name.split(" - ", 1)[0].strip()
+        timestamp = info.get("transaction_timestamp")
         dest_file = subfolder_path / f"{base_name}{path.suffix}"
-
-        # Check for duplicates
         duplicate_found = False
-        timestamp_regex = regex_patterns["timestamp"]
-        timestamp_rect = page_rects["timestamp"]
 
-        for existing_file in output_root_dir.rglob(f"{prefix_name}*.pdf"):
-            try:
-                with fitz.open(existing_file) as doc:
-                    if doc.page_count > 0:
-                        page_text = doc[0].get_text(clip=timestamp_rect)
-                        ts_match = timestamp_regex.search(page_text)
-                        if ts_match and ts_match.group(1) == info.get(
-                            "transaction_timestamp"
-                        ):
-                            duplicate_found = True
-                            break
-            except Exception:
-                continue
+        if (prefix_name, timestamp) in seen_files:
+            continue
 
-        # Copy if not duplicate
+        if output_dir_exists:
+            timestamp_regex = regex_patterns["timestamp"]
+            timestamp_rect = page_rects["timestamp"]
+
+            for existing_file in output_root_dir.rglob(f"{prefix_name}*.pdf"):
+                try:
+                    with fitz.open(existing_file) as doc:
+                        if doc.page_count > 0:
+                            page_text = doc[0].get_text(clip=timestamp_rect)
+                            ts_match = timestamp_regex.search(page_text)
+                            if ts_match and ts_match.group(1) == info.get(
+                                "transaction_timestamp"
+                            ):
+                                duplicate_found = True
+                                break
+                except Exception:
+                    continue
+
         if not duplicate_found:
             dest_file = Path(unique_file_name(str(dest_file)))
             try:
                 shutil.copy2(path, dest_file)
-                copied_files.append(dest_file)  # <-- track actual copied file
+                copied_files.append(dest_file)
+                seen_files.add((prefix_name, timestamp))
             except Exception as e:
                 print(f"⚠️ Failed to copy '{path.name}': {e}")
-
-    return copied_files  # <-- return paths
+    return copied_files
 
 
 # ----------------- Move files to similar folder ----------------- #
-def move_pdfs(files_to_move, copy_with_no_producer_two):
+
+
+# ----------------- Move files to similar folder ----------------- #
+
+
+def get_target_subfolder_name(file, root_folder, subfolder_cache):
+    root_folder = Path(root_folder)
+    if file.parent != root_folder:
+        return None
+    prefix = file.stem.split(" - ", 1)[0].strip().lower()
+    for subdir_name, files in subfolder_cache.items():
+        for f in files:
+            if f.is_file() and f.stem.lower().startswith(prefix):
+                top_level = subdir_name.split("/")[-1]
+                return root_folder / top_level
+    return root_folder
+
+
+def move_pdfs(files, copy_with_no_producer_two, root_folder):
     if not copy_with_no_producer_two:
         return []
 
+    root_folder = Path(root_folder)
     moved_files = []
-    excluded_terms = {
-        "TOP",
-        "STORAGE",
-        "CANCEL",
-        "RENTAL",
-        "SPECIAL RISK",
-        "GARAGE",
-        "MANUSCRIPT",
-        "CHANGE",
-        "REGISTRATION",
-    }
 
-    for src in progressbar(files_to_move, prefix="📦Moving PDFs:  ", size=10):
-        src = Path(src)
-        filename = src.name
-
-        # Split into base name (left of -) and the rest
-        parts = re.split(r"\s*-\s*", filename, 1)
-        base_name = parts[0].strip().upper()
-        license_plate = ""
-
-        # Extract first word right of dash (license plate)
-        if len(parts) > 1:
-            # Take everything right of dash, then only the first non-space sequence
-            match = re.match(r"([A-Z0-9]+)", parts[1].strip().upper())
-            if match:
-                license_plate = match.group(1)
-
-        matches = []
-
-        # Search subdirectories for matching base name
-        for subdir, _, files in os.walk(src.parent):
-            if subdir == str(src.parent):
+    # Build cache of subdirectories and their files (RECURSIVELY)
+    subfolder_cache = {}
+    for subdir in root_folder.rglob("*"):
+        if subdir.is_dir() and subdir != root_folder:
+            try:
+                subfolder_cache[subdir.relative_to(root_folder).as_posix()] = list(
+                    subdir.iterdir()
+                )
+            except PermissionError:
                 continue
 
-            for subfile in files:
-                subfile_base = re.split(r"\s*-\s*", subfile, 1)[0].strip().upper()
-                if subfile_base == base_name:
-                    full_path = os.path.join(subdir, subfile)
-                    modified_time = os.path.getmtime(full_path)
-                    matches.append((subdir, subfile, modified_time))
-                    break  # only one per subdir
-
-        if not matches:
+    for file in progressbar(files, prefix="📦 Moving PDFs:    ", size=10):
+        target_folder = get_target_subfolder_name(file, root_folder, subfolder_cache)
+        if target_folder is None or target_folder == file.parent:
             continue
-
-        # If multiple base-name matches, refine by license plate
-        if len(matches) > 1 and license_plate and license_plate not in excluded_terms:
-            refined = []
-            for subdir, subfile, modified_time in matches:
-                # Extract subfile's first word right of dash
-                sub_parts = re.split(r"\s*-\s*", subfile, 1)
-                if len(sub_parts) > 1:
-                    sub_match = re.match(r"([A-Z0-9]+)", sub_parts[1].strip().upper())
-                    sub_plate = sub_match.group(1) if sub_match else ""
-                else:
-                    sub_plate = ""
-
-                if sub_plate == license_plate:
-                    refined.append((subdir, subfile, modified_time))
-
-            if refined:
-                matches = refined
-
-        # If still multiple, pick most recently modified
-        if len(matches) > 1:
-            best_match = max(matches, key=lambda x: x[2])[0]
-        else:
-            best_match = matches[0][0]
-
-        # Move file to destination
-        dest = os.path.join(best_match, filename)
-        dest = unique_file_name(dest)
-
-        try:
-            shutil.move(src, dest)
-            moved_files.append((filename, dest))
-        except Exception as e:
-            print(f"⚠️ Failed to move '{filename}': {e}")
+        target_folder.mkdir(parents=True, exist_ok=True)
+        target_path = unique_file_name(str(target_folder / file.name))
+        shutil.move(str(file), target_path)
+        moved_files.append(target_path)
 
     return moved_files
+
+
+# ----------------- Auto Archiving ----------------- #
+def auto_archive(root_path, min_age_to_archive=2):
+    folder = Path(root_path)
+    archive_root = folder / "Archive"
+    archive_root.mkdir(exist_ok=True)
+    cutoff_date = datetime.now() - timedelta(days=365 * min_age_to_archive)
+    cutoff_timestamp = cutoff_date.timestamp()
+
+    all_pdfs = []
+    for subdir in folder.rglob("*"):
+        if (
+            subdir.is_dir()
+            and archive_root not in subdir.parents
+            and subdir != archive_root
+        ):
+            pdf_files = [
+                f
+                for f in subdir.iterdir()
+                if f.is_file() and f.suffix.lower() == ".pdf"
+            ]
+            all_pdfs.extend(pdf_files)
+
+    root_pdfs = [
+        f for f in folder.iterdir() if f.is_file() and f.suffix.lower() == ".pdf"
+    ]
+    all_pdfs.extend(root_pdfs)
+
+    pdfs_to_archive = [
+        pdf for pdf in all_pdfs if pdf.stat().st_mtime < cutoff_timestamp
+    ]
+
+    if not pdfs_to_archive:
+        return
+
+    archived_files = []
+
+    for pdf in progressbar(pdfs_to_archive, prefix="📂 Archiving PDFs: ", size=10):
+        last_modified_time = pdf.stat().st_mtime
+        if last_modified_time >= cutoff_timestamp:
+            continue
+
+        year = time.strftime("%Y", time.localtime(last_modified_time))
+        relative_path = pdf.relative_to(folder)
+        target_folder = archive_root / year / relative_path.parent
+        target_folder.mkdir(parents=True, exist_ok=True)
+
+        target_file = target_folder / pdf.name
+        target_file = Path(unique_file_name(str(target_file)))
+
+        shutil.move(str(pdf), target_file)
+        archived_files.append(target_file)
+
+    return archived_files
+
+
+def reincrement_pdfs(root_dir):
+    root = Path(root_dir)
+    if not root.is_dir():
+        return
+
+    for folder in sorted(
+        [root] + list(root.rglob("*")), key=lambda f: f.parts, reverse=True
+    ):
+        if not folder.is_dir():
+            continue
+
+        pdfs = list(folder.glob("*.pdf"))
+        grouped = {}
+        for pdf in pdfs:
+            base_name = re.sub(r"\s*\(\d+\)$", "", pdf.stem)
+            base_name = safe_filename(base_name)
+            grouped.setdefault(base_name, []).append(pdf)
+
+        for base_name, files in grouped.items():
+
+            def extract_number(file_path):
+                match = re.search(r"\((\d+)\)$", file_path.stem)
+                return int(match.group(1)) if match else 0
+
+            files.sort(key=extract_number)
+
+            for i, file_path in enumerate(files):
+                new_name = f"{base_name}{'' if i == 0 else f' ({i})'}.pdf"
+                new_path = file_path.with_name(new_name)
+                if new_path != file_path:
+                    file_path.rename(new_path)
+
+        if folder != root and not any(folder.iterdir()):
+            folder.rmdir()
