@@ -67,7 +67,7 @@ python -m auto_py_to_exe
 
 4. Fill out the `config.xlsx` Excel sheet found in the /assets folder and move it into the same folder as the exe.
 
-## How it works?
+### How can it tell what pdfs are ICBC policy documents?
 
 <table align="center">
   <tr>
