@@ -23,6 +23,19 @@ def bulk_copy_icbc_tool():
     print("📄 Bulk Copy ICBC Tool\n")
 
     mapping_path = Path.cwd() / "config.xlsx"
+
+    # --- Check if config file exists ---
+    if not mapping_path.exists():
+        print(f"⚠️ Missing configuration file: '{mapping_path}'")
+        print("Please create or place 'config.xlsx' in the current working directory.")
+        print("Exiting in ", end="", flush=True)
+        for i in range(7, 0, -1):
+            print(f"{i} ", end="", flush=True)
+            time.sleep(1)
+        print("\n👋 Done.")
+        sys.exit(1)
+
+    mapping_path = Path.cwd() / "config.xlsx"
     mapping_data = load_excel_mapping(mapping_path, sheet_index=1, start_row=4)
 
     input_folder = mapping_data.get("b1")
