@@ -117,7 +117,7 @@ def bulk_copy_icbc_tool():
         log.write("\n")
 
         log.write(
-            "=== PDFs with no producer_two code moved to a root/subfolder_name ===\n"
+            "=== PDFs with no producer two code moved to a 'root/subfolder' ===\n"
         )
         for file_path in moved_files:
             log.write(str(file_path) + "\n")
