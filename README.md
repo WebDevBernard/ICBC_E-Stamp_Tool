@@ -14,14 +14,14 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 ## Features
 
-- Stamps a customer copy and batch copy ICBC policy document.
-- Checks for duplicates, will not overide or delete anything other than empty folders in your shared backup.
-- Copies the original policy document to a shared backup folder, renaming it using the client’s first name, last name, and license plate.
-- Sorts files in the backup drive according to the producer two code.
-- Places files without producer codes into a root-level sub-folder if a folder with the same name contains at least one file.
-- Will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`.
-- All files archived will get reincremented as well (e.g. ABC 123 (3) → ABC 123).
-- Free to use and share.
+- 🖋️ Stamps a customer copy and batch copy ICBC policy document.
+- 🔍 Checks for duplicates, will not overide or delete anything other than empty folders in your shared backup.
+- ✏️ Copies the original policy document to a shared backup folder, renaming it using the client’s first name, last name, and license plate.
+- 📊 Sorts files in the backup drive according to the producer two code.
+- 📁 Places files without producer codes into a root-level sub-folder if a folder with the same name contains at least one file.
+- ⏳ Will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`.
+- 🔢 All files archived will get reincremented as well (e.g. ABC 123 (3) → ABC 123).
+- 🆓 Free to use and share.
 
 ## Usage
 
@@ -62,7 +62,7 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 ### I accidentally put my archive folder into another folder, and now my archive folder has an archive folder?
 
-- This is what I call archive hell. Just run the `bulk_copy_icbc_tool` to create a new shared folder, it will reorganize and sort out all the folders.
+- Welcome to what I call archive hell 🔱🔥. To fix this, simply run the `bulk_copy_icbc_tool` to create a new shared folder.
 
 ### How do I create the exe?
 
