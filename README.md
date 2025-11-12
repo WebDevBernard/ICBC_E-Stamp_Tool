@@ -56,9 +56,9 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 ### Why are some files copying to the wrong folder when there is no producer two code?
 
-- If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called `root/archive/2023/sub1/abc123.pdf`, and the file being copied is also called `abc123.pdf`, it will copy that file to `root/sub1/abc123.pdf`. This is also why you should not manually create folders inside the ICBC copies folder.
-
 - In order to keep files without the producer two code in ending in the wrong place, manually move those files out of the producer folder into the root directory. This includes all the archived producer folders that contains that client name. Next time, the file with the same name will get copy into the root folder.
+
+- If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called `root/archive/2023/sub1/abc123.pdf`, and the file being copied is also called `abc123.pdf`, it will copy that file to `root/sub1/abc123.pdf`. This is also why you should not manually create folders inside the ICBC copies folder.
 
 ### I accidentally put my archive folder into another folder, and now my archive folder has an archive folder?
 
