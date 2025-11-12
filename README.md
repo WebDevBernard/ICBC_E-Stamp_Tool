@@ -28,12 +28,12 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 ### It's not doing anything...
 
-Make sure you have downloads set properly in Microsoft Edge, open settings at `edge://settings/downloads`:
+Make sure you have downloads set up properly in Microsoft Edge, open settings at `edge://settings/downloads`:
 
 - Set downloads to "C:\Users\\<your_username>\Downloads"
 - Toggle off "Ask me what to do with each download".
 
-Make sure the pathnames are correct in the Excel Sheet, `config.xlsx`, and you have all the corresponding producer two code + subfolder name filled out. The Excel sheet also has to be in the same directory as the script. If you just need stamping, you can delete the Excel sheet.
+Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you have all the corresponding producer two code + subfolder name filled out. The Excel sheet also has to be in the same directory as the script. If you just need stamping, you can delete the Excel sheet.
 
 ### Where are my ICBC E-Stamp copies?
 
