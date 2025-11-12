@@ -30,7 +30,8 @@ def bulk_copy_icbc_tool():
     producer_mapping = mapping_data.get("producer_mapping", {})
 
     folders_missing = False
-
+    if input_folder.exists():
+        print(f"✅ Input folder path: {input_folder}")
     if not input_folder or not input_folder.exists():
         print(f"⚠️ Input folder '{input_folder}' does not exist.")
         folders_missing = True
