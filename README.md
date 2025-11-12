@@ -29,7 +29,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 - Run the `bulk_copy_icbc_tool` to create the main shared folder.
 - Always run the `bulk_copy_icbc_tool` on a new empty folder or on a path name that does not yet exist. Doing so ensures the script uses the cached “Read” data instead of reopening each PDF, which greatly improves the speed during the "Copy" process.
-- If you have multiple computers with unidentified PDFs, place all their folders into a single parent folder. The script will automatically scan that folder and all its subfolders. If duplicates are found, it will only copy the first matching file.
+- If you have multiple computers with unidentified PDFs, place all their folders into a single parent folder. The script will scan that folder and all its subfolders. If duplicates are found, it will only copy the first matching file.
 - A `log.txt` file is also generated, containing a list of any files that could not be copied, as well as files without a producer two code that were moved.
 
 - The `icbc_e-stamp_and_copy_tool` can be placed on each computer that does ICBC Policy Centre.
