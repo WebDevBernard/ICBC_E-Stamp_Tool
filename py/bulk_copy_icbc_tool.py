@@ -27,7 +27,6 @@ def bulk_copy_icbc_tool():
 
     input_folder = mapping_data.get("b1")
     output_folder = mapping_data.get("b2")
-    print(output_folder)
     producer_mapping = mapping_data.get("producer_mapping", {})
 
     folders_missing = False
