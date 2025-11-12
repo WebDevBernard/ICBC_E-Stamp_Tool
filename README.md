@@ -20,12 +20,12 @@ This script offers a one-click solution to apply a digital validation stamp to m
 - 📊 Sort files into producer folder using the producer two code.
 - 📁 Smart sorting - Will place files into producer folder even if it is missing the producer two code. Searches if client name is in any subfolder (including the archive) and matches that name to any producer subfolder in the root directory.
 - ⏳ Will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`.
-- 🔢 All files archived will get reincremented as well (e.g. ABC123 (3).pdf → ABC123.pdf, ABC123 (4).pdf → ABC123 (1).pdf).
+- 🔢 All files archived will get reincremented as well (e.g. ABC123 (2).pdf → ABC123 (1).pdf, ABC123 (1).pdf → ABC123.pdf).
 - 🆓 Free to use and share.
 
 ## Usage
 
-- Complete the `config.xlsx` Excel sheet. In the first worksheet, the ICBC copies path is where your new ICBC copies goes. In the second worksheet, specify the path of where your old folder is and name of the new folder (Only the parent path needs to exist, just specify the folder name).
+- Complete the `config.xlsx` Excel sheet. In the first worksheet, the ICBC copies path is where your new ICBC copies goes. In the second worksheet, specify the path of where your old folder is and path of the new folder (Only the parent path needs to exist, just specify the parent path and folder name).
 
 - Now use the `bulk_copy_icbc_tool` to create the new ICBC copies folder.
 - Always run the `bulk_copy_icbc_tool` on a new empty folder or on a folder that does not yet exist. Doing so ensures the script uses the cached “Read” data instead of reopening each PDF, which greatly improves the speed during the "Copy" process.
