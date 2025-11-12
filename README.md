@@ -14,26 +14,26 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 ## Features
 
-- Stamps a customer copy and batch copy ICBC policy document
-- Checks for duplicates, will not overide or delete anything other than empty folders in your shared backup
-- Copies the unmodified policy document into a shared backup folder and rename it based on the client first and last name and licence plate
-- Sort files into the backup drive folder based on the producer two code
-- Matches files without producer two code into a root-level folder, if a folder with the same name contains at least one file
-- Will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`
-- All files archived will get reincremented as well (e.g. ABC 123 (3) → ABC 123)
-- Free to use and share
+- Stamps a customer copy and batch copy ICBC policy document.
+- Checks for duplicates, will not overide or delete anything other than empty folders in your shared backup.
+- Copies the original policy document to a shared backup folder, renaming it using the client’s first name, last name, and license plate.
+- Sorts files in the backup drive according to the producer two code.
+- Places files without producer codes into a root-level sub-folder if a folder with the same name contains at least one file.
+- Will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`.
+- All files archived will get reincremented as well (e.g. ABC 123 (3) → ABC 123).
+- Free to use and share.
 
 ## Usage
 
-- Complete the `config.xlsx` Excel sheet
+- Complete the `config.xlsx` Excel sheet.
 
-- Run the `bulk_copy_icbc_tool` to create the main shared folder
-- Always run the `bulk_copy_icbc_tool` on a new empty folder or on a path name that does not yet exist. Doing so ensures the script uses the cached “Read” data instead of reopening each PDF, which greatly improves the speed during the copy process.
-- If you have multiple computers with unidentified PDFs, place all of them into a single parent folder and the script will automatically scan that folder and all its subfolders.
+- Run the `bulk_copy_icbc_tool` to create the main shared folder.
+- Always run the `bulk_copy_icbc_tool` on a new empty folder or on a path name that does not yet exist. Doing so ensures the script uses the cached “Read” data instead of reopening each PDF, which greatly improves the speed during the "Copy" process.
+- If you have multiple computers with unidentified PDFs, place all their folders into a single parent folder. The script will automatically scan that folder and all its subfolders. If duplicates are found, it will only copy the first matching file.
 - A `log.txt` file is also generated, containing a list of any files that could not be copied, as well as files without a producer two code that were moved.
 
-- The `icbc_e-stamp_and_copy_tool` can be placed on each computer that does ICBC Policy Centre
-- No need to put the `bulk_copy_icbc_tool` on every computer, but keep one as backup incase you ever need to reset the folder
+- The `icbc_e-stamp_and_copy_tool` can be placed on each computer that does ICBC Policy Centre.
+- No need to put the `bulk_copy_icbc_tool` on every computer, but keep one as backup in case you ever need to reset the folder.
 
 ## Frequently Asked Questions
 
