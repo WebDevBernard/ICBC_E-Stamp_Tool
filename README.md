@@ -43,7 +43,7 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 - You can restamp using the backup, just copy the file back into your Downloads folder. The file won't get duplicated in the share folder if it is already there.
 
-### Why are some files copying to the wrong folder when there is no producer code two?
+### Why are some files copying to the wrong folder when there is no producer two code?
 
 - If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called `root/archive/2023/sub1/abc123.pdf`, and the file being copied is also called `abc123.pdf`, it will copy that file to `root/sub1/abc123.pdf`. This is why you should not manually create folders inside the shared folder.
 
