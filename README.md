@@ -18,7 +18,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 - 🔍 Checks for duplicates, will not overide or delete anything other than empty folders in your shared backup.
 - ✏️ Copies the original policy document to a shared backup folder, renaming it using the client’s first name, last name, and license plate.
 - 📊 Sorts files in the backup drive according to the producer two code.
-- 📁 Places files without producer codes into a root-level sub-folder if a folder with the same name contains at least one file.
+- 📁 Places files without the producer two code into a root-level sub-folder if a folder with the same name contains at least one file.
 - ⏳ Will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`.
 - 🔢 All files archived will get reincremented as well (e.g. ABC 123 (3) → ABC 123).
 - 🆓 Free to use and share.
