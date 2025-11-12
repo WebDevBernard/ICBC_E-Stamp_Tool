@@ -19,9 +19,9 @@ This script offers a one-click solution to apply a digital validation stamp to m
 - Will copy the unmodified policy document into a shared backup folder and rename it based on the client first and last name and licence plate
 - Will sort into the backup drive folder based on the producer two code
 - Will match files without producer two code into a root-level folder, if a folder with the same name contains at least one file
-- Auto archives all files more than two years from the current year, as long any user runs the `icbc_e-stamp_and_copy_tool`
+- Auto archives will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`
 - All files archived will get reincremented as well (e.g., ABC 123 (3) → ABC 123)
-- When you run the `bulk_copy_ICBC_tool`, it will also generate a log of all the files that could not be copied and files with no producer two code that were moved
+- When you run the `bulk_copy_icbc_tool`, it will also generate a log of all the files that could not be copied and files with no producer two code that were moved
 - Free to share and use
 
 ## FAQ
