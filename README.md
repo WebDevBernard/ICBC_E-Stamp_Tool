@@ -19,12 +19,12 @@ This script offers a one-click solution to apply a digital validation stamp to m
 - Will copy the unmodified policy document into a shared backup folder and rename it based on the client first and last name and licence plate
 - Will sort into the backup drive folder based on the producer two code
 - Will match files without producer two code into a root-level folder, if a folder with the same name contains at least one file
-- Auto archives will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`
+- Auto archive will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`
 - All files archived will get reincremented as well (e.g., ABC 123 (3) → ABC 123)
-- When you run the `bulk_copy_icbc_tool`, it will also generate a log of all the files that could not be copied and files with no producer two code that were moved
-- Free to share and use
+- When you run the `bulk_copy_icbc_tool`, it will also generate a `log.txt` of all the files that could not be copied and files with no producer two code that were moved
+- Free to use and share
 
-## FAQ
+## Frequently Asked Questions
 
 ### It's not doing anything...
 
@@ -37,13 +37,21 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 ### Where are my ICBC E-Stamp copies?
 
-- Either on your Desktop or inside the script folder if you are using OneDrive Desktop. Stamping is limited to the 10 last modified pdfs.
+- Either on your Desktop or inside the script folder if you are using OneDrive Desktop. Stamping is limited to the last 10 modified pdfs in Downloads.
 
-### Why are some files copying to the wrong folder?
+### Can I restamp using the backup copy? Will it make a copy into the backup folder?
+
+- You can restamp using the backup, just copy the file back into your Downloads folder. The file won't get duplicated in the share folder if it is already there.
+
+### Why are some files copying to the wrong folder when there is no producer code two?
 
 - If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called `root/archive/2023/sub1/abc123.pdf`, and the file being copied is also called `abc123.pdf`, it will copy that file to `root/sub1/abc123.pdf`. This is why you should not manually create folders inside the shared folder.
 
-- To fix this problem, move the file without producer two code back out of the producer folder (including all the archived producer folders). Next time, the file with the same name will get copy into the root (correct) folder.
+- In order to keep files without producer two code in ending in the wrong place, move those files out of the producer folder manually (including all the archived producer folders). Next time, the file with the same name will get copy into the root (correct) folder.
+
+### I accidentally put my archive folder into another folder, and now my archive folder has an archive folder?
+
+- This is what I call archive hell. Just run the `bulk_copy_icbc_tool` to create a new shared folder, it will reorganize and sort out all the folders.
 
 ### How do I create the exe?
 
