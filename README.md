@@ -15,12 +15,12 @@ This script offers a one-click solution to apply a digital validation stamp to m
 ## Features
 
 - Stamps a customer copy and batch copy ICBC policy document
-- Will check for duplicates, will not overide or delete anything other than empty folders
-- Will copy the unmodified policy document into a shared backup folder and rename it based on the client first and last name and licence plate
-- Will sort into the backup drive folder based on the producer two code
-- Will match files without producer two code into a root-level folder, if a folder with the same name contains at least one file
-- Auto archive will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`
-- All files archived will get reincremented as well (e.g., ABC 123 (3) → ABC 123)
+- Checks for duplicates, will not overide or delete anything other than empty folders in your shared backup
+- Copies the unmodified policy document into a shared backup folder and rename it based on the client first and last name and licence plate
+- Sort files into the backup drive folder based on the producer two code
+- Matches files without producer two code into a root-level folder, if a folder with the same name contains at least one file
+- Will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`
+- All files archived will get reincremented as well (e.g. ABC 123 (3) → ABC 123)
 - Free to use and share
 
 ## Usage
