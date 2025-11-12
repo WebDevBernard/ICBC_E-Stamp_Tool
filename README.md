@@ -15,7 +15,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 ## Features
 
 - 🖋️ Stamps a customer copy and batch copy ICBC policy document.
-- 🔍 Checks for duplicates, will not overide or delete anything other than empty folders in your shared backup.
+- 🔍 Checks for duplicates using the client's name and transaction timestamp. It will not overide or delete anything other than empty folders in your shared backup.
 - ✏️ Copies the original policy document to a shared backup folder, renaming it using the client’s first name, last name, and license plate.
 - 📊 Sorts files in the backup drive according to the producer two code.
 - 📁 Places files without the producer two code into a root-level sub-folder if a folder with the same name contains at least one file.
@@ -58,7 +58,7 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 - If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called `root/archive/2023/sub1/abc123.pdf`, and the file being copied is also called `abc123.pdf`, it will copy that file to `root/sub1/abc123.pdf`. This is why you should not manually create folders inside the shared folder.
 
-- In order to keep files without producer two code in ending in the wrong place, move those files out of the producer folder manually (including all the archived producer folders). Next time, the file with the same name will get copy into the root (correct) folder.
+- In order to keep files without the producer two code in ending in the wrong place, move those files out of the producer folder manually (including all the archived producer folders). Next time, the file with the same name will get copy into the root (correct) folder.
 
 ### I accidentally put my archive folder into another folder, and now my archive folder has an archive folder?
 
