@@ -140,7 +140,7 @@ def icbc_e_stamp_tool():
     stamped_counter = 0
     for path, info in progressbar(
         list(reversed(list(icbc_data.items()))),
-        prefix="🖋️ Stamping PDFs:  ",
+        prefix="🖋️ Stamping PDFs:   ",
         size=10,
     ):
         ts = info.get("transaction_timestamp")
