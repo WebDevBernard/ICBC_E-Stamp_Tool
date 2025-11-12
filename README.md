@@ -21,8 +21,15 @@ This script offers a one-click solution to apply a digital validation stamp to m
 - Will match files without producer two code into a root-level folder, if a folder with the same name contains at least one file
 - Auto archive will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`
 - All files archived will get reincremented as well (e.g., ABC 123 (3) → ABC 123)
-- When you run the `bulk_copy_icbc_tool`, it will also generate a `log.txt` of all the files that could not be copied and files with no producer two code that were moved
 - Free to use and share
+
+## Usage
+
+- Complete the `config.xlsx` Excel sheet
+- Run the `bulk_copy_icbc_tool` to create the main shared folder
+- This will also generate a `log.txt` of all the files that could not be copied and files with no producer two code that were moved
+- The `icbc_e-stamp_and_copy_tool` can be placed on each computer that does ICBC Policy Centre
+- No need to put the `bulk_copy_icbc_tool` on every computer, but keep one as backup incase you ever need to reset the folder
 
 ## Frequently Asked Questions
 
