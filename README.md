@@ -19,7 +19,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 - 🔍 Checks for duplicates using the client's name and transaction timestamp. It will not overide or delete anything other than empty folders in your shared backup.
 - 📊 Sort files into producer folder using the producer two code.
 - 📁 Match similar files - Will place files into producer folder even if it is missing the producer two code. Searches if client name is in any subfolder (including the archive) and matches that name to any producer subfolder in the root directory.
-- ⏳ Will continuously archive files older than two years, as long any user runs the `icbc_e-stamp_and_copy_tool`.
+- ⏳ Will continuously archive files older than one year, as long any user runs the `icbc_e-stamp_and_copy_tool`.
 - 🔢 All files archived will get reincremented as well (e.g. ABC123 (2).pdf → ABC123 (1).pdf, ABC123 (1).pdf → ABC123.pdf).
 - 🆓 Free to use and share.
 
@@ -46,7 +46,7 @@ Make sure you have downloads set up properly in Microsoft Edge, open settings at
 
 Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you have all the corresponding producer two code + subfolder name filled out. The Excel sheet also has to be in the same directory as the script. If you just need stamping, you can delete the Excel sheet.
 
-### Where are my ICBC E-Stamp Copies folder?
+### Where did the ICBC E-Stamp Copies folder go?
 
 - Either on your Desktop or inside the script folder if you are using OneDrive Desktop. Stamping is limited to the last 10 modified pdfs in Downloads.
 
