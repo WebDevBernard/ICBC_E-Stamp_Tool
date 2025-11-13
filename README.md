@@ -15,7 +15,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 ## Features
 
 - 🖋️ Stamps a customer copy and batch copy ICBC policy document.
-- ✏️ Copies the original policy document to a shared backup folder, renaming it using the client’s "first name, last name and licence plate.
+- ✏️ Copies the original policy document to a shared backup folder, renaming it using the client’s first name, last name and licence plate.
 - 🔍 Checks for duplicates using the client's name and transaction timestamp. It will not overide or delete anything other than empty folders in your shared backup.
 - 📊 Sort files into producer folder using the producer two code.
 - 📁 Smart sorting - Will place files into producer folder even if it is missing the producer two code. Searches if client name is in any subfolder (including the archive) and matches that name to any producer subfolder in the root directory.
