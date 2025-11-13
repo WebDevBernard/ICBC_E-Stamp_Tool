@@ -72,16 +72,18 @@ def bulk_copy_icbc_tool():
         sys.exit(1)
 
     # ------------------- PDF Scanning and Copy -------------------
-    scanned_data, non_icbc_files = scan_icbc_pdfs(
-        input_folder,
-        regex_patterns=ICBC_PATTERNS,
-        page_rects=PAGE_RECTS,
-        max_docs=None,
-        copy_mode=True,
+    icbc_data, non_icbc_files, payment_plan_agreements_and_receipts, cannot_open = (
+        scan_icbc_pdfs(
+            input_folder,
+            regex_patterns=ICBC_PATTERNS,
+            page_rects=PAGE_RECTS,
+            max_docs=None,
+            copy_mode=True,
+        )
     )
 
     copied_files = copy_pdfs(
-        icbc_data=scanned_data,
+        icbc_data=icbc_data,
         output_root_dir=output_folder,
         producer_mapping=producer_mapping,
         regex_patterns=ICBC_PATTERNS,
@@ -89,7 +91,7 @@ def bulk_copy_icbc_tool():
     )
 
     # ------------------- ICBC File Mover -------------------
-    moved_files = []
+
     moved_files = move_pdfs(
         files=copied_files,
         copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
@@ -106,21 +108,30 @@ def bulk_copy_icbc_tool():
     # ------------------- Consolidated Log -------------------
     log_path = Path.cwd() / "log.txt"
     with open(log_path, "w", encoding="utf-8") as log:
-        log.write("=== PDF Copy Summary ===\n")
-        log.write(f"Total PDFs scanned:  {len(scanned_data)}\n")
-        log.write(f"Total PDFs copied:   {len(copied_files)}\n")
-        log.write(f"Total PDFs moved:    {len(moved_files)}\n")
+        log.write("=== Bulk Copy ICBC Summary ===\n")
 
-        log.write("=== PDFs not copied to output folder ===\n")
-        for file_path in non_icbc_files:
-            log.write(str(file_path) + "\n")
-        log.write("\n")
+        if non_icbc_files:
+            log.write("=== Non ICBC PDFs found ===\n")
+            for file_path in non_icbc_files:
+                log.write(str(file_path) + "\n")
+            log.write("\n")
 
-        log.write(
-            "=== PDFs with no producer two code moved to a 'root/subfolder' ===\n"
-        )
-        for file_path in moved_files:
-            log.write(str(file_path) + "\n")
+        if payment_plan_agreements_and_receipts:
+            log.write("=== Payment Plan Agreements and Receipts ===\n")
+            for item in payment_plan_agreements_and_receipts:
+                log.write(str(item) + "\n")
+            log.write("\n")
+
+        if cannot_open:
+            log.write("=== PDFs that could NOT be opened ===\n")
+            for file_path in cannot_open:
+                log.write(str(file_path) + "\n")
+            log.write("\n")
+
+        if moved_files:
+            log.write("=== ICBC PDFs moved to a producer subfolder ===\n")
+            for file_path in moved_files:
+                log.write(str(file_path) + "\n")
 
     print(f"\n📝 Log saved to: {log_path}")
 

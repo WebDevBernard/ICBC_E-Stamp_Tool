@@ -7,6 +7,7 @@ import fitz
 import openpyxl
 from pathlib import Path
 from datetime import datetime, timedelta
+from collections import defaultdict
 
 
 # -------------------- Progress Bar -------------------- #
@@ -247,6 +248,8 @@ def scan_icbc_pdfs(
     input_dir = Path(input_dir)
     icbc_data = {}
     non_icbc_file_paths = []
+    payment_plan_agreements_and_receipts = []
+    cannot_open = []
 
     pdfs = sorted(
         input_dir.rglob("*.pdf"), key=lambda f: f.stat().st_mtime, reverse=True
@@ -278,7 +281,7 @@ def scan_icbc_pdfs(
                         "payment_plan_receipt" in regex_patterns
                         and regex_patterns["payment_plan_receipt"].search(full_text)
                     ):
-                        non_icbc_file_paths.append(str(pdf_path))
+                        payment_plan_agreements_and_receipts.append(str(pdf_path))
                         continue
 
                 # ======================================================
@@ -419,9 +422,14 @@ def scan_icbc_pdfs(
 
         except Exception as e:
             print(f"⚠️  Error processing {pdf_path.name}: {e}")
-            non_icbc_file_paths.append(str(pdf_path))
+            cannot_open.append(str(pdf_path))
 
-    return icbc_data, non_icbc_file_paths
+    return (
+        icbc_data,
+        non_icbc_file_paths,
+        payment_plan_agreements_and_receipts,
+        cannot_open,
+    )
 
 
 # -------------------- Copy PDFs -------------------- #
@@ -507,7 +515,7 @@ def get_target_subfolder_name(file, root_folder, subfolder_cache):
 
 def move_pdfs(files, copy_with_no_producer_two, root_folder):
     if not copy_with_no_producer_two:
-        return []
+        return
 
     root_folder = Path(root_folder)
     moved_files = []
@@ -537,11 +545,16 @@ def move_pdfs(files, copy_with_no_producer_two, root_folder):
 
 # ----------------- Auto Archiving ----------------- #
 def auto_archive(root_path, min_age_to_archive=2):
+    """
+    Archive PDFs older than min_age_to_archive years.
+    Compares by date only (ignoring time of day).
+    """
     folder = Path(root_path)
     archive_root = folder / "Archive"
     archive_root.mkdir(exist_ok=True)
-    cutoff_date = datetime.now() - timedelta(days=365 * min_age_to_archive)
-    cutoff_timestamp = cutoff_date.timestamp()
+
+    # Calculate cutoff date (only compare by day, not time)
+    cutoff_date = (datetime.now() - timedelta(days=365 * min_age_to_archive)).date()
 
     all_pdfs = []
     for subdir in folder.rglob("*"):
@@ -562,20 +575,20 @@ def auto_archive(root_path, min_age_to_archive=2):
     ]
     all_pdfs.extend(root_pdfs)
 
+    # Compare by date only (not timestamp)
     pdfs_to_archive = [
-        pdf for pdf in all_pdfs if pdf.stat().st_mtime < cutoff_timestamp
+        pdf
+        for pdf in all_pdfs
+        if datetime.fromtimestamp(pdf.stat().st_mtime).date() < cutoff_date
     ]
 
     if not pdfs_to_archive:
-        return
+        return None
 
     archived_files = []
 
     for pdf in progressbar(pdfs_to_archive, prefix="📂 Archiving PDFs: ", size=10):
         last_modified_time = pdf.stat().st_mtime
-        if last_modified_time >= cutoff_timestamp:
-            continue
-
         year = time.strftime("%Y", time.localtime(last_modified_time))
         relative_path = pdf.relative_to(folder)
         target_folder = archive_root / year / relative_path.parent
@@ -595,6 +608,7 @@ def reincrement_pdfs(root_dir):
     if not root.is_dir():
         return
 
+    # Process folders starting from the deepest
     for folder in sorted(
         [root] + list(root.rglob("*")), key=lambda f: f.parts, reverse=True
     ):
@@ -602,25 +616,31 @@ def reincrement_pdfs(root_dir):
             continue
 
         pdfs = list(folder.glob("*.pdf"))
-        grouped = {}
+        if not pdfs:
+            continue
+
+        # Group PDFs by base name
+        grouped = defaultdict(list)
         for pdf in pdfs:
-            base_name = re.sub(r"\s*\(\d+\)$", "", pdf.stem)
+            # Remove trailing (n) and normalize name
+            base_name = re.sub(r"\s*\((\d+)\)$", "", pdf.stem)
             base_name = safe_filename(base_name)
-            grouped.setdefault(base_name, []).append(pdf)
+            # Precompute the current numeric suffix
+            match = re.search(r"\((\d+)\)$", pdf.stem)
+            number = int(match.group(1)) if match else 0
+            grouped[base_name].append((number, pdf))
 
-        for base_name, files in grouped.items():
+        # Re-increment files in each group
+        for base_name, file_entries in grouped.items():
+            # Sort by current numeric suffix
+            file_entries.sort(key=lambda x: x[0])
 
-            def extract_number(file_path):
-                match = re.search(r"\((\d+)\)$", file_path.stem)
-                return int(match.group(1)) if match else 0
-
-            files.sort(key=extract_number)
-
-            for i, file_path in enumerate(files):
+            for i, (_, file_path) in enumerate(file_entries):
                 new_name = f"{base_name}{'' if i == 0 else f' ({i})'}.pdf"
                 new_path = file_path.with_name(new_name)
                 if new_path != file_path:
                     file_path.rename(new_path)
 
+        # Remove folder if empty
         if folder != root and not any(folder.iterdir()):
             folder.rmdir()
