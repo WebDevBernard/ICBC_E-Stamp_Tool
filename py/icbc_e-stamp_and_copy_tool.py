@@ -125,14 +125,23 @@ def icbc_e_stamp_tool():
 
     copied_files = []
 
+    # -------------------- Load Mapping -------------------- #
+    mapping_path = Path.cwd() / "config.xlsx"
+    mapping_data = load_excel_mapping(mapping_path, sheet_index=0, start_row=3)
+    output_folder = mapping_data.get("b1")
+    producer_mapping = mapping_data.get("producer_mapping", {})
+
+    # ✅ Determine stamping mode based on folder existence
+    copy_mode = bool(output_folder and Path(output_folder).exists())
+
     # -------------------- Stage 1: Scan PDFs -------------------- #
-    icbc_data, _ = scan_icbc_pdfs(
+    icbc_data, _, _, _ = scan_icbc_pdfs(
         input_dir=input_dir,
         regex_patterns=ICBC_PATTERNS,
         page_rects=PAGE_RECTS,
         max_docs=DEFAULTS["number_of_pdfs"],
         stamping_mode=True,
-        copy_mode=False,
+        copy_mode=copy_mode,
     )
     total_scanned = len(icbc_data)
 
@@ -140,7 +149,7 @@ def icbc_e_stamp_tool():
     stamped_counter = 0
     for path, info in progressbar(
         list(reversed(list(icbc_data.items()))),
-        prefix="🖋️ Stamping PDFs:   ",
+        prefix="🖋️ Stamping PDFs:  ",
         size=10,
     ):
         ts = info.get("transaction_timestamp")
@@ -168,42 +177,35 @@ def icbc_e_stamp_tool():
 
         except Exception as e:
             print(f"❌ Error processing {path}: {e}")
-
+    if stamped_counter > 0:
+        print(f"\n🎉 Stamping complete! ICBC E-Stamp Copies folder is now ready!\n")
     # -------------------- Stage 3: Copy PDFs -------------------- #
-    mapping_path = Path.cwd() / "config.xlsx"
-    mapping_data = load_excel_mapping(mapping_path, sheet_index=0, start_row=3)
-    output_folder = mapping_data.get("b1")
-    producer_mapping = mapping_data.get("producer_mapping", {})
-
-    copy_data, _ = scan_icbc_pdfs(
-        input_dir=input_dir,
-        regex_patterns=ICBC_PATTERNS,
-        page_rects=PAGE_RECTS,
-        max_docs=DEFAULTS["number_of_pdfs"],
-        copy_mode=True,
-    )
-
-    if output_folder and Path(output_folder).exists():
+    if copy_mode:
         copied_files = copy_pdfs(
-            icbc_data=copy_data,
+            icbc_data=icbc_data,
             output_root_dir=output_folder,
             producer_mapping=producer_mapping,
             regex_patterns=ICBC_PATTERNS,
             page_rects=PAGE_RECTS,
         )
-        move_pdfs(
-            files=copied_files,
-            copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
-            root_folder=output_folder,
-        )
+        files_without_producer = [
+            file for file in copied_files if file.parent == Path(output_folder)
+        ]
+        if files_without_producer:
+            move_pdfs(
+                files=copied_files,
+                copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
+                root_folder=output_folder,
+            )
         archived_files = auto_archive(
-            root_path=output_folder, min_age_to_archive=DEFAULTS["min_age_to_archive"]
+            root_path=output_folder,
+            min_age_to_archive=DEFAULTS["min_age_to_archive"],
         )
         if archived_files:
             reincrement_pdfs(root_dir=output_folder)
     else:
         print(
-            f" ⚠️ICBC Copies folder: '{output_folder}' not found or invalid — skipping copy step."
+            f"⚠️  ICBC Copies folder: '{output_folder}' not found or invalid — skipping copy step."
         )
 
     # -------------------- Summary -------------------- #
