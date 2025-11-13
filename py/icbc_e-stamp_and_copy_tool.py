@@ -40,7 +40,7 @@ DEFAULTS = {
     "output_dir": str(output_dir),
     "input_dir": str(Path.home() / "Downloads"),
     "copy_with_no_producer_two": True,
-    "min_age_to_archive": 2,
+    "min_age_to_archive": 1,
 }
 
 # -------------------- PDF Stamping Functions -------------------- #

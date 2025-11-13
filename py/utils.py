@@ -616,30 +616,25 @@ def reincrement_pdfs(root_dir):
             continue
 
         pdfs = list(folder.glob("*.pdf"))
-        if not pdfs:
-            continue
 
-        # Group PDFs by base name
-        grouped = defaultdict(list)
-        for pdf in pdfs:
-            # Remove trailing (n) and normalize name
-            base_name = re.sub(r"\s*\((\d+)\)$", "", pdf.stem)
-            base_name = safe_filename(base_name)
-            # Precompute the current numeric suffix
-            match = re.search(r"\((\d+)\)$", pdf.stem)
-            number = int(match.group(1)) if match else 0
-            grouped[base_name].append((number, pdf))
+        if pdfs:
+            # Group PDFs by base name
+            grouped = defaultdict(list)
+            for pdf in pdfs:
+                base_name = re.sub(r"\s*\((\d+)\)$", "", pdf.stem)
+                base_name = safe_filename(base_name)
+                match = re.search(r"\((\d+)\)$", pdf.stem)
+                number = int(match.group(1)) if match else 0
+                grouped[base_name].append((number, pdf))
 
-        # Re-increment files in each group
-        for base_name, file_entries in grouped.items():
-            # Sort by current numeric suffix
-            file_entries.sort(key=lambda x: x[0])
-
-            for i, (_, file_path) in enumerate(file_entries):
-                new_name = f"{base_name}{'' if i == 0 else f' ({i})'}.pdf"
-                new_path = file_path.with_name(new_name)
-                if new_path != file_path:
-                    file_path.rename(new_path)
+            # Re-increment files in each group
+            for base_name, file_entries in grouped.items():
+                file_entries.sort(key=lambda x: x[0])
+                for i, (_, file_path) in enumerate(file_entries):
+                    new_name = f"{base_name}{'' if i == 0 else f' ({i})'}.pdf"
+                    new_path = file_path.with_name(new_name)
+                    if new_path != file_path:
+                        file_path.rename(new_path)
 
         # Remove folder if empty
         if folder != root and not any(folder.iterdir()):
