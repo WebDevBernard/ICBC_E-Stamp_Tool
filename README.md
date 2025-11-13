@@ -46,7 +46,7 @@ Make sure you have downloads set up properly in Microsoft Edge, open settings at
 
 Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you have all the corresponding producer two code + subfolder name filled out. The Excel sheet also has to be in the same directory as the script. If you just need stamping, you can delete the Excel sheet.
 
-### Where are my ICBC E-Stamp copies?
+### Where are my ICBC E-Stamp Copies folder?
 
 - Either on your Desktop or inside the script folder if you are using OneDrive Desktop. Stamping is limited to the last 10 modified pdfs in Downloads.
 
