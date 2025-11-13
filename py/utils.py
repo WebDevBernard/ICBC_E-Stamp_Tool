@@ -449,7 +449,7 @@ def copy_pdfs(
 
     items_to_process = list(reversed(list(icbc_data.items())))
     for path, info in progressbar(
-        items_to_process, prefix="🧾 Copying PDFs:   ", size=10
+        items_to_process, prefix="🧾 Searching PDFs: ", size=10
     ):
         producer_name = info.get("producer_name")
         if producer_name and producer_name in producer_mapping:
@@ -513,12 +513,12 @@ def get_target_subfolder_name(file, root_folder, subfolder_cache):
     return root_folder
 
 
-def move_pdfs(files, copy_with_no_producer_two, root_folder):
+def match_pdfs(files, copy_with_no_producer_two, root_folder):
     if not copy_with_no_producer_two:
         return
 
     root_folder = Path(root_folder)
-    moved_files = []
+    match_files = []
 
     # Build cache of subdirectories and their files (RECURSIVELY)
     subfolder_cache = {}
@@ -531,16 +531,16 @@ def move_pdfs(files, copy_with_no_producer_two, root_folder):
             except PermissionError:
                 continue
 
-    for file in progressbar(files, prefix="📦 Moving PDFs:    ", size=10):
+    for file in progressbar(files, prefix="📦 Matching PDFs:  ", size=10):
         target_folder = get_target_subfolder_name(file, root_folder, subfolder_cache)
         if target_folder is None or target_folder == file.parent:
             continue
         target_folder.mkdir(parents=True, exist_ok=True)
         target_path = unique_file_name(str(target_folder / file.name))
         shutil.move(str(file), target_path)
-        moved_files.append(target_path)
+        match_files.append(target_path)
 
-    return moved_files
+    return match_files
 
 
 # ----------------- Auto Archiving ----------------- #
