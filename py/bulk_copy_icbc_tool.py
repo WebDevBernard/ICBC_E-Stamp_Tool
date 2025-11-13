@@ -7,7 +7,7 @@ from utils import (
     load_excel_mapping,
     scan_icbc_pdfs,
     copy_pdfs,
-    move_pdfs,
+    match_pdfs,
     auto_archive,
     reincrement_pdfs,
 )
@@ -92,7 +92,7 @@ def bulk_copy_icbc_tool():
 
     # ------------------- ICBC File Mover -------------------
 
-    moved_files = move_pdfs(
+    matched_files = match_pdfs(
         files=copied_files,
         copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
         root_folder=output_folder,
@@ -128,9 +128,9 @@ def bulk_copy_icbc_tool():
                 log.write(str(file_path) + "\n")
             log.write("\n")
 
-        if moved_files:
-            log.write("=== ICBC PDFs moved to a producer subfolder ===\n")
-            for file_path in moved_files:
+        if matched_files:
+            log.write("=== ICBC PDFs matched to a producer subfolder ===\n")
+            for file_path in matched_files:
                 log.write(str(file_path) + "\n")
 
     print(f"\n📝 Log saved to: {log_path}")

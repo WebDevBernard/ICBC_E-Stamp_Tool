@@ -9,7 +9,7 @@ from utils import (
     scan_icbc_pdfs,
     load_excel_mapping,
     copy_pdfs,
-    move_pdfs,
+    match_pdfs,
     auto_archive,
     reincrement_pdfs,
 )
@@ -40,7 +40,7 @@ DEFAULTS = {
     "output_dir": str(output_dir),
     "input_dir": str(Path.home() / "Downloads"),
     "copy_with_no_producer_two": True,
-    "min_age_to_archive": 2,
+    "min_age_to_archive": 1,
 }
 
 # -------------------- PDF Stamping Functions -------------------- #
@@ -178,7 +178,7 @@ def icbc_e_stamp_tool():
         except Exception as e:
             print(f"❌ Error processing {path}: {e}")
     if stamped_counter > 0:
-        print(f"\n🎉 Stamping complete! ICBC E-Stamp Copies folder is now ready!\n")
+        print(f"\n🎉 Stamping complete! ICBC E-Stamp Copies folder is ready now!\n")
     # -------------------- Stage 3: Copy PDFs -------------------- #
     if copy_mode:
         copied_files = copy_pdfs(
@@ -192,7 +192,7 @@ def icbc_e_stamp_tool():
             file for file in copied_files if file.parent == Path(output_folder)
         ]
         if files_without_producer:
-            move_pdfs(
+            match_pdfs(
                 files=copied_files,
                 copy_with_no_producer_two=DEFAULTS["copy_with_no_producer_two"],
                 root_folder=output_folder,
