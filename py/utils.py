@@ -273,16 +273,15 @@ def scan_icbc_pdfs(
 
                 full_text = text()
 
-                if not stamping_mode:
-                    if (
-                        "payment_plan" in regex_patterns
-                        and regex_patterns["payment_plan"].search(full_text)
-                    ) or (
-                        "payment_plan_receipt" in regex_patterns
-                        and regex_patterns["payment_plan_receipt"].search(full_text)
-                    ):
-                        payment_plan_agreements_and_receipts.append(str(pdf_path))
-                        continue
+                if (
+                    "payment_plan" in regex_patterns
+                    and regex_patterns["payment_plan"].search(full_text)
+                ) or (
+                    "payment_plan_receipt" in regex_patterns
+                    and regex_patterns["payment_plan_receipt"].search(full_text)
+                ):
+                    payment_plan_agreements_and_receipts.append(str(pdf_path))
+                    continue
 
                 # ======================================================
                 # 🔴 PRIMARY SEARCH
@@ -502,14 +501,28 @@ def copy_pdfs(
 
 def get_target_subfolder_name(file, root_folder, subfolder_cache):
     root_folder = Path(root_folder)
+    year_pattern = re.compile(r"^\d{4}$")
     if file.parent != root_folder:
         return None
-    prefix = file.stem.split(" - ", 1)[0].strip().lower()
+
+    file_stem_key = file.stem.split(" - ", 1)[0].strip().lower()
+
     for subdir_name, files in subfolder_cache.items():
         for f in files:
-            if f.is_file() and f.stem.lower().startswith(prefix):
-                top_level = subdir_name.split("/")[-1]
-                return root_folder / top_level
+            if not f.is_file():
+                continue
+
+            f_stem_key = f.stem.lower().split(" - ", 1)[0].strip()
+            if f_stem_key != file_stem_key:
+                continue
+
+            # Get the top-level folder name, skip if it's a year folder
+            top_level = subdir_name.split("/")[-1]
+            if year_pattern.match(top_level):
+                continue
+
+            return root_folder / top_level
+
     return root_folder
 
 
@@ -520,7 +533,6 @@ def match_pdfs(files, copy_with_no_producer_two, root_folder):
     root_folder = Path(root_folder)
     match_files = []
 
-    # Build cache of subdirectories and their files (RECURSIVELY)
     subfolder_cache = {}
     for subdir in root_folder.rglob("*"):
         if subdir.is_dir() and subdir != root_folder:
@@ -535,6 +547,7 @@ def match_pdfs(files, copy_with_no_producer_two, root_folder):
         target_folder = get_target_subfolder_name(file, root_folder, subfolder_cache)
         if target_folder is None or target_folder == file.parent:
             continue
+
         target_folder.mkdir(parents=True, exist_ok=True)
         target_path = unique_file_name(str(target_folder / file.name))
         shutil.move(str(file), target_path)
