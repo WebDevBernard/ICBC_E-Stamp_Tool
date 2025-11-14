@@ -646,8 +646,10 @@ def reincrement_pdfs(root_dir):
                 for i, (_, file_path) in enumerate(file_entries):
                     new_name = f"{base_name}{'' if i == 0 else f' ({i})'}.pdf"
                     new_path = file_path.with_name(new_name)
+
+                    unique_path = Path(unique_file_name(str(new_path)))
                     if new_path != file_path:
-                        file_path.rename(new_path)
+                        file_path.rename(unique_path)
 
         # Remove folder if empty
         if folder != root and not any(folder.iterdir()):
