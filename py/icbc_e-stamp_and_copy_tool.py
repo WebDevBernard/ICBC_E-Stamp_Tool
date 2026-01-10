@@ -178,7 +178,10 @@ def icbc_e_stamp_tool():
         except Exception as e:
             print(f"❌ Error processing {path}: {e}")
     if stamped_counter > 0:
-        print(f"\n🎉 Stamping complete! ICBC E-Stamp Copies folder is ready now!\n")
+        print(
+            "\n\033[1m\033[4m🎉 Stamping complete! ICBC E-Stamp Copies folder is ready now!\033[0m\n"
+        )
+
     # -------------------- Stage 3: Copy PDFs -------------------- #
     if copy_mode:
         copied_files = copy_pdfs(
