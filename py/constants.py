@@ -28,6 +28,7 @@ ICBC_PATTERNS = {
     "payment_plan": re.compile(r"Payment Plan Agreement"),
     "payment_plan_receipt": re.compile(r"Payment Plan Receipt"),
     "manuscript": re.compile(r"Manuscript Certificate/Manuscript Policy"),
+    "binder": re.compile(r"Binder for Owner’s Interim Certificate of Insurance"),
 }
 
 # -----------------------------

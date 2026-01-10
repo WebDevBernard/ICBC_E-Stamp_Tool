@@ -44,6 +44,7 @@ def clean_name(name):
 
 def format_name(name, lessor=False):
     name = clean_name(name)
+
     parts = name.split(" ")
 
     if (len(name) == 27 and len(parts) >= 4) or re.search(
@@ -108,22 +109,51 @@ def unique_file_name(path: str) -> str:
     return new_path
 
 
-def get_base_name(info):
-    transaction_timestamp = info.get("transaction_timestamp") or ""
-    license_plate = (info.get("license_plate") or "").strip().upper()
-    insured_name = (info.get("insured_name") or "").strip()
-    insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
-    insured_name = re.sub(r"\s+", " ", insured_name).strip()
-    insured_name = insured_name.title() if insured_name else ""
-    transaction_type = (info.get("transaction_type") or "").strip().title()
+def clean_insured_name(name: str) -> str:
+    """Normalize the insured name."""
+    if not name:
+        return ""
+    name = name.strip()
+    name = re.sub(r"[.:/\\*?\"<>|]", "", name)
+    name = re.sub(r"\s+", " ", name).strip()
+    return name.title()
 
-    top = info.get("top", False)
-    storage = info.get("storage", False)
-    cancellation = info.get("cancellation", False)
-    rental = info.get("rental", False)
-    special_risk = info.get("special_risk", False)
-    garage = info.get("garage", False)
-    manuscript = info.get("manuscript", False)
+
+def append_suffixes(base: str, info: dict) -> str:
+    """Append flags or transaction type to the base name."""
+    flags = [
+        ("top", "TOP"),
+        ("storage", "Storage"),
+        ("cancellation", "Cancel"),
+        ("rental", "Rental"),
+        ("special_risk", "Special Risk"),
+        ("garage", "Garage"),
+        ("manuscript", "Manuscript"),
+        ("binder", "Binder"),
+    ]
+
+    for key, suffix in flags:
+        if info.get(key, False):
+            return f"{base} - {suffix}" if suffix != "Cancel" else f"{base} {suffix}"
+
+    # Handle transaction_type and special NONLIC
+    transaction_type = (info.get("transaction_type") or "").strip().title()
+    license_plate = (info.get("license_plate") or "").strip().upper()
+
+    if transaction_type == "Change":
+        return f"{base} Change"
+    if license_plate == "NONLIC":
+        return f"{base} - Registration"
+
+    return base
+
+
+def get_base_name(info: dict) -> str:
+    license_plate = (info.get("license_plate") or "").strip().upper()
+    insured_name = clean_insured_name(info.get("insured_name"))
+    transaction_timestamp = info.get("transaction_timestamp") or ""
+
+    # Determine base
     if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
         base_name = f"{insured_name} - {license_plate}"
     elif insured_name:
@@ -133,59 +163,49 @@ def get_base_name(info):
     else:
         base_name = "UNKNOWN"
 
-    if top:
-        base_name = f"{base_name} - TOP"
-    elif storage:
-        base_name = f"{base_name} - Storage"
-    elif cancellation:
-        base_name = f"{base_name} Cancel"
-    elif rental:
-        base_name = f"{base_name} - Rental"
-    elif special_risk:
-        base_name = f"{base_name} - Special Risk"
-    elif garage:
-        base_name = f"{base_name} - Garage"
-    elif manuscript:
-        base_name = f"{base_name} - Manuscript"
-    elif transaction_type == "Change":
-        base_name = f"{base_name} Change"
-    elif license_plate == "NONLIC":
-        base_name = f"{base_name} - Registration"
-
-    return base_name
+    return append_suffixes(base_name, info)
 
 
-def get_stamp_name(info):
-    transaction_timestamp = info.get("transaction_timestamp") or ""
+def get_stamp_name(info: dict) -> str:
     license_plate = (info.get("license_plate") or "").strip().upper()
-    insured_name = (info.get("insured_name") or "").strip()
-    insured_name = re.sub(r"[.:/\\*?\"<>|]", "", insured_name)
-    insured_name = re.sub(r"\s+", " ", insured_name).strip()
-    insured_name = insured_name.title() if insured_name else ""
+    insured_name = clean_insured_name(info.get("insured_name"))
+    transaction_timestamp = info.get("transaction_timestamp") or ""
 
+    # Determine base
     if license_plate and license_plate not in ("NONLIC", "STORAGE", "DEALER"):
         stamp_name = license_plate
     elif insured_name:
         stamp_name = insured_name
     elif transaction_timestamp:
         stamp_name = transaction_timestamp
-    return stamp_name
+    else:
+        stamp_name = "UNKNOWN"
+
+    return append_suffixes(stamp_name, info)
+
+
+def clean_filename(name: str) -> str:
+    """Normalize a file name for comparison."""
+    # Take only first part if separated by " - " or space
+    if " - " in name:
+        name = name.split(" - ", 1)[0]
+    elif " " in name:
+        name = name.split(" ", 1)[0]
+
+    # Uppercase, strip whitespace, remove special characters
+    name = name.upper().strip()
+    name = re.sub(r"[.:/\\*?\"<>|]", "", name)
+    return name
 
 
 def find_existing_timestamps(base_name, timestamp_pattern, timestamp_rect, folder_dir):
     timestamps = set()
-    if " - " in base_name:
-        clean_name = base_name.split(" - ", 1)[0]
-    elif " " in base_name:
-        clean_name = base_name.split(" ", 1)[0]
-    else:
-        clean_name = base_name
 
-    clean_name = clean_name.upper().strip()
-    clean_name = re.sub(r"[.:/\\*?\"<>|]", "", clean_name)
+    clean_name = clean_filename(base_name)
 
     for pdf_file in Path(folder_dir).glob(f"{clean_name}*.pdf"):
-        filename = pdf_file.stem.upper().split(" ")[0]
+        filename = clean_filename(pdf_file.stem)
+
         if filename != clean_name:
             continue
 
@@ -416,6 +436,10 @@ def scan_icbc_pdfs(
                                 regex_patterns.get("manuscript")
                                 and regex_patterns["manuscript"].search(full_text)
                             ),
+                            "binder": bool(
+                                regex_patterns.get("binder")
+                                and regex_patterns["binder"].search(full_text)
+                            ),
                         }
                     )
 
@@ -448,7 +472,7 @@ def copy_pdfs(
 
     items_to_process = list(reversed(list(icbc_data.items())))
     for path, info in progressbar(
-        items_to_process, prefix="🧾 Searching PDFs: ", size=10
+        items_to_process, prefix="🧾 Copying PDFs:   ", size=10
     ):
         producer_name = info.get("producer_name")
         if producer_name and producer_name in producer_mapping:
@@ -600,7 +624,7 @@ def auto_archive(root_path, min_age_to_archive=2):
 
     archived_files = []
 
-    for pdf in progressbar(pdfs_to_archive, prefix="📂 Archiving PDFs: ", size=10):
+    for pdf in progressbar(pdfs_to_archive, prefix="⌛ Archiving PDFs: ", size=10):
         last_modified_time = pdf.stat().st_mtime
         year = time.strftime("%Y", time.localtime(last_modified_time))
         relative_path = pdf.relative_to(folder)
