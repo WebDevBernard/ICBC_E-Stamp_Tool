@@ -324,6 +324,12 @@ def scan_icbc_pdfs(
                     "license_plate": license_plate,
                     "insured_name": insured_name,
                     "producer_name": None,
+                    "top": bool(
+                        regex_patterns.get("temporary_operation_permit")
+                        and regex_patterns["temporary_operation_permit"].search(
+                            full_text
+                        )
+                    ),
                 }
 
                 # ======================================================
@@ -402,10 +408,6 @@ def scan_icbc_pdfs(
                         {
                             "producer_name": producer_name,
                             "transaction_type": transaction_type,
-                            "top": bool(
-                                regex_patterns.get("temporary_permit")
-                                and regex_patterns["temporary_permit"].search(full_text)
-                            ),
                             "storage": bool(
                                 regex_patterns.get("storage_policy")
                                 and regex_patterns["storage_policy"].search(full_text)
