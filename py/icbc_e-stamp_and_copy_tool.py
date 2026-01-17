@@ -102,7 +102,7 @@ def save_batch_copy(doc, info, output_dir):
 def save_customer_copy(doc, info, output_dir):
     total_pages = doc.page_count
     customer_pages = info.get("customer_copy_pages", [])
-    if info.get("temporary_operation_permit") and total_pages - 1 not in customer_pages:
+    if info.get("top") and total_pages - 1 not in customer_pages:
         customer_pages.append(total_pages - 1)
     pages_to_delete = [i for i in range(total_pages) if i not in customer_pages]
     for page_num in reversed(pages_to_delete):

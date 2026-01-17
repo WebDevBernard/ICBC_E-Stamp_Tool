@@ -10,7 +10,7 @@ ICBC_PATTERNS = {
     "license_plate": re.compile(
         r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
     ),
-    "temporary_permit": re.compile(
+    "temporary_operation_permit": re.compile(
         r"Temporary Operation Permit and Owner’s Certificate of Insurance",
         re.IGNORECASE,
     ),
@@ -29,6 +29,7 @@ ICBC_PATTERNS = {
     "payment_plan_receipt": re.compile(r"Payment Plan Receipt"),
     "manuscript": re.compile(r"Manuscript Certificate/Manuscript Policy"),
     "binder": re.compile(r"Binder for Owner’s Interim Certificate of Insurance"),
+    "has_bcdl": re.compile(r"Owner's BC Driver's Licence Number\s+(?:\*{5}(\d{3}))?"),
 }
 
 # -----------------------------
