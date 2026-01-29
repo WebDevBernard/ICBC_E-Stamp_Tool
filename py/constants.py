@@ -29,7 +29,9 @@ ICBC_PATTERNS = {
     "payment_plan_receipt": re.compile(r"Payment Plan Receipt"),
     "manuscript": re.compile(r"Manuscript Certificate/Manuscript Policy"),
     "binder": re.compile(r"Binder for Owner’s Interim Certificate of Insurance"),
-    "has_bcdl": re.compile(r"Owner's BC Driver's Licence Number\s+(?:\*{5}(\d{3}))?"),
+    "has_bcdl": re.compile(
+        r"Owner's BC Driver's Licence Number(?:\s+(\*{5}\d{3}))?", re.IGNORECASE
+    ),
 }
 
 # -----------------------------
