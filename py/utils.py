@@ -42,44 +42,70 @@ def clean_name(name):
     return name
 
 
-def format_name(name, lessor=False):
+def format_name(name, lessor=False, has_bcdl_string=False, has_bcdl_number=False):
     name = clean_name(name)
 
     parts = name.split(" ")
 
-    if (len(name) == 27 and len(parts) >= 4) or re.search(
-        r"(Inc\.?|Ltd\.?|Corp\.?)$", name, re.IGNORECASE
-    ):
+    # New method of finding company name
+    if has_bcdl_string and not has_bcdl_number:
         return name
 
     if lessor:
-        if len(parts) < 4 and len(name) < 27:
+        if has_bcdl_string and has_bcdl_number:
             return " ".join(parts[1:] + [parts[0]])
+        return name
 
-        return " ".join(parts[:3])
+    if not has_bcdl_string:
+        if (len(name) == 27 and len(parts) >= 4) or re.search(
+            r"(Inc\.?|Ltd\.?|Corp\.?)$", name, re.IGNORECASE
+        ):
+            return name
+
+        if lessor:
+            if len(parts) < 4 and len(name) < 27:
+                return " ".join(parts[1:] + [parts[0]])
+
+            return name
 
     # Non-lessor names
+
     if len(parts) == 1:
         return name
     return " ".join(parts[1:] + [parts[0]])
 
 
-def search_insured_name(full_text_first_page):
+def search_insured_name(
+    full_text_first_page, has_bcdl_string=False, has_bcdl_number=False
+):
+    # ----------------- Lessor / LSR -----------------
     lessor_match = re.search(
-        r"\((?:LESSOR|LSR)\)\s*(.*?)\s*\((?:LESSEE|LSE)\)",
+        r"\((?:LESSOR|LSR)\)\s*([^\n]+)",  # capture only the first line after (LESSOR)/(LSR)
         full_text_first_page,
-        re.IGNORECASE | re.DOTALL,
+        re.IGNORECASE,
     )
     if lessor_match:
-        return format_name(lessor_match.group(1), lessor=True)
+        lessor_name = lessor_match.group(1).strip()
+        return format_name(
+            lessor_name,
+            lessor=True,
+            has_bcdl_string=has_bcdl_string,
+            has_bcdl_number=has_bcdl_number,
+        )
 
+    # ----------------- Owner / Applicant -----------------
     match = re.search(
         r"(?:Owner\s|Applicant|Name of Insured \(surname followed by given name\(s\)\))\s*\n([^\n]+)",
         full_text_first_page,
         re.IGNORECASE,
     )
     if match:
-        return format_name(match.group(1))
+        insured_name = match.group(1).strip()  # Only first line
+        return format_name(
+            insured_name,
+            has_bcdl_string=has_bcdl_string,
+            has_bcdl_number=has_bcdl_number,
+        )
 
     return None
 
@@ -317,7 +343,22 @@ def scan_icbc_pdfs(
                     license_match.group(1).strip().upper() if license_match else None
                 )
 
-                insured_name = search_insured_name(full_text)
+                # this checks if it is a company name or not
+                has_bcdl_match = regex_patterns.get("has_bcdl") and regex_patterns[
+                    "has_bcdl"
+                ].search(full_text)
+                has_bcdl_string = bool(
+                    has_bcdl_match
+                )  # True if the string exists at all
+                has_bcdl_number = bool(
+                    has_bcdl_match and has_bcdl_match.group(1)
+                )  # True if the masked number exists
+
+                insured_name = search_insured_name(
+                    full_text,
+                    has_bcdl_string=has_bcdl_string,
+                    has_bcdl_number=has_bcdl_number,
+                )
 
                 icbc_data[pdf_path] = {
                     "transaction_timestamp": timestamp,
@@ -589,7 +630,7 @@ def auto_archive(root_path, min_age_to_archive=2):
     Compares by date only (ignoring time of day).
     """
     folder = Path(root_path)
-    archive_root = folder / "Archive"
+    archive_root = folder / "_Archive"
     archive_root.mkdir(exist_ok=True)
 
     # Calculate cutoff date (only compare by day, not time)

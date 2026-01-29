@@ -15,7 +15,7 @@ from constants import ICBC_PATTERNS, PAGE_RECTS
 
 DEFAULTS = {
     "copy_with_no_producer_two": True,
-    "min_age_to_archive": 2,
+    "min_age_to_archive": 1,
 }
 
 
