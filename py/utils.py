@@ -44,34 +44,24 @@ def clean_name(name):
 
 def format_name(name, lessor=False, has_bcdl_string=False, has_bcdl_number=False):
     name = clean_name(name)
-
     parts = name.split(" ")
 
-    # New method of finding company name
+    is_company = (len(name) == 27 and len(parts) >= 4) or re.search(
+        r"(Inc\.?|Ltd\.?|Corp\.?)$", name, re.IGNORECASE
+    )
+
+    # If BCDL string exists but no number, always return as-is
     if has_bcdl_string and not has_bcdl_number:
         return name
 
-    if lessor:
-        if has_bcdl_string and has_bcdl_number:
-            return " ".join(parts[1:] + [parts[0]])
+    # If lessor or no BCDL string, and it looks like a company, return as-is
+    if (lessor or not has_bcdl_string) and is_company:
         return name
 
-    if not has_bcdl_string:
-        if (len(name) == 27 and len(parts) >= 4) or re.search(
-            r"(Inc\.?|Ltd\.?|Corp\.?)$", name, re.IGNORECASE
-        ):
-            return name
-
-        if lessor:
-            if len(parts) < 4 and len(name) < 27:
-                return " ".join(parts[1:] + [parts[0]])
-
-            return name
-
-    # Non-lessor names
-
+    # Non-lessor or remaining cases
     if len(parts) == 1:
         return name
+
     return " ".join(parts[1:] + [parts[0]])
 
 
