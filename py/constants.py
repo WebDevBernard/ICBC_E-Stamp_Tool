@@ -6,7 +6,7 @@ import fitz
 # Modular regex patterns
 # -----------------------------
 ICBC_PATTERNS = {
-    "timestamp": re.compile(r"Transaction Timestamp\s*(\d+)"),
+    "timestamp": re.compile(r"Transaction Timestamp\s*(\d{14})"),
     "license_plate": re.compile(
         r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
     ),
