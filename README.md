@@ -35,7 +35,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 - Move the newly created ICBC Copies folder back to your shared drive. Then, in `config.xlsx`, copy that shared drive path into the ICBC E-Stamp and Copy Tool worksheet. Enter the producer name codes and corresponding folder names there as well.
 
-- The `icbc_e-stamp_and_copy_tool` can be installed on each computer that uses ICBC Policy Centre. There is no need to install the `bulk_copy_icbc_tool` on every computer, but keep one copy as a backup in case you need to reset the folder in the future.
+- Put the `icbc_e-stamp_and_copy_tool` along with the `config.xlsx` on each computer that uses ICBC Policy Centre. There is no need to include the `bulk_copy_icbc_tool`, but keep one copy as a backup in case you need to reset the folder in the future.
 
 - Each time someone runs the `icbc_e-stamp_and_copy_tool`, it will stamp the ICBC policy document and back up an unmodified copy to the shared drive.
 
