@@ -27,6 +27,8 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 - Copy your existing ICBC Copies folder from the shared drive to your Desktop. If you do not have a shared folder or have many unidentified policy documents across multiple computers, place all the folders into a single parent directory, then copy that entire folder to your Desktop. The script will scan that directory and all its subfolders. If duplicate files are detected, only the first matching file will be copied.
 
+- If you downloaded my premade exe files, extract the zip and place the `bulk_copy_icbc_tool`, `icbc_e-stamp_and_copy_tool` and `config.xlsx` into a new folder. They just need to be in the same folder, it does not matter where they are located.
+
 - In the `config.xlsx` Excel file, select the Bulk Copy ICBC Tool worksheet and specify the path where you copied the ICBC Copies folder. On the line below, specify the path and folder name where you want the new ICBC Copies folder to be created, preferably on your Desktop so you can easily find it later. Then enter the name codes for all producers, including former producers, along with their corresponding folder names so the script knows how to sort the files.
 
 - Run the `bulk_copy_icbc_tool` to create the new ICBC Copies folder. Always run the tool on an empty directory. This ensures the script uses the cached read data instead of reopening each PDF, which significantly improves speed during the searching and copying process.
@@ -35,7 +37,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 - Move the newly created ICBC Copies folder back to your shared drive. Then, in `config.xlsx`, copy that shared drive path into the ICBC E-Stamp and Copy Tool worksheet. Enter the producer name codes and corresponding folder names there as well.
 
-- Put the `icbc_e-stamp_and_copy_tool` along with the `config.xlsx` on each computer that uses ICBC Policy Centre. There is no need to include the `bulk_copy_icbc_tool`, but keep one copy as a backup in case you need to reset the folder in the future.
+- Put the `icbc_e-stamp_and_copy_tool` along with the `config.xlsx` on each computer that does ICBC Policy Centre transactions. There is no need to include the `bulk_copy_icbc_tool`, but keep one copy as a backup in case you need to reset the folder in the future. Put a shortcut on your Desktop for the `icbc_e-stamp_and_copy_tool` so you can easily access it.
 
 - Each time someone runs the `icbc_e-stamp_and_copy_tool`, it will stamp the ICBC policy document and back up an unmodified copy to the shared drive.
 
