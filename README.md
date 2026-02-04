@@ -25,17 +25,12 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 ## How to Setup
 
-- Copy your existing ICBC copies folder with all your ICBC policy documents from the shared drive to your Desktop.
-
-- Complete the `config.xlsx` Excel sheet. In the Bulk Copy ICBC Tool Worksheet, specify the path where you copied the ICBC copies folder on your Desktop and the path + folder name where you want the new ICBC copies folder (preferably also on your desktop so you can easily locate it). Fill out the name code of all your producers (including any ex-producers) and the corresponding folder name so the script knows how to sort them.
-- Now run the `bulk_copy_icbc_tool` to create the new ICBC copies folder.
-- Always run the `bulk_copy_icbc_tool` on a new empty folder or on a folder that does not yet exist. Doing so ensures the script uses the cached “Read” data instead of reopening each PDF, which greatly improves the speed during the "Searching/Copying" process.
-- If you have multiple computers containing unidentified PDFs or PDFs that the tool has already renamed, place all their folders into a single parent directory. The script will then scan that directory and all its subfolders. If duplicate files are detected, only the first matching file will be copied.
+- Copy your existing ICBC copies folder with all your ICBC policy documents from the shared drive to your Desktop. If you do not have a shared folder or have many identified policy documents on multiple computers, place all their folders into a single parent directory (then copy that entire folder onto your Desktop). The script will then scan that directory and all its subfolders. If duplicate files are detected, only the first matching file will be copied.
+- In the `config.xlsx` Excel sheet, select the Bulk Copy ICBC Tool worksheet and specify the path where you copied the ICBC copies folder and the path + folder name where you want the new ICBC copies folder (preferably also on your Desktop so you can easily locate it afterwards). Then fill out the name code of all your producers (including any ex-producers) and the corresponding folder name so the script knows how to sort them.
+- Now run the `bulk_copy_icbc_tool` to create the new ICBC copies folder. Always run the `bulk_copy_icbc_tool` on an empty directory. Doing so ensures the script uses the cached “Read” data instead of reopening each PDF, which greatly improves its speed during the "Searching/Copying" process.
 - A `log.txt` file is also generated, containing a list of any files that could not be copied, as well as files without a producer two code that were moved.
-- Now move the newly created ICBC copies folder back into your shared drive and in `config.xlsx` copy that pathname into the ICBC E-Stamp and Copy Tool worksheet. Fill out the producer name codes and corresponding folder names as well.
-
-- The `icbc_e-stamp_and_copy_tool` can be placed on each computer that does ICBC Policy Centre.
-- No need to put the `bulk_copy_icbc_tool` on every computer, but keep one as backup in case you ever need to reset the folder.
+- Now move the newly created ICBC copies folder back into your shared drive and in `config.xlsx` copy that pathname on your shared drive into the ICBC E-Stamp and Copy Tool worksheet. Fill out the producer name codes and corresponding folder names as well.
+- The `icbc_e-stamp_and_copy_tool` can be placed on each computer that does ICBC Policy Centre. No need to put the `bulk_copy_icbc_tool` on every computer, but keep one as backup in case you ever need to reset the folder.
 - Now everytime someone runs the `icbc_e-stamp_and_copy_tool` it will stamp the ICBC policy document and backup an unmodified copy into the shared drive.
 
 ## Frequently Asked Questions
