@@ -50,7 +50,7 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 ### Can I restamp using the backup copy? Will it make a copy into the backup folder?
 
-- You can restamp using the backup, just copy the file back into your Downloads folder. The file won't get duplicated in the share folder if it is already there.
+- You can restamp using the backup, just open the pdf and Save As a new file in your Downloads folder. The file won't get duplicated in the shared folder if it is already there.
 
 ### Why are some files copying to the wrong folder when there is no producer two code?
 
