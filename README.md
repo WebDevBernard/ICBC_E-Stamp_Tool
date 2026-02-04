@@ -25,9 +25,9 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 ## How to Setup
 
-- Copy your existing ICBC Copies folder, including all ICBC policy documents, from the shared drive to your Desktop. If you do not have a shared folder or have many unidentified policy documents across multiple computers, place all the folders into a single parent directory, then copy that entire folder to your Desktop. The script will scan that directory and all its subfolders. If duplicate files are detected, only the first matching file will be copied.
+- Copy your existing ICBC Copies folder from the shared drive to your Desktop. If you do not have a shared folder or have many unidentified policy documents across multiple computers, place all the folders into a single parent directory, then copy that entire folder to your Desktop. The script will scan that directory and all its subfolders. If duplicate files are detected, only the first matching file will be copied.
 
-- In the `config.xlsx` Excel file, select the Bulk Copy ICBC Tool worksheet and specify the path where you copied the ICBC Copies folder, as well as the path and folder name where you want the new ICBC Copies folder to be created, preferably on your Desktop so you can easily find it later. Then enter the name codes for all producers, including former producers, along with their corresponding folder names so the script knows how to sort the files.
+- In the `config.xlsx` Excel file, select the Bulk Copy ICBC Tool worksheet and specify the path where you copied the ICBC Copies folder. On the line below, specify the path and folder name where you want the new ICBC Copies folder to be created, preferably on your Desktop so you can easily find it later. Then enter the name codes for all producers, including former producers, along with their corresponding folder names so the script knows how to sort the files.
 
 - Run the `bulk_copy_icbc_tool` to create the new ICBC Copies folder. Always run the tool on an empty directory. This ensures the script uses the cached read data instead of reopening each PDF, which significantly improves speed during the searching and copying process.
 
