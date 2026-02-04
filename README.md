@@ -25,17 +25,17 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 ## How to Setup
 
-- Copy your existing ICBC Copies folder from the shared drive to your Desktop. If you do not have a shared folder but have many unidentified policy documents across multiple computers, place all the folders into a single parent directory, then copy that entire folder to your Desktop. The script will scan that directory and all its subfolders. If duplicate files are detected, only the first matching file will be copied.
+- Copy your existing ICBC Copies folder from the shared drive to your Desktop. If you do not have a shared folder and instead have policy documents saved on multiple computers, copy all PDF files on each computer into a single folder, then place those folders into one main folder and copy that main folder to your Desktop. The script will scan that folder and all subfolders, and if duplicate files are found, only the first matching file will be copied.
 
 - If you downloaded my premade exe files, extract the zip and place the `bulk_copy_icbc_tool`, `icbc_e-stamp_and_copy_tool` and `config.xlsx` into a new folder. They just need to be in the same directory, it does not matter where these files are stored on your computer.
 
-- In the `config.xlsx` Excel file, select the Bulk Copy ICBC Tool worksheet and specify the path where you copied the ICBC Copies folder. On the line below, specify the path and folder name where you want the new ICBC Copies folder to be created, preferably on your Desktop so you can easily find it later. Then enter the name codes for all producers, including former producers, along with their corresponding folder names so the script knows how to sort the files.
+- In the `config.xlsx` Excel file, select the Bulk Copy ICBC Tool worksheet and specify the path (under cell B1) where you copied the ICBC Copies folder. On the line below (under cell B2), specify the path and folder name where you want the new ICBC Copies folder to be created, preferably on your Desktop so you can easily find it later. Then enter the name codes for all producers, including former producers, along with their corresponding folder names so the script knows how to sort the files.
 
 - Run the `bulk_copy_icbc_tool` to create the new ICBC Copies folder. Always run the tool on an empty directory. This ensures the script uses the cached read data instead of reopening each PDF, which significantly improves speed during the copying process.
 
 - A `log.txt` file will also be generated. It contains a list of any files that could not be copied, as well as files without a producer two code that were moved.
 
-- Move the newly created ICBC Copies folder back to your shared drive. Then, in `config.xlsx`, copy that shared drive path into the ICBC E-Stamp and Copy Tool worksheet. Enter the producer name codes and corresponding folder names there as well.
+- Move the newly created ICBC Copies folder back to your shared drive. Then, in `config.xlsx`, copy that shared drive path into the ICBC E-Stamp and Copy Tool worksheet (under cell B1). Enter the producer name codes and corresponding folder names there as well.
 
 - Put the `icbc_e-stamp_and_copy_tool` along with the `config.xlsx` on each computer that does ICBC Policy Centre transactions. There is no need to include the `bulk_copy_icbc_tool`, but keep one copy as a backup in case you need to reset the folder in the future. Make sure to put a shortcut on your Desktop to the `icbc_e-stamp_and_copy_tool` so you can easily access it.
 
@@ -64,7 +64,7 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 - If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called `root/archive/2023/sub1/Bernard Yang - abc123.pdf`, and the file being copied also starts with the same name `Bernard Yang - efg456.pdf`, it will copy that file to `root/sub1/Bernard Yang - efg456.pdf`. For this reason, it is important you do not manually create folders.
 
-- If a CSR mistakenly enters the wrong producer code, just manually move that file to the root folder or correct producer folder. Doing so will prevent the file with the same client name from being copied into that folder.
+- If a CSR mistakenly enters the wrong producer code, just manually move that file to the root folder or correct producer folder. Doing so will prevent future files with the same client name from being copied into that folder.
 
 ### I accidentally put my archive folder into another folder, and now my archive folder has an archive folder?
 
