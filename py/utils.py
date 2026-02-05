@@ -135,7 +135,7 @@ def clean_insured_name(name: str) -> str:
     return name.title()
 
 
-def append_suffixes(base: str, info: dict, allow_change: bool = True) -> str:
+def append_suffixes(base, info, *, show_change_and_cancel=True):
     """Append flags or transaction type to the base name."""
     flags = [
         ("top", "Top"),
@@ -150,13 +150,15 @@ def append_suffixes(base: str, info: dict, allow_change: bool = True) -> str:
 
     for key, suffix in flags:
         if info.get(key, False):
+
+            if not show_change_and_cancel and suffix == "Cancel":
+                break
             return f"{base} - {suffix}" if suffix != "Cancel" else f"{base} {suffix}"
 
     transaction_type = (info.get("transaction_type") or "").strip().title()
     license_plate = (info.get("license_plate") or "").strip().upper()
 
-    # ✅ Only append Change if allowed
-    if allow_change and transaction_type == "Change":
+    if show_change_and_cancel and transaction_type == "Change":
         return f"{base} Change"
 
     if license_plate in ("NONLIC", "DEALER"):
@@ -165,7 +167,7 @@ def append_suffixes(base: str, info: dict, allow_change: bool = True) -> str:
     return base
 
 
-def get_base_name(info: dict) -> str:
+def get_base_name(info):
     license_plate = (info.get("license_plate") or "").strip().upper()
     insured_name = clean_insured_name(info.get("insured_name"))
     transaction_timestamp = info.get("transaction_timestamp") or ""
@@ -179,10 +181,10 @@ def get_base_name(info: dict) -> str:
     else:
         base_name = "UNKNOWN"
 
-    return append_suffixes(base_name, info, allow_change=True)
+    return append_suffixes(base_name, info, show_change_and_cancel=True)
 
 
-def get_stamp_name(info: dict) -> str:
+def get_stamp_name(info):
     license_plate = (info.get("license_plate") or "").strip().upper()
     insured_name = clean_insured_name(info.get("insured_name"))
     transaction_timestamp = info.get("transaction_timestamp") or ""
@@ -196,8 +198,8 @@ def get_stamp_name(info: dict) -> str:
     else:
         stamp_name = "UNKNOWN"
 
-    # ❌ Do NOT allow Change for stamp name
-    return append_suffixes(stamp_name, info, allow_change=False)
+    # ❌ Do NOT show Change or Cancel
+    return append_suffixes(stamp_name, info, show_change_and_cancel=False)
 
 
 def clean_filename(name: str) -> str:
