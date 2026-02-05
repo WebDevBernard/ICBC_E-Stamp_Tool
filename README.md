@@ -62,7 +62,7 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 ### Why are some files copying to the wrong folder when there is no producer two code?
 
-- If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called `root/archive/2023/sub1/Bernard Yang - abc123.pdf`, and the file being copied also starts with the same name `Bernard Yang - efg456.pdf`, it will copy that file to `root/sub1/Bernard Yang - efg456.pdf`. For this reason, it is important you do not manually create folders.
+- If there is no producer two code, the script will try to find a file name with the same client name. If it finds a match it will return that parent subfolder name and append that to the root directory. So if the file is called `root/archive/2023/Bernard/Bernard Yang - ABC123.pdf`, and the file being copied also starts with the same name `Bernard Yang - EFG456.pdf`, it will copy that file to `root/Bernard/Bernard Yang - EFG  456.pdf`. For this reason, it is important you do not manually create folders.
 
 - If a CSR mistakenly enters the wrong producer code, just manually move that file to the root folder or correct producer folder. Doing so will prevent future files with the same client name from being copied into that folder.
 
