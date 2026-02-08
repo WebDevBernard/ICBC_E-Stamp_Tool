@@ -39,7 +39,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 - Put the `icbc_e-stamp_and_copy_tool` along with the `config.xlsx` on each computer that does ICBC Policy Centre transactions. There is no need to include the `bulk_copy_icbc_tool`, but keep one copy as a backup in case you need to reset the folder in the future. Make sure to put a shortcut on your Desktop to the `icbc_e-stamp_and_copy_tool` so you can easily access it.
 
-- Each time someone runs the `icbc_e-stamp_and_copy_tool`, it will stamp the ICBC policy document and back up an unmodified copy to the shared drive.
+- Each time someone runs the `icbc_e-stamp_and_copy_tool`, it will stamp the ICBC policy document to your Desktop and back up an unmodified copy to the shared drive.
 
 ## Frequently Asked Questions
 

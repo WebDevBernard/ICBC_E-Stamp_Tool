@@ -41,6 +41,7 @@ DEFAULTS = {
     "input_dir": str(Path.home() / "Downloads"),
     "copy_with_no_producer_two": True,
     "min_age_to_archive": 1,
+    "ignore_archive": False,
 }
 
 # -------------------- PDF Stamping Functions -------------------- #
@@ -190,6 +191,7 @@ def icbc_e_stamp_tool():
             producer_mapping=producer_mapping,
             regex_patterns=ICBC_PATTERNS,
             page_rects=PAGE_RECTS,
+            ignore_archive=DEFAULTS["ignore_archive"],
         )
         files_without_producer = [
             file for file in copied_files if file.parent == Path(output_folder)

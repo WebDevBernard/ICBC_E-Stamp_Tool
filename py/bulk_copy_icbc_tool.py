@@ -16,6 +16,7 @@ from constants import ICBC_PATTERNS, PAGE_RECTS
 DEFAULTS = {
     "copy_with_no_producer_two": True,
     "min_age_to_archive": 1,
+    "ignore_archive": False,
 }
 
 
@@ -88,6 +89,7 @@ def bulk_copy_icbc_tool():
         producer_mapping=producer_mapping,
         regex_patterns=ICBC_PATTERNS,
         page_rects=PAGE_RECTS,
+        ignore_archive=DEFAULTS["ignore_archive"],
     )
 
     # ------------------- ICBC File Mover -------------------
