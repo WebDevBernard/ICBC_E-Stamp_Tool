@@ -497,6 +497,7 @@ def copy_pdfs(
     producer_mapping=None,
     regex_patterns=None,
     page_rects=None,
+    ignore_archive=True,
 ):
     output_root_dir = Path(output_root_dir)
     producer_mapping = producer_mapping or {}
@@ -530,7 +531,10 @@ def copy_pdfs(
             timestamp_regex = regex_patterns["timestamp"]
             timestamp_rect = page_rects["timestamp"]
 
+            archive_folder = output_root_dir / "_Archive"
             for existing_file in output_root_dir.rglob(f"{prefix_name}*.pdf"):
+                if ignore_archive and archive_folder in existing_file.parents:
+                    continue
                 try:
                     with fitz.open(existing_file) as doc:
                         if doc.page_count > 0:
