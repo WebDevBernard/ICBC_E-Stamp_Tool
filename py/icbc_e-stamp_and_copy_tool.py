@@ -17,6 +17,7 @@ from constants import ICBC_PATTERNS, PAGE_RECTS
 import timeit
 import time
 
+#
 # -------------------- Local Constants -------------------- #
 
 validation_stamp_coords_box_offset = (-4.25, 23.77, 1.58, 58.95)
