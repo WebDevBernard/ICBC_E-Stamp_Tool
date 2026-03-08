@@ -27,17 +27,17 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 - Copy your existing ICBC Copies folder from the shared drive to your Desktop. If you do not have a shared folder and instead have policy documents saved on multiple computers, copy all PDF files on each computer into a single folder, then place those folders into one main folder and copy that main folder to your Desktop. The script will scan that folder and all subfolders, and if duplicate files are found, only the first matching file will be copied.
 
-- If you downloaded my premade exe files, extract the zip and place the `bulk_copy_icbc_tool`, `icbc_e-stamp_and_copy_tool` and `config.xlsx` into a new folder. They just need to be in the same directory, it does not matter where these files are stored on your computer.
+- If you downloaded my premade exe files, extract the zip and place the `create_icbc_folder_tool`, `icbc_e-stamp_and_copy_tool` and `config.xlsx` into a new folder. They just need to be in the same directory, it does not matter where these files are stored on your computer.
 
 - In the `config.xlsx` Excel file, select the Bulk Copy ICBC Tool worksheet and specify the path (under cell B1) where you copied the ICBC Copies folder. On the line below (under cell B2), specify the path and folder name where you want the new ICBC Copies folder to be created, preferably on your Desktop so you can easily find it later. Then enter the name codes for all producers, including former producers, along with their corresponding folder names so the script knows how to sort the files.
 
-- Run the `bulk_copy_icbc_tool` to create the new ICBC Copies folder. Always run the tool on an empty directory. This ensures the script uses the cached read data instead of reopening each PDF, which significantly improves speed during the copying process.
+- Run the `create_icbc_folder_tool` to create the new ICBC Copies folder. Always run the tool on an empty directory. This ensures the script uses the cached read data instead of reopening each PDF, which significantly improves speed during the copying process.
 
 - A `log.txt` file will also be generated. It contains a list of any files that could not be copied, as well as files without a producer two code that were moved.
 
 - Move the newly created ICBC Copies folder back to your shared drive. Then, in `config.xlsx`, copy that shared drive path into the ICBC E-Stamp and Copy Tool worksheet (under cell B1). Enter the producer name codes and corresponding folder names there as well.
 
-- Put the `icbc_e-stamp_and_copy_tool` along with the `config.xlsx` on each computer that does ICBC Policy Centre transactions. There is no need to include the `bulk_copy_icbc_tool`, but keep one copy as a backup in case you need to reset the folder in the future. Make sure to put a shortcut on your Desktop to the `icbc_e-stamp_and_copy_tool` so you can easily access it.
+- Put the `icbc_e-stamp_and_copy_tool` along with the `config.xlsx` on each computer that does ICBC Policy Centre transactions. There is no need to include the `create_icbc_folder_tool`, but keep one copy as a backup in case you need to reset the folder in the future. Make sure to put a shortcut on your Desktop to the `icbc_e-stamp_and_copy_tool` so you can easily access it.
 
 - Each time someone runs the `icbc_e-stamp_and_copy_tool`, it will stamp the ICBC policy document to your Desktop and back up an unmodified copy to the shared drive.
 
@@ -68,7 +68,7 @@ Make sure the path names are correct in the Excel Sheet, `config.xlsx`, and you 
 
 ### I accidentally put my archive folder into another folder, and now my archive folder has an archive folder?
 
-- Welcome to what I call archive hell 🔱🔥. To fix this, simply run the `bulk_copy_icbc_tool` to create a new ICBC copies folder.
+- Welcome to what I call archive hell 🔱🔥. To fix this, simply run the `create_icbc_folder_tool` to create a new ICBC copies folder.
 
 ### How do I create the exe?
 
@@ -87,7 +87,7 @@ pip install -r requirements.txt
 python -m auto_py_to_exe
 ```
 
-3. In the GUI, select the script location under `/py/icbc_e-stamp_and_copy_tool.py` or `/py/bulk_copy_icbc_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico` or `grayscale.ico`. Now select
+3. In the GUI, select the script location under `/py/icbc_e-stamp_and_copy_tool.py` or `/py/create_icbc_folder_tool.py`. Change settings to `One File` and leave settings to `Console Based`. Browse Icon in `/py/icon.ico` or `grayscale.ico`. Now select
    `Convert .PY To .EXE`
 
 4. Fill out the `config.xlsx` Excel sheet found in the `/assets` folder and move it into the same folder as the exe.
