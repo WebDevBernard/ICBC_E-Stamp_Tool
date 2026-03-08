@@ -7,6 +7,8 @@ import fitz
 # -----------------------------
 ICBC_PATTERNS = {
     "timestamp": re.compile(r"Transaction Timestamp\s*(\d{14})"),
+    "certificate_replacement": re.compile(r"Certificate Replacement\s*(\d{14})"),
+    "same_day_re-print": re.compile(r"Same day Re-print\s*(\d{14})"),
     "license_plate": re.compile(
         r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
     ),
@@ -14,7 +16,7 @@ ICBC_PATTERNS = {
         r"Temporary Operation Permit and Owner’s Certificate of Insurance",
         re.IGNORECASE,
     ),
-    "agency_number": re.compile(r"Agency Number\s*[:#]?\s*([A-Z0-9]+)", re.IGNORECASE),
+    "agency_number": re.compile(r"Agency Number\s*[:#]?\s*(\d{5})", re.IGNORECASE),
     "customer_copy": re.compile(r"customer copy", re.IGNORECASE),
     "validation_stamp": re.compile(r"NOT VALID UNLESS STAMPED BY", re.IGNORECASE),
     "time_of_validation": re.compile(r"TIME OF VALIDATION", re.IGNORECASE),
