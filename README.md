@@ -8,14 +8,14 @@ The tool also organizes policy files by producer code, checks for duplicates, an
 
 Download the required files from the latest release:
 
-- 📄 **Config File**
-  https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/config.xlsx
+- 📄 **Config File**  
+  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/config.xlsx)
 
-- 🗂 **Create ICBC Folder Tool**
-  https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/create_icbc_folder_tool.exe
+- 🗂 **Create ICBC Folder Tool**  
+  [create_icbc_folder_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/create_icbc_folder_tool.exe)
 
-- 🏷 **ICBC E-Stamp and Copy Tool**
-  https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/icbc_e-stamp_and_copy_tool.exe
+- 🏷 **ICBC E-Stamp and Copy Tool**  
+  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/icbc_e-stamp_and_copy_tool.exe)
 
 <table align="center">
 <tr>
