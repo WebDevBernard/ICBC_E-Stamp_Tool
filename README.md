@@ -4,19 +4,6 @@ A lightweight tool that automatically detects ICBC policy PDFs, applies the ICBC
 
 The tool also organizes policy files by producer code, checks for duplicates, and maintains an archive of older files.
 
-## Downloads
-
-Download the required files from the latest release:
-
-- 📄 **Config File**  
-  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/config.xlsx)
-
-- 🗂 **Create ICBC Folder Tool**  
-  [create_icbc_folder_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/create_icbc_folder_tool.exe)
-
-- 🏷 **ICBC E-Stamp and Copy Tool**  
-  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/icbc_e-stamp_and_copy_tool.exe)
-
 <table align="center">
 <tr>
 <td><img src="https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/images/redacted_before.png" alt="Unstamped Policy Document"/></td>
@@ -36,6 +23,19 @@ Download the required files from the latest release:
 - 📁 Matches similar files when the producer code is missing by checking existing client names
 - ⏳ Automatically archives files older than one year when the tool runs
 - 🆓 Free to use and share
+
+## Downloads
+
+Download the required files from the latest release:
+
+- 📄 **Config File**  
+  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/config.xlsx)
+
+- 🗂 **Create ICBC Folder Tool**  
+  [create_icbc_folder_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/create_icbc_folder_tool.exe)
+
+- 🏷 **ICBC E-Stamp and Copy Tool**  
+  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/icbc_e-stamp_and_copy_tool.exe)
 
 ## Setup
 
