@@ -316,7 +316,7 @@ def _extract_filename_timestamp(path: Path) -> str | None:
 
 
 def load_excel_mapping(
-    mapping_path: Path | str,
+    mapping_path: Path | str = Path.cwd() / "config.xlsx",
     sheet_name: str = "ICBC E-Stamp and Copy Tool",
     input_folder_row: int | None = None,
     output_folder_row: int | None = 1,
@@ -564,10 +564,22 @@ def scan_icbc_pdfs(
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  Find Existing Timestamps
+#  Stamping Constants
+# ═══════════════════════════════════════════════════════════════════
+
+VALIDATION_STAMP_OFFSET = (-4.25, 23.77, 1.58, 58.95)
+TIME_OF_VALIDATION_OFFSET = (0.0, 10.35, 0.0, 40.0)
+TIME_STAMP_OFFSET = (0.0, 13.0, 0.0, 0.0)
+TIME_OF_VALIDATION_AM_OFFSET = (0.0, -0.6, 0.0, 0.0)
+TIME_OF_VALIDATION_PM_OFFSET = (0.0, 21.2, 0.0, 0.0)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  PDF Stamping Functions
 # ═══════════════════════════════════════════════════════════════════
 
 
+# helper for finding stamped copies in the ICBC Batch folder
 def find_existing_timestamps(
     base_name: str,
     folder_dir: Path | str,
@@ -579,6 +591,83 @@ def find_existing_timestamps(
         for pdf in folder.rglob("*.pdf")
         if _file_key(pdf.stem) == key and (ts := _extract_filename_timestamp(pdf))
     }
+
+
+def validation_stamp(
+    doc: fitz.Document, document: ICBCDocument, ts_dt: datetime
+) -> fitz.Document:
+    for page_num, (x0, y0, x1, y1) in document.validation_stamp_coords:
+        dx0, dy0, dx1, dy1 = VALIDATION_STAMP_OFFSET
+        agency_rect = fitz.Rect(x0 + dx0, y0 + dy0, x1 + dx1, y1 + dy1)
+        date_rect = fitz.Rect(
+            agency_rect.x0 + TIME_STAMP_OFFSET[0],
+            agency_rect.y0 + TIME_STAMP_OFFSET[1],
+            agency_rect.x1 + TIME_STAMP_OFFSET[2],
+            agency_rect.y1 + TIME_STAMP_OFFSET[3],
+        )
+        page = doc[page_num]
+        page.insert_textbox(
+            agency_rect,
+            document.agency_number,
+            fontname="spacembo",
+            fontsize=9,
+            align=1,
+        )
+        page.insert_textbox(
+            date_rect,
+            ts_dt.strftime("%b %d, %Y"),
+            fontname="spacemo",
+            fontsize=9,
+            align=1,
+        )
+    return doc
+
+
+def stamp_time_of_validation(
+    doc: fitz.Document, document: ICBCDocument, ts_dt: datetime
+) -> fitz.Document:
+    am_pm_offset = (
+        TIME_OF_VALIDATION_AM_OFFSET
+        if ts_dt.hour < 12
+        else TIME_OF_VALIDATION_PM_OFFSET
+    )
+    for page_num, (x0, y0, x1, y1) in document.time_of_validation_coords:
+        dx0, dy0, dx1, dy1 = TIME_OF_VALIDATION_OFFSET
+        dx0 += am_pm_offset[0]
+        dy0 += am_pm_offset[1]
+        time_rect = fitz.Rect(x0 + dx0, y0 + dy0, x1 + dx1, y1 + dy1)
+        doc[page_num].insert_textbox(
+            time_rect, ts_dt.strftime("%I:%M"), fontname="helv", fontsize=6, align=2
+        )
+    return doc
+
+
+def save_batch_copy(
+    doc: fitz.Document, document: ICBCDocument, output_folder: Path
+) -> Path:
+    batch_dir = output_folder / "ICBC Batch Copies"
+    batch_dir.mkdir(parents=True, exist_ok=True)
+    dest = unique_file_path(
+        batch_dir / f"{document.base_name()} [{document.transaction_timestamp}].pdf"
+    )
+    doc.save(dest, garbage=4, deflate=True)
+    return dest
+
+
+def save_customer_copy(
+    doc: fitz.Document, document: ICBCDocument, output_folder: Path
+) -> Path:
+    customer_pages = list(document.customer_copy_pages)
+    if document.top and (doc.page_count - 1) not in customer_pages:
+        customer_pages.append(doc.page_count - 1)
+    pages_to_delete = [i for i in range(doc.page_count) if i not in customer_pages]
+    for page_num in reversed(pages_to_delete):
+        doc.delete_page(page_num)
+    dest = unique_file_path(
+        output_folder / f"{document.stamp_name()} (Customer Copy).pdf"
+    )
+    doc.save(dest, garbage=4, deflate=True)
+    return dest
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -596,8 +685,6 @@ def copy_pdfs(
     prod_map = producer_mapping or {}
     archive_folder = output_root / "_Archive"
 
-    # Pre-build an index of (prefix_key → set[timestamp]) from all existing
-    # PDFs in the output root. Replaces per-document rglob (was O(n²)).
     existing_index: dict[str, set[str]] = {}
     for existing in output_root.rglob("*.pdf"):
         if ignore_archive and archive_folder in existing.parents:
@@ -626,7 +713,6 @@ def copy_pdfs(
         if dedup_key in seen:
             continue
 
-        # O(1) index lookup instead of rglob per document
         prefix_key = prefix_name.lower()
         if timestamp in existing_index.get(prefix_key, set()):
             continue
@@ -638,7 +724,6 @@ def copy_pdfs(
             shutil.copy2(src, dest_file)
             copied.append(dest_file)
             seen.add(dedup_key)
-            # Keep index consistent for remaining iterations in this run
             existing_index.setdefault(prefix_key, set()).add(timestamp)
         except Exception as e:
             print(f"Failed to copy '{src.name}': {e}")
@@ -750,7 +835,7 @@ def auto_archive(
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  Reincrement PDFs
+#  Reincrement PDFs (Old implemention, this will unlikely run)
 # ═══════════════════════════════════════════════════════════════════
 
 
