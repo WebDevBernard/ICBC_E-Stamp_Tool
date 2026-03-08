@@ -41,7 +41,6 @@ def create_icbc_folder_tool():
 
     # ---- Load config ------------------------------------------------
     mapping = load_excel_mapping(
-        mapping_path,
         sheet_name="Create ICBC Folder Tool",
         input_folder_row=1,
         output_folder_row=2,
