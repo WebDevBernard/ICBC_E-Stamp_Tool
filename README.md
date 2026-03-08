@@ -2,13 +2,13 @@
 
 ## Downloads
 
-Download the required files from the latest release:
+Download the required files from the latest release v(1.0.1):
 
 - 📄 **Config File**  
-  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/config.xlsx)
+  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/V1.0.1/config.xlsx)
 
 - 🏷 **ICBC E-Stamp Tool**  
-  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/icbc_e-stamp_tool.exe)
+  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/V1.0.1/icbc_e-stamp_and_copy_tool.exe)
 
 ## Summary
 

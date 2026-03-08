@@ -1,0 +1,5 @@
+{
+  "Endpoint": "https://wus.codesigning.azure.net/",
+  "CodeSigningAccountName": "bernard-yang",
+  "CertificateProfileName": "codesign-profile"
+}
