@@ -43,7 +43,7 @@ Download the required files from the latest release:
 
 2. If files exist on multiple computers, collect all PDFs into folders and place those folders inside one main folder. Copy that main folder to your Desktop.
 
-3. Create a new folder and place the following files inside it:
+3. Create a new folder on your Desktop (or any location) and place the following files inside it:
    - `create_icbc_folder_tool.exe`
    - `icbc_e-stamp_and_copy_tool.exe`
    - `config.xlsx`
