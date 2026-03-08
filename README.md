@@ -29,7 +29,7 @@ This script offers a one-click solution to apply a digital validation stamp to m
 
 - If you downloaded my premade exe files, extract the zip and place the `create_icbc_folder_tool`, `icbc_e-stamp_and_copy_tool` and `config.xlsx` into a new folder. They just need to be in the same directory, it does not matter where these files are stored on your computer.
 
-- In the `config.xlsx` Excel file, select the Bulk Copy ICBC Tool worksheet and specify the path (under cell B1) where you copied the ICBC Copies folder. On the line below (under cell B2), specify the path and folder name where you want the new ICBC Copies folder to be created, preferably on your Desktop so you can easily find it later. Then enter the name codes for all producers, including former producers, along with their corresponding folder names so the script knows how to sort the files.
+- In the `config.xlsx` Excel file, select the Create ICBC Folder Tool worksheet and specify the path (under cell B1) where you copied the ICBC Copies folder. On the line below (under cell B2), specify the path and folder name where you want the new ICBC Copies folder to be created, preferably on your Desktop so you can easily find it later. Then enter the name codes for all producers, including former producers, along with their corresponding folder names so the script knows how to sort the files.
 
 - Run the `create_icbc_folder_tool` to create the new ICBC Copies folder. Always run the tool on an empty directory. This ensures the script uses the cached read data instead of reopening each PDF, which significantly improves speed during the copying process.
 
