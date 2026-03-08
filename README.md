@@ -2,7 +2,7 @@
 
 ## Downloads
 
-Download the required files from the latest release v(1.0.1):
+Download the required files from the latest release (v1.0.1):
 
 - 📄 **Config File**  
   [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/V1.0.1/config.xlsx)
