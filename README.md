@@ -1,8 +1,21 @@
 <h1 align="center">ICBC E-Stamp Tool</h1>
 
-A lightweight tool that automatically detects ICBC policy PDFs, applies the ICBC digital validation stamp, and backs up the original file to a structured shared folder.
+## Downloads
 
-The tool also organizes policy files by producer code, checks for duplicates, and maintains an archive of older files.
+Download the required files from the latest release:
+
+- 📄 **Config File**  
+  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/config.xlsx)
+
+- 🗂 **Create ICBC Folder Tool**  
+  [create_icbc_folder_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/create_icbc_folder_tool.exe)
+
+- 🏷 **ICBC E-Stamp and Copy Tool**  
+  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/icbc_e-stamp_and_copy_tool.exe)
+
+## Summary
+
+A lightweight tool that automatically detects ICBC policy document PDFs, applies the digital validation stamp, and backs up the original file to a shared folder.
 
 <table align="center">
 <tr>
@@ -23,19 +36,6 @@ The tool also organizes policy files by producer code, checks for duplicates, an
 - 📁 Matches similar files when the producer code is missing by checking existing client names
 - ⏳ Automatically archives files older than one year when the tool runs
 - 🆓 Free to use and share
-
-## Downloads
-
-Download the required files from the latest release:
-
-- 📄 **Config File**  
-  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/config.xlsx)
-
-- 🗂 **Create ICBC Folder Tool**  
-  [create_icbc_folder_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/create_icbc_folder_tool.exe)
-
-- 🏷 **ICBC E-Stamp and Copy Tool**  
-  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/icbc_e-stamp_and_copy_tool.exe)
 
 ## Setup
 
@@ -137,7 +137,7 @@ The tool will place the new file in:
 
 `root/Bernard/Steve Smith - EFG456.pdf`
 
-Do not manually create folders inside the structure.
+Do not manually create folders inside the shared backup folder.
 
 If a producer code was entered incorrectly, move the file to the correct folder manually.
 
