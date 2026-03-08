@@ -77,8 +77,10 @@ class PageRects(TypedDict, total=False):
 
 @dataclass
 class FolderMapping:
-    input_folder: Path | None
+    tool_event: str | None
+    copy_input_folder: Path | None
     output_folder: Path | None
+    stamp_input_folder: Path | None
     agency_number: str | None = None
     producer_mapping: dict[str, str] = field(default_factory=dict)
 
@@ -317,14 +319,16 @@ def _extract_filename_timestamp(path: Path) -> str | None:
 
 def load_excel_mapping(
     mapping_path: Path | str = Path.cwd() / "config.xlsx",
-    sheet_name: str = "ICBC E-Stamp and Copy Tool",
-    input_folder_row: int | None = None,
-    output_folder_row: int | None = 1,
-    agency_number_row: int | None = 2,
+    sheet_name: str = "Config",
 ) -> FolderMapping:
     mapping_path = Path(mapping_path)
     if not mapping_path.exists():
-        return FolderMapping(input_folder=None, output_folder=None)
+        return FolderMapping(
+            tool_event="ICBC E-Stamp and Copy Tool",
+            copy_input_folder=None,
+            output_folder=None,
+            stamp_input_folder=None,
+        )
 
     wb = openpyxl.load_workbook(mapping_path)
     if sheet_name not in wb.sheetnames:
@@ -343,14 +347,16 @@ def load_excel_mapping(
 
     producer_mapping = {
         str(row[0]).upper(): str(row[1])
-        for row in ws.iter_rows(min_row=4, values_only=True)
+        for row in ws.iter_rows(min_row=18, values_only=True)
         if row[0] and row[1]
     }
 
     return FolderMapping(
-        input_folder=_read_path(input_folder_row) if input_folder_row else None,
-        output_folder=_read_path(output_folder_row) if output_folder_row else None,
-        agency_number=_read_str(agency_number_row) if agency_number_row else None,
+        tool_event=_read_str(3),  # B3
+        copy_input_folder=_read_path(7),  # B7
+        output_folder=_read_path(9),  # B9
+        stamp_input_folder=_read_path(13),  # B13
+        agency_number=_read_str(15),  # B15
         producer_mapping=producer_mapping,
     )
 
@@ -409,8 +415,6 @@ def _extract_stamping_fields(
     time_of_validation_coords: list[tuple] = []
 
     for page_num, page in enumerate(doc):
-        # Cache get_text() per page to avoid calling it twice (once for
-        # customer_copy check, once for blocks) on the same page object
         page_text = page.get_text()
         if _search(patterns, "customer_copy", page_text):
             customer_copy_pages.append(page_num)
@@ -477,7 +481,6 @@ def scan_icbc_pdfs(
     payment_plans: list[Path] = []
     unreadable: list[Path] = []
 
-    # Cache stat() results from the sort so auto_archive doesn't re-stat later
     pdfs_with_mtime = [(f, f.stat().st_mtime) for f in input_dir.rglob("*.pdf")]
     pdfs = [f for f, _ in sorted(pdfs_with_mtime, key=lambda x: x[1], reverse=True)]
     if max_docs:
@@ -490,7 +493,6 @@ def scan_icbc_pdfs(
                     non_icbc.append(pdf_path)
                     continue
 
-                # Cache all get_text() calls on page 0 to avoid redundant reads
                 _text_cache: dict[str | None, str] = {}
 
                 def _page_text(clip_name: str | None = None) -> str:
@@ -557,7 +559,7 @@ def scan_icbc_pdfs(
                 documents[pdf_path] = document
 
         except Exception as e:
-            print(f"⚠️  Error processing {pdf_path.name}: {e}")
+            print(f"Error processing {pdf_path.name}: {e}")
             unreadable.append(pdf_path)
 
     return ScanResult(documents, non_icbc, payment_plans, unreadable)
@@ -579,7 +581,6 @@ TIME_OF_VALIDATION_PM_OFFSET = (0.0, 21.2, 0.0, 0.0)
 # ═══════════════════════════════════════════════════════════════════
 
 
-# helper for finding stamped copies in the ICBC Batch folder
 def find_existing_timestamps(
     base_name: str,
     folder_dir: Path | str,
@@ -695,7 +696,7 @@ def copy_pdfs(
             existing_index.setdefault(key, set()).add(ts)
 
     copied: list[Path] = []
-    seen: set[tuple[str, str]] = set()  # (prefix_name, transaction_timestamp)
+    seen: set[tuple[str, str]] = set()
 
     pdf_items = list(reversed(list(documents.items())))
 
@@ -835,7 +836,7 @@ def auto_archive(
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  Reincrement PDFs (Old implemention, this will unlikely run)
+#  Reincrement PDFs
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -855,7 +856,6 @@ def reincrement_pdfs(root_dir: Path | str) -> None:
             groups[base].append((int(num_match.group(1)) if num_match else 0, pdf))
 
         for base, entries in groups.items():
-            # Skip groups with a single, already-correctly-named file
             if len(entries) == 1 and entries[0][0] == 0:
                 continue
             for i, (_, pdf) in enumerate(sorted(entries)):
@@ -866,3 +866,45 @@ def reincrement_pdfs(root_dir: Path | str) -> None:
 
         if folder != root and not any(folder.iterdir()):
             folder.rmdir()
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  ICBC Patterns & Page Rects
+# ═══════════════════════════════════════════════════════════════════
+
+ICBC_PATTERNS: RegexPatterns = {
+    "timestamp": re.compile(r"Transaction Timestamp\s*(\d{14})"),
+    "certificate_replacement": re.compile(r"Certificate Replacement\s*(\d{14})"),
+    "same_day_re-print": re.compile(r"Same day Re-print\s*(\d{14})"),
+    "license_plate": re.compile(
+        r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
+    ),
+    "temporary_operation_permit": re.compile(
+        r"Temporary Operation Permit and Owner's Certificate of Insurance",
+        re.IGNORECASE,
+    ),
+    "agency_number": re.compile(r"Agency Number\s*[:#]?\s*(\d{5})", re.IGNORECASE),
+    "customer_copy": re.compile(r"customer copy", re.IGNORECASE),
+    "validation_stamp": re.compile(r"NOT VALID UNLESS STAMPED BY", re.IGNORECASE),
+    "time_of_validation": re.compile(r"TIME OF VALIDATION", re.IGNORECASE),
+    "producer": re.compile(r"-\s*([A-Za-z]+)\s*-", re.IGNORECASE),
+    "transaction_type": re.compile(r"Transaction Type\s+([A-Z]+)", re.IGNORECASE),
+    "cancellation": re.compile(r"Application for Cancellation"),
+    "storage_policy": re.compile(r"Storage Policy"),
+    "rental_vehicle_policy": re.compile(r"Rental Vehicle Policy"),
+    "special_risk_own_damage_policy": re.compile(r"Special Risk Own Damage Policy"),
+    "garage_vehicle_certificate": re.compile(r"Garage Vehicle Certificate"),
+    "payment_plan": re.compile(r"Payment Plan Agreement"),
+    "payment_plan_receipt": re.compile(r"Payment Plan Receipt"),
+    "manuscript": re.compile(r"Manuscript Certificate/Manuscript Policy"),
+    "binder": re.compile(r"Binder for Owner's Interim Certificate of Insurance"),
+    "has_bcdl": re.compile(
+        r"Owner's BC Driver's Licence Number(?:\s+(\*{4,5}\d{3}))?", re.IGNORECASE
+    ),
+}
+
+PAGE_RECTS: PageRects = {
+    "timestamp": fitz.Rect(409.979, 63.8488, 576.0, 83.7455),
+    "producer": fitz.Rect(198.0, 752.729736328125, 255.011, 769.977),
+    "customer_copy": fitz.Rect(498.438, 751.953, 578.181, 769.977),
+}
