@@ -319,7 +319,7 @@ def _extract_filename_timestamp(path: Path) -> str | None:
 
 def load_excel_mapping(
     mapping_path: Path | str = Path.cwd() / "config.xlsx",
-    sheet_name: str = "Config",
+    sheet_name: str = "config",
 ) -> FolderMapping:
     mapping_path = Path(mapping_path)
     if not mapping_path.exists():
@@ -331,11 +331,17 @@ def load_excel_mapping(
         )
 
     wb = openpyxl.load_workbook(mapping_path)
-    if sheet_name not in wb.sheetnames:
+
+    sheet_name_resolved = next(
+        (s for s in wb.sheetnames if s.casefold() == sheet_name.casefold()),
+        None,
+    )
+    if sheet_name_resolved is None:
         raise ValueError(
             f"Sheet '{sheet_name}' not found. Available sheets: {wb.sheetnames}"
         )
-    ws = wb[sheet_name]
+
+    ws = wb[sheet_name_resolved]
 
     def _read_path(row: int) -> Path | None:
         val = ws.cell(row=row, column=2).value
