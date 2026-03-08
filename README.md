@@ -174,12 +174,9 @@ In the GUI:
    - Console Based
 
 3. Optional icon:
-   - `/py/icon.ico`
-   - `/py/grayscale.ico`
+   - Pick an icon.ico
 
 4. Click **Convert .PY to .EXE**
-
-Move `config.xlsx` from the `/assets` folder into the same directory as the executable.
 
 ## How the Tool Detects ICBC Policy PDFs
 
