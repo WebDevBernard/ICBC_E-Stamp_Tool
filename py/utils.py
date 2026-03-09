@@ -889,7 +889,7 @@ ICBC_PATTERNS: RegexPatterns = {
         r"Temporary Operation Permit and Owner's Certificate of Insurance",
         re.IGNORECASE,
     ),
-    "agency_number": re.compile(r"Agency Number\s*[:#]?\s*(\d{5})", re.IGNORECASE),
+    "agency_number": re.compile(r"Agency Number\s*[:#]?\s*(\d{1,6})", re.IGNORECASE),
     "customer_copy": re.compile(r"customer copy", re.IGNORECASE),
     "validation_stamp": re.compile(r"NOT VALID UNLESS STAMPED BY", re.IGNORECASE),
     "time_of_validation": re.compile(r"TIME OF VALIDATION", re.IGNORECASE),
