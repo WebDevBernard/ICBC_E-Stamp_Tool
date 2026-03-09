@@ -78,7 +78,7 @@ def icbc_e_stamp_tool() -> None:
     # ── Load Excel mapping
     mapping = load_excel_mapping()
     input_folder: Path = Path.home() / "Downloads"
-    COPY_OUTPUT_FOLDER: Path = mapping.output_folder
+    COPY_OUTPUT_FOLDER: Path = mapping.e_stamp_output_folder
     producer_mapping = mapping.producer_mapping
     copy_mode = bool(COPY_OUTPUT_FOLDER and COPY_OUTPUT_FOLDER.exists())
 
@@ -200,7 +200,7 @@ def create_icbc_folder_tool() -> None:
     # ── Load config
     mapping = load_excel_mapping()
     input_folder = mapping.copy_input_folder
-    output_folder = mapping.output_folder
+    output_folder = mapping.create_folder_tool_output_folder
     producer_mapping = mapping.producer_mapping
 
     # ── Validate folders

@@ -126,8 +126,8 @@ class PageRects(TypedDict, total=False):
 class FolderMapping:
     tool_event: str | None
     copy_input_folder: Path | None
-    output_folder: Path | None
-    stamp_input_folder: Path | None
+    create_folder_tool_output_folder: Path | None
+    e_stamp_output_folder: Path | None
     agency_number: str | None = None
     producer_mapping: dict[str, str] = field(default_factory=dict)
 
@@ -379,8 +379,8 @@ def load_excel_mapping(
         return FolderMapping(
             tool_event="ICBC E-Stamp and Copy Tool",
             copy_input_folder=None,
-            output_folder=None,
-            stamp_input_folder=None,
+            create_folder_tool_output_folder=None,
+            e_stamp_output_folder=None,
         )
 
     wb = openpyxl.load_workbook(mapping_path)
@@ -413,8 +413,8 @@ def load_excel_mapping(
     return FolderMapping(
         tool_event=_read_str(3),
         copy_input_folder=_read_path(7),
-        output_folder=_read_path(9),
-        stamp_input_folder=_read_path(13),
+        create_folder_tool_output_folder=_read_path(9),
+        e_stamp_output_folder=_read_path(13),
         agency_number=_read_str(15),
         producer_mapping=producer_mapping,
     )
