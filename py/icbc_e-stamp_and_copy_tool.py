@@ -150,7 +150,7 @@ def icbc_e_stamp_tool() -> None:
     # ── Stage 3: Copy → Excel folder
     copied_files = []
     if copy_mode:
-        copied_files = copy_pdfs(
+        copied_files, _ = copy_pdfs(
             documents=scan.documents,
             output_root_dir=COPY_OUTPUT_FOLDER,
             producer_mapping=producer_mapping,
@@ -175,7 +175,7 @@ def icbc_e_stamp_tool() -> None:
             reincrement_pdfs(root_dir=COPY_OUTPUT_FOLDER)
     else:
         print(
-            f"\nNo ICBC Copies folder found — skipping copy step."
+            f"No ICBC Copies folder found — skipping copy step."
             f"\nTo enable copying, set a valid output folder path in B13 of config.xlsx."
         )
 
@@ -195,11 +195,12 @@ def icbc_e_stamp_tool() -> None:
 def create_icbc_folder_tool() -> None:
     print("Create ICBC Copies Folder Tool\n")
     _require_config()
+    start_total = timeit.default_timer()
 
     # ── Load config
     mapping = load_excel_mapping()
-    input_folder = mapping.copy_input_folder  # B7
-    output_folder = mapping.output_folder  # B9
+    input_folder = mapping.copy_input_folder
+    output_folder = mapping.output_folder
     producer_mapping = mapping.producer_mapping
 
     # ── Validate folders
@@ -239,7 +240,7 @@ def create_icbc_folder_tool() -> None:
     )
 
     # ── Copy
-    copied_files = copy_pdfs(
+    copied_files, duplicate_files = copy_pdfs(
         documents=scan.documents,
         output_root_dir=output_folder,
         producer_mapping=producer_mapping,
@@ -283,11 +284,18 @@ def create_icbc_folder_tool() -> None:
             log.writelines(f"{p}\n" for p in scan.unreadable)
             log.write("\n")
 
+        if duplicate_files:
+            log.write("=== Duplicate PDFs (already exist in output folder) ===\n")
+            log.writelines(f"{p}\n" for p in duplicate_files)
+            log.write("\n")
+
         if matched_files:
             log.write("=== ICBC PDFs matched to a producer subfolder ===\n")
             log.writelines(f"{p}\n" for p in matched_files)
 
     print(f"\nLog saved to: {log_path}")
+    elapsed = timeit.default_timer() - start_total
+    print(f"Total execution time: {elapsed:.2f} seconds")
     _countdown(3)
 
 
