@@ -664,7 +664,6 @@ def scan_icbc_pdfs(
     non_icbc: list[Path] = []
     payment_plans: list[Path] = []
     unreadable: list[Path] = []
-    errors: list[str] = []
 
     workers = min(8, (os.cpu_count() or 1) * 2)
 
@@ -683,14 +682,8 @@ def scan_icbc_pdfs(
                 payment_plans.append(path)
             else:
                 unreadable.append(path)
-                if error:
-                    errors.append(f"  {path.name}: {error}")
 
     print(flush=True)
-
-    if errors:
-        print("Unreadable PDFs:")
-        print("\n".join(errors))
 
     mtime_order = {p: i for i, p in enumerate(pdfs)}
     documents = dict(sorted(documents.items(), key=lambda kv: mtime_order[kv[0]]))
