@@ -36,54 +36,61 @@ A lightweight tool that automatically detects ICBC policy document PDFs, applies
 
 ## Setup
 
-### First-Time Setup — Create ICBC Copies Folder
+### First-Time Setup — Create ICBC Copies Folder Tool
 
 1. Copy your existing **ICBC Copies** folder from the shared drive to your Desktop.
 
-2. If files exist on multiple computers, collect all PDFs into folders and place those folders inside one main folder. Copy that main folder to your Desktop.
-   _(This step is only if you do not have an existing shared folders or you have many unidentified pdfs)_
-
-3. Create a new folder (on your Desktop or any location) and place the following files inside it:
+2. Create a new folder (on your Desktop or any location) and place the following files inside it:
    - `icbc_e-stamp_and_copy_tool.exe`
    - `config.xlsx`
 
-4. Open **config.xlsx** and go to the **Config** worksheet.
+3. Open **config.xlsx** and go to the **Config** worksheet.
 
-5. Set **Event B3** to: `Create ICBC Copies Folder Tool`
+4. Set **B3** to: `Create ICBC Copies Folder Tool`
 
-6. Fill in the following cells:
+5. Fill in the following cells:
    - **B7** — path to the copied ICBC Copies folder (input)
    - **B9** — path where the new ICBC Copies folder should be created (output)
    - **A18 / B18 onwards** — producer codes and folder names (including ex-CSRs and ex-producers)
 
-7. Run `icbc_e-stamp_tool.exe`.
+6. Run `icbc_e-stamp_tool.exe`.
 
-8. The tool creates a new **ICBC Copies** folder and a `log.txt` file listing:
+7. The tool creates a new **ICBC Copies** folder and a `log.txt` file listing:
    - files that could not be copied
    - files without a producer code
 
-9. Move the new ICBC Copies folder back to the shared drive.
+8. Move the new ICBC Copies folder back to the shared drive.
 
 ---
 
 ### Daily Use — ICBC E-Stamp and Copy Tool
 
-10. In **config.xlsx**, set **Event B3** back to: `ICBC E-Stamp and Copy Tool`  
-    _(This is the default — if B3 is blank or config.xlsx is missing, the tool runs this mode automatically.)_
+9. In **config.xlsx**, set **B3** back to: `ICBC E-Stamp and Copy Tool`  
+   _(This is the default — if B3 is blank or config.xlsx is missing, the tool runs this mode automatically.)_
 
-11. Fill in the following cells:
+10. Fill in the following cells:
     - **B13** — Path to the shared ICBC copies folder created in Step 9
     - **B15** — Agency Number used for Certificate Replacement and Same Day Reprint
 
-12. Place `icbc_e-stamp_and_copy_tool.exe` and `config.xlsx` on each computer that processes ICBC transactions.
+11. Place `icbc_e-stamp_and_copy_tool.exe` and `config.xlsx` on each computer that processes ICBC transactions.
 
-13. Create a Desktop shortcut to `icbc_e-stamp_and_copy_tool.exe`.
+12. Create a Desktop shortcut to `icbc_e-stamp_and_copy_tool.exe`.
 
-14. Each time the tool runs:
+13. Each time the tool runs:
     - the policy PDF in Downloads is stamped
     - an unmodified copy is backed up to the shared drive
 
 ---
+
+### Additional Usage - Create ICBC Copies Folder Tool (copying older files to shared folder)
+
+14. The ICBC E-Stamp Tool checks only the last 10 modified PDFs. Use the Create ICBC Copies Folder Tool to catch any files missed — useful if a computer processes walk-ins only, or if a CSR forgot to run the tool. Fill in the following cells:
+    - **B7** — path to the Downloads folder (input)
+    - **B9** — path to your shared backup folder (output)
+
+15. Set **B3** to: `Create ICBC Copies Folder Tool`. Then run icbc_e-stamp_and_copy_tool.exe.
+
+16. Remember to set **B3** back to: `ICBC E-Stamp and Copy Tool`
 
 ## Frequently Asked Questions
 
