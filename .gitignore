@@ -10,6 +10,8 @@ __pycache__/
 *$py.class
 /py/log.txt
 
+AzureSignFile.txt
+SignfileMetadata.json
 config.xlsx
 /py/ICBC E-Stamp Copies
 /py/log.txt

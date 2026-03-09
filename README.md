@@ -7,7 +7,7 @@ Download the required files from the latest release (v1.0.1):
 - 📄 **Config File**  
   [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/V1.0.1/config.xlsx)
 
-- 🏷 **ICBC E-Stamp Tool**  
+- 🏷 **ICBC E-Stamp and Copy Tool**  
   [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/V1.0.1/icbc_e-stamp_and_copy_tool.exe)
 
 ## Summary
@@ -36,7 +36,7 @@ A lightweight tool that automatically detects ICBC policy document PDFs, applies
 
 ## Setup
 
-### First-Time Setup — Build the ICBC Copies Folder
+### First-Time Setup — Create ICBC Copies Folder
 
 1. Copy your existing **ICBC Copies** folder from the shared drive to your Desktop.
 

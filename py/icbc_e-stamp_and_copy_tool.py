@@ -1,6 +1,7 @@
 import fitz
 import timeit
 import time
+import openpyxl
 from pathlib import Path
 from datetime import datetime
 import sys
@@ -44,11 +45,27 @@ def _countdown(seconds: int) -> None:
     print()
 
 
+def _require_config() -> None:
+    mapping_path = Path.cwd() / "config.xlsx"
+    if not mapping_path.exists():
+        return
+
+    wb = openpyxl.load_workbook(mapping_path, read_only=True)
+    if not any(s.casefold() == "config" for s in wb.sheetnames):
+        print(f"Missing 'config' sheet in '{mapping_path}'")
+        print(f"Available sheets: {wb.sheetnames}")
+        print("Please ensure 'config.xlsx' contains a sheet named 'config'.")
+        _countdown(7)
+        print("Done.")
+        sys.exit(1)
+
+
 # ────────────── ICBC E-Stamp and Copy Tool ────────────── #
 
 
 def icbc_e_stamp_tool() -> None:
     print("ICBC E-Stamp and Copy Tool\n")
+    _require_config()
     start_total = timeit.default_timer()
 
     # ── Define Desktop stamping folder
@@ -177,14 +194,7 @@ def icbc_e_stamp_tool() -> None:
 
 def create_icbc_folder_tool() -> None:
     print("Create ICBC Copies Folder Tool\n")
-
-    mapping_path = Path.cwd() / "config.xlsx"
-    if not mapping_path.exists():
-        print(f"Missing configuration file: '{mapping_path}'")
-        print("Please create or place 'config.xlsx' in the current working directory.")
-        _countdown(7)
-        print("Done.")
-        sys.exit(1)
+    _require_config()
 
     # ── Load config
     mapping = load_excel_mapping()
@@ -284,6 +294,7 @@ def create_icbc_folder_tool() -> None:
 # ────────────── Dispatcher ────────────── #
 
 if __name__ == "__main__":
+    _require_config()
     mapping = load_excel_mapping()
     event = (mapping.tool_event or "").strip()
 
