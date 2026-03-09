@@ -696,7 +696,8 @@ def copy_pdfs(
     for existing in output_root.rglob("*.pdf"):
         if ignore_archive and archive_folder in existing.parents:
             continue
-        key = existing.stem.split(" - ", 1)[0].strip().lower()
+        stem_no_ts = _RE_FILENAME_TS.sub("", existing.stem).strip()  # strip [timestamp]
+        key = stem_no_ts.split(" - ", 1)[0].strip().lower()
         ts = _extract_filename_timestamp(existing)
         if ts:
             existing_index.setdefault(key, set()).add(ts)
@@ -886,7 +887,7 @@ ICBC_PATTERNS: RegexPatterns = {
         r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
     ),
     "temporary_operation_permit": re.compile(
-        r"Temporary Operation Permit and Owner's Certificate of Insurance",
+        r"Temporary Operation Permit and Owner['\u2019]s Certificate of Insurance",
         re.IGNORECASE,
     ),
     "agency_number": re.compile(r"Agency Number\s*[:#]?\s*(\d{1,6})", re.IGNORECASE),
@@ -903,9 +904,12 @@ ICBC_PATTERNS: RegexPatterns = {
     "payment_plan": re.compile(r"Payment Plan Agreement"),
     "payment_plan_receipt": re.compile(r"Payment Plan Receipt"),
     "manuscript": re.compile(r"Manuscript Certificate/Manuscript Policy"),
-    "binder": re.compile(r"Binder for Owner's Interim Certificate of Insurance"),
+    "binder": re.compile(
+        r"Binder for Owner['\u2019]s Interim Certificate of Insurance"
+    ),
     "has_bcdl": re.compile(
-        r"Owner's BC Driver's Licence Number(?:\s+(\*{4,5}\d{3}))?", re.IGNORECASE
+        r"Owner['\u2019]s BC Driver['\u2019]s Licence Number(?:\s+(\*{4,5}\d{3}))?",
+        re.IGNORECASE,
     ),
 }
 
