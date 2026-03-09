@@ -9,6 +9,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 /py/log.txt
+.pytest_cache/
 
 AzureSignFile.txt
 SignfileMetadata.json
