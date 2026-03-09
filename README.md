@@ -178,11 +178,11 @@ python -m auto_py_to_exe
 
 In the GUI:
 
-1. Select the script: `/py/main.py`
+1. Select the script: `/py/icbc_e-stamp_and_copy_tool.py`
 2. Settings:
    - One File
    - Console Based
-3. Optional: pick an `icon.ico`
+3. Optional: download `icon.ico` from github
 4. Click **Convert .PY to .EXE**
 
 ---

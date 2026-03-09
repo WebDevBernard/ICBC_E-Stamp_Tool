@@ -144,7 +144,7 @@ def icbc_e_stamp_tool() -> None:
 
     if stamped_counter > 0:
         print(
-            "\n\033[1m\033[4m Stamping complete! ICBC E-Stamp Copies folder is ready now!\033[0m\n"
+            "\n\033[1m\033[4mStamping complete! ICBC E-Stamp Copies folder is ready now!\033[0m\n"
         )
 
     # ── Stage 3: Copy → Excel folder
@@ -287,7 +287,7 @@ def create_icbc_folder_tool() -> None:
             log.write("=== ICBC PDFs matched to a producer subfolder ===\n")
             log.writelines(f"{p}\n" for p in matched_files)
 
-    print(f"\n Log saved to: {log_path}")
+    print(f"\nLog saved to: {log_path}")
     _countdown(3)
 
 
