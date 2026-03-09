@@ -686,7 +686,7 @@ def copy_pdfs(
     documents: dict[Path, ICBCDocument],
     output_root_dir: Path | str,
     producer_mapping: dict[str, str] | None = None,
-    ignore_archive: bool = True,
+    ignore_archive: bool = False,
 ) -> list[Path]:
     output_root = Path(output_root_dir)
     prod_map = producer_mapping or {}
