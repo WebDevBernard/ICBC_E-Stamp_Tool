@@ -688,6 +688,9 @@ def scan_icbc_pdfs(
     mtime_order = {p: i for i, p in enumerate(pdfs)}
     documents = dict(sorted(documents.items(), key=lambda kv: mtime_order[kv[0]]))
 
+    if not documents:
+        print("No ICBC PDFs detected.")
+
     return ScanResult(documents, non_icbc, payment_plans, unreadable)
 
 
@@ -812,6 +815,8 @@ def match_pdfs(
                 continue
 
     match_index = _build_match_index(subfolder_cache, root)
+
+    print("\r" + " " * 30 + "\r", end="", flush=True)
 
     moved: list[Path] = []
     for file in progressbar(files, prefix=PFX_MATCHING, size=10):

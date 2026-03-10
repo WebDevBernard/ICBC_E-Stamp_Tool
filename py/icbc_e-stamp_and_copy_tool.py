@@ -63,7 +63,7 @@ def _require_config() -> None:
 # ────────────── ICBC E-Stamp and Copy Tool ────────────── #
 
 
-def icbc_e_stamp_tool() -> None:
+def icbc_e_stamp_tool(skip_countdown: bool = False) -> None:
     print("ICBC E-Stamp and Copy Tool\n")
     _require_config()
     start_total = timeit.default_timer()
@@ -186,7 +186,15 @@ def icbc_e_stamp_tool() -> None:
     print(f"Total PDFs copied:  {len(copied_files)}")
     print(f"Total execution time: {elapsed:.2f} seconds")
 
-    _countdown(3)
+    if copy_mode and copied_files:
+        log_path = Path.cwd() / "log.txt"
+        with open(log_path, "w", encoding="utf-8") as log:
+            log.write("=== ICBC E-Stamp and Copy Tool — Copied Files ===\n\n")
+            log.writelines(f"{p}\n" for p in copied_files)
+        print(f"Log saved to: {log_path}")
+
+    if not skip_countdown:
+        _countdown(3)
 
 
 # ────────────── Create ICBC Copies Folder Tool ────────────── #
@@ -221,6 +229,7 @@ def create_icbc_folder_tool() -> None:
         )
         folders_missing = True
     else:
+        folder_existed = output_folder.exists()
         output_folder.mkdir(exist_ok=True)
         print(f"Output folder path: {output_folder}")
 
@@ -266,8 +275,12 @@ def create_icbc_folder_tool() -> None:
     # ── Log
     log_path = Path.cwd() / "log.txt"
     with open(log_path, "w", encoding="utf-8") as log:
-        log.write("=== Create ICBC Copies Folder Tool Summary ===\n")
-        log.write("\n")
+        log.write("=== Create ICBC Copies Folder Tool Summary ===\n\n")
+
+        if folder_existed and copied_files:
+            log.write("=== ICBC PDFs copied ===\n")
+            log.writelines(f"{p}\n" for p in copied_files)
+            log.write("\n")
 
         if scan.non_icbc:
             log.write("=== Non ICBC PDFs found ===\n")
@@ -309,9 +322,13 @@ if __name__ == "__main__":
     if event == "Create ICBC Copies Folder Tool":
         create_icbc_folder_tool()
     else:
-        if event and event != "ICBC E-Stamp and Copy Tool":
+        skip = "(Skip Countdown)" in event
+        if event and not event.replace("(Skip Countdown)", "").strip() in (
+            "ICBC E-Stamp and Copy Tool",
+            "",
+        ):
             print(
                 f"Unrecognised tool event in B3: '{event}'\n"
                 "Defaulting to ICBC E-Stamp and Copy Tool."
             )
-        icbc_e_stamp_tool()
+        icbc_e_stamp_tool(skip_countdown=skip)
