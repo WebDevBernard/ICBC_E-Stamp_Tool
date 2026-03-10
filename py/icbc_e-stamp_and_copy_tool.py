@@ -144,7 +144,7 @@ def icbc_e_stamp_tool(skip_countdown: bool = False) -> None:
 
     if stamped_counter > 0:
         print(
-            "\n\033[1m\033[4mStamping complete! ICBC E-Stamp Copies folder is ready now!\033[0m\n"
+            "\n\033[1m\033[4mStamping complete! ICBC E-Stamp Copies folder is ready now!\033[0m"
         )
 
     # ── Stage 3: Copy → Excel folder
@@ -175,7 +175,7 @@ def icbc_e_stamp_tool(skip_countdown: bool = False) -> None:
             reincrement_pdfs(root_dir=COPY_OUTPUT_FOLDER)
     else:
         print(
-            f"No ICBC Copies folder found — skipping copy step."
+            f"\nNo ICBC Copies folder found — skipping copy step."
             f"\nTo enable copying, set a valid output folder path in B13 of config.xlsx."
         )
 
@@ -193,6 +193,7 @@ def icbc_e_stamp_tool(skip_countdown: bool = False) -> None:
             log.writelines(f"{p}\n" for p in copied_files)
         print(f"Log saved to: {log_path}")
 
+    print()
     if not skip_countdown:
         _countdown(3)
 
@@ -215,7 +216,7 @@ def create_icbc_folder_tool() -> None:
     folders_missing = False
 
     if input_folder and input_folder.exists():
-        print(f"Input folder path: {input_folder}")
+        print(f"Input folder path:  {input_folder}")
     else:
         print(f"Input folder '{input_folder}' does not exist.")
         folders_missing = True
@@ -234,12 +235,13 @@ def create_icbc_folder_tool() -> None:
         print(f"Output folder path: {output_folder}")
 
     if folders_missing:
-        print("Please correct the folder paths in 'config.xlsx'.")
+        print("\nPlease correct the folder paths in 'config.xlsx'.")
         _countdown(7)
         print("Done.")
         sys.exit(1)
 
     # ── Scan
+    print()
     scan = scan_icbc_pdfs(
         input_folder,
         regex_patterns=ICBC_PATTERNS,
@@ -308,7 +310,7 @@ def create_icbc_folder_tool() -> None:
 
     print(f"\nLog saved to: {log_path}")
     elapsed = timeit.default_timer() - start_total
-    print(f"Total execution time: {elapsed:.2f} seconds")
+    print(f"Total execution time: {elapsed:.2f} seconds\n")
     _countdown(3)
 
 

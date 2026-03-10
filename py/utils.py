@@ -709,7 +709,7 @@ def copy_pdfs(
     prod_map = producer_mapping or {}
     archive_folder = output_root / "_Archive"
 
-    print("Waiting on I/O...", end="", flush=True)
+    print("\nWaiting on I/O...", end="", flush=True)
 
     existing_index: dict[str, set[str]] = {}
     for existing in output_root.rglob("*.pdf"):
@@ -720,6 +720,8 @@ def copy_pdfs(
         ts = _extract_filename_timestamp(existing)
         if ts:
             existing_index.setdefault(key, set()).add(ts)
+
+    print("\r" + " " * 20 + "\r", end="", flush=True)
 
     copied: list[Path] = []
     duplicates: list[Path] = []
@@ -806,7 +808,7 @@ def match_pdfs(
 
     root = Path(root_folder)
 
-    print("Waiting on I/O...", end="", flush=True)
+    print("\nWaiting on I/O...", end="", flush=True)
 
     subfolder_cache: dict[str, list[Path]] = {}
     for subdir in root.rglob("*"):
@@ -820,7 +822,7 @@ def match_pdfs(
 
     match_index = _build_match_index(subfolder_cache, root)
 
-    print("\r" + " " * 30 + "\r", end="", flush=True)
+    print("\r" + " " * 20 + "\r", end="", flush=True)
 
     moved: list[Path] = []
     for file in progressbar(files, prefix=PFX_MATCHING, size=10):
