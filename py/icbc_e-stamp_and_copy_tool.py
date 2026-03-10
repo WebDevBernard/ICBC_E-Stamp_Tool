@@ -63,7 +63,7 @@ def _require_config() -> None:
 # ────────────── ICBC E-Stamp and Copy Tool ────────────── #
 
 
-def icbc_e_stamp_tool(skip_countdown: bool = False) -> None:
+def icbc_e_stamp_tool(show_countdown: bool = False) -> None:
     print("ICBC E-Stamp and Copy Tool\n")
     _require_config()
     start_total = timeit.default_timer()
@@ -194,7 +194,7 @@ def icbc_e_stamp_tool(skip_countdown: bool = False) -> None:
         print(f"Log saved to: {log_path}")
 
     print()
-    if not skip_countdown:
+    if show_countdown:
         _countdown(3)
 
 
@@ -324,8 +324,8 @@ if __name__ == "__main__":
     if event == "Create ICBC Copies Folder Tool":
         create_icbc_folder_tool()
     else:
-        skip = "(Skip Countdown)" in event
-        if event and not event.replace("(Skip Countdown)", "").strip() in (
+        show_countdown = "(Show Countdown)" in event
+        if event and not event.replace("(Show Countdown)", "").strip() in (
             "ICBC E-Stamp and Copy Tool",
             "",
         ):
@@ -333,4 +333,4 @@ if __name__ == "__main__":
                 f"Unrecognised tool event in B3: '{event}'\n"
                 "Defaulting to ICBC E-Stamp and Copy Tool."
             )
-        icbc_e_stamp_tool(skip_countdown=skip)
+        icbc_e_stamp_tool(show_countdown=show_countdown)
