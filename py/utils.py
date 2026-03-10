@@ -709,6 +709,8 @@ def copy_pdfs(
     prod_map = producer_mapping or {}
     archive_folder = output_root / "_Archive"
 
+    print("Waiting on I/O...", flush=True)
+
     existing_index: dict[str, set[str]] = {}
     for existing in output_root.rglob("*.pdf"):
         if ignore_archive and archive_folder in existing.parents:
@@ -803,6 +805,8 @@ def match_pdfs(
         return None
 
     root = Path(root_folder)
+
+    print("Waiting on I/O...", flush=True)
 
     subfolder_cache: dict[str, list[Path]] = {}
     for subdir in root.rglob("*"):
