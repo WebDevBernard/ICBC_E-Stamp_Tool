@@ -12,7 +12,7 @@ Download the required files from the latest release (v1.0.0):
 
 ## Summary
 
-A lightweight tool that automatically detects ICBC policy document PDFs, applies the digital validation stamp, and backs up the original file to a shared folder.
+A Python script that automatically detects ICBC policy document PDFs, applies the digital validation stamp, and backs up the original file to a shared folder.
 
 <table align="center">
 <tr>
@@ -26,12 +26,12 @@ A lightweight tool that automatically detects ICBC policy document PDFs, applies
 
 ## Features
 
-- 🖋️ Automatically stamps ICBC customer and batch copy policy documents
+- 🖋️ Automatically detects ICBC policy documents and stamps a customer copy and a copy for the batch
 - ✏️ Backs up the original PDF to a shared folder using client name and license plate
-- 🔍 Duplicate protection using client name and transaction timestamp
-- 📊 Sorts files into producer folders using producer two code
-- 📁 Matches similar files when the producer code is missing by checking existing client names
-- ⏳ Automatically archives files older than one year when the tool runs
+- 🔍 Duplicate protection using the insured name and transaction timestamp
+- 📊 Sorts files into producer folders using the producer two code
+- 📁 Matches files without a producer two code to a producer folder by checking for a matching insured name
+- ⏳ Automatically archives files older than one year when the script runs
 - 🆓 Free to use and share
 
 ## Setup
@@ -55,9 +55,14 @@ A lightweight tool that automatically detects ICBC policy document PDFs, applies
 
 6. Run `icbc_e-stamp_tool.exe`.
 
-7. The tool creates a new **ICBC Copies** folder and a `log.txt` file listing:
-   - files that could not be copied
-   - files without a producer code
+7. The script creates a new **ICBC Copies** folder and a `log.txt` file listing:
+   - files that are not ICBC policy documents
+   - files that are ICBC standalone payment plans and payment receipts
+   - files that could not be opened
+   - duplicate ICBC policy documents
+   - files with no producer two code matched to a producer folder
+
+> If the shared folder already exists, it will also print a log of which files were copied. This does not print the first time you create the folder.
 
 8. Move the new ICBC Copies folder back to the shared drive.
 
@@ -65,8 +70,9 @@ A lightweight tool that automatically detects ICBC policy document PDFs, applies
 
 ### Daily Use — ICBC E-Stamp and Copy Tool
 
-9. In **config.xlsx**, set **B3** back to: `ICBC E-Stamp and Copy Tool`  
-   _(This is the default — if B3 is blank or config.xlsx is missing, the tool runs this mode automatically.)_
+9. In **config.xlsx**, set **B3** back to: `ICBC E-Stamp and Copy Tool`
+
+> If B3 is blank or config.xlsx is missing, the script runs this mode and will not copy to a shared backup folder.
 
 10. Fill in the following cells:
     - **B13** — Path to the shared ICBC copies folder created in Step 9
@@ -76,15 +82,19 @@ A lightweight tool that automatically detects ICBC policy document PDFs, applies
 
 12. Create a Desktop shortcut to `icbc_e-stamp_and_copy_tool.exe`.
 
-13. Each time the tool runs:
-    - the policy PDF in Downloads is stamped
+13. Each time the script runs:
+    - the policy document in Downloads is stamped and placed on Desktop
     - an unmodified copy is backed up to the shared drive
+
+### ❗ The script uses the client's name and transaction timestamp in the filename to find duplicates.
+
+> Do not rename files or manually create folders inside shared backup folder. Only use the Excel sheet to create new folders.
 
 ---
 
 ### Additional Usage - Create ICBC Copies Folder Tool (copying older files to shared folder)
 
-14. The ICBC E-Stamp Tool checks only the last 10 modified PDFs. Use the Create ICBC Copies Folder Tool to catch any files missed — useful if a computer processes walk-ins only, or if a CSR forgot to run the tool. Fill in the following cells:
+14. The ICBC E-Stamp Tool checks only the last 10 modified PDFs. Use the Create ICBC Copies Folder Tool to catch any files missed — useful if a computer processes walk-ins only, or if a CSR forgot to run the script. Fill in the following cells:
     - **B7** — path to the Downloads folder (input)
     - **B9** — path to your shared backup folder (output)
 
@@ -111,7 +121,7 @@ Also verify:
 - `config.xlsx` is in the same folder as the executable
 - Producer codes and folder names are filled in (rows 18 and below)
 
-> If you only need stamping, `config.xlsx` can be removed entirely — the tool will default to the ICBC E-Stamp and Copy Tool automatically.
+> If you only need stamping, `config.xlsx` can be removed entirely — the script will default to the ICBC E-Stamp and Copy Tool automatically.
 
 ---
 
@@ -119,21 +129,21 @@ Also verify:
 
 The stamped copy folder named **ICBC E-Stamp Copies** appears on your Desktop, or inside the script folder if your Desktop is synced with OneDrive.
 
-> The tool checks the **10 most recently modified PDFs** in the input folder.
+> The script checks the **10 most recently modified PDFs** in the input folder.
 
 ---
 
 ### ❓ Can I restamp a backup copy?
 
-**Yes.** Open the backup PDF and use **Save As** to place it back in Downloads, then run the tool.
+**Yes.** Open the backup PDF and use **Save As** to place it back in Downloads, then run the script.
 
-The file will not be duplicated in the backup folder if it already exists.
+> The file will not be duplicated in the backup folder if it already exists.
 
 ---
 
 ### ❓ Why are some files copied to the wrong folder?
 
-If a producer code is missing, the tool searches for an existing file with the same client name and moves the new file to match.
+If a producer two code is missing, the script searches for an existing file with the same client name and moves the new file to the matching producer folder.
 
 **Example:**
 
@@ -149,21 +159,21 @@ New file without a producer code:
 Steve Smith - EFG456.pdf
 ```
 
-The tool will place the new file in:
+The script will place the new file in:
 
 ```
 root/CSR1/Steve Smith - EFG456.pdf
 ```
 
-> Do not manually create folders inside the shared backup folder. If a producer code was entered incorrectly, move the file to the correct folder manually.
+> If the producer two code was entered incorrectly, manually move that file to the root folder to prevent future files from copying into a producer folder.
 
 ---
 
 ### ❓ My archive folder contains another archive folder
 
-This usually happens if the `_Archive` folder was accidentally moved inside itself.
+This usually happens if the `_Archive` folder was accidentally moved inside another folder.
 
-**Fix:** Set B3 to `Create ICBC Copies Folder Tool` and run `icbc_e-stamp_and_copy_tool.exe` to rebuild the ICBC Copies folder cleanly.
+> **Fix:** Follow steps 1-8 in setup to rebuild the shared folder.
 
 ---
 
@@ -185,7 +195,7 @@ python -m auto_py_to_exe
 
 In the GUI:
 
-1. Select the script: `/py/icbc_e-stamp_and_copy_tool.py`
+1. Select the file: `/py/icbc_e-stamp_and_copy_tool.py`
 2. Settings:
    - One File
    - Console Based
@@ -194,14 +204,14 @@ In the GUI:
 
 ---
 
-## How the Tool Detects ICBC Policy PDFs
+## How the tool detects ICBC policy document
 
 <table align="center">
 <tr>
 <td><img src="https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/images/transaction_timestamp.png" alt="Transaction Timestamp Area"/></td>
 </tr>
 <tr>
-<td align="center">The highlighted area is where the script checks for the ICBC transaction timestamp.</td>
+<td align="center">The highlighted area is where the script checks for the word <em>"Transaction Timestamp"</em> to determine if it is an ICBC policy document.</td>
 </tr>
 </table>
 

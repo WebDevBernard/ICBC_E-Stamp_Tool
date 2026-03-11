@@ -689,7 +689,7 @@ def scan_icbc_pdfs(
     documents = dict(sorted(documents.items(), key=lambda kv: mtime_order[kv[0]]))
 
     if not documents:
-        print("No ICBC PDFs detected.")
+        print("No ICBC Policy Documents detected.")
 
     return ScanResult(documents, non_icbc, payment_plans, unreadable)
 
@@ -709,7 +709,7 @@ def copy_pdfs(
     prod_map = producer_mapping or {}
     archive_folder = output_root / "_Archive"
 
-    print("\nWaiting on I/O...", end="", flush=True)
+    print("Waiting on I/O...", end="", flush=True)
 
     existing_index: dict[str, set[str]] = {}
     for existing in output_root.rglob("*.pdf"):
@@ -808,7 +808,7 @@ def match_pdfs(
 
     root = Path(root_folder)
 
-    print("\nWaiting on I/O...", end="", flush=True)
+    print("Waiting on I/O...", end="", flush=True)
 
     subfolder_cache: dict[str, list[Path]] = {}
     for subdir in root.rglob("*"):

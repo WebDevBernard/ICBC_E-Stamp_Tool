@@ -63,7 +63,7 @@ def _require_config() -> None:
 # ────────────── ICBC E-Stamp and Copy Tool ────────────── #
 
 
-def icbc_e_stamp_tool(show_countdown: bool = False) -> None:
+def icbc_e_stamp_tool() -> None:
     print("ICBC E-Stamp and Copy Tool\n")
     _require_config()
     start_total = timeit.default_timer()
@@ -175,8 +175,8 @@ def icbc_e_stamp_tool(show_countdown: bool = False) -> None:
             reincrement_pdfs(root_dir=COPY_OUTPUT_FOLDER)
     else:
         print(
-            f"\nNo ICBC Copies folder found — skipping copy step."
-            f"\nTo enable copying, set a valid output folder path in B13 of config.xlsx."
+            f"No ICBC Copies folder found — skipping copy step.\n"
+            f"To enable copying, set a valid output folder path in B13 of config.xlsx.\n"
         )
 
     # ── Summary
@@ -186,16 +186,8 @@ def icbc_e_stamp_tool(show_countdown: bool = False) -> None:
     print(f"Total PDFs copied:  {len(copied_files)}")
     print(f"Total execution time: {elapsed:.2f} seconds")
 
-    if copy_mode and copied_files:
-        log_path = Path.cwd() / "log.txt"
-        with open(log_path, "w", encoding="utf-8") as log:
-            log.write("=== ICBC E-Stamp and Copy Tool — Copied Files ===\n\n")
-            log.writelines(f"{p}\n" for p in copied_files)
-        print(f"Log saved to: {log_path}")
-
     print()
-    if show_countdown:
-        _countdown(3)
+    _countdown(3)
 
 
 # ────────────── Create ICBC Copies Folder Tool ────────────── #
@@ -235,7 +227,7 @@ def create_icbc_folder_tool() -> None:
         print(f"Output folder path: {output_folder}")
 
     if folders_missing:
-        print("\nPlease correct the folder paths in 'config.xlsx'.")
+        print("Please correct the folder paths in 'config.xlsx'.")
         _countdown(7)
         print("Done.")
         sys.exit(1)
@@ -324,13 +316,9 @@ if __name__ == "__main__":
     if event == "Create ICBC Copies Folder Tool":
         create_icbc_folder_tool()
     else:
-        show_countdown = "(Show Countdown)" in event
-        if event and not event.replace("(Show Countdown)", "").strip() in (
-            "ICBC E-Stamp and Copy Tool",
-            "",
-        ):
+        if event and event not in ("ICBC E-Stamp and Copy Tool", ""):
             print(
                 f"Unrecognised tool event in B3: '{event}'\n"
                 "Defaulting to ICBC E-Stamp and Copy Tool."
             )
-        icbc_e_stamp_tool(show_countdown=show_countdown)
+        icbc_e_stamp_tool()
