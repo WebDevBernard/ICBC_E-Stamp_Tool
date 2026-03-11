@@ -144,7 +144,7 @@ def icbc_e_stamp_tool() -> None:
 
     if stamped_counter > 0:
         print(
-            "\n\033[1m\033[4mStamping complete! ICBC E-Stamp Copies folder is ready now!\033[0m"
+            "\n\033[1m\033[4mStamping complete! ICBC E-Stamp Copies folder is ready now!\033[0m\n"
         )
 
     # ── Stage 3: Copy → Excel folder
