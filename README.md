@@ -53,7 +53,7 @@ A Python script that automatically detects ICBC policy document PDFs, applies th
    - **B9** — path where the new ICBC Copies folder should be created (output)
    - **A18 / B18 onwards** — producer codes and folder names (including ex-CSRs and ex-producers)
 
-6. Run `icbc_e-stamp_tool.exe`.
+6. Run `icbc_e-stamp_and_copy_tool.exe`.
 
 7. The script creates a new **ICBC Copies** folder and a `log.txt` file listing:
    - files that are not ICBC policy documents
@@ -61,8 +61,7 @@ A Python script that automatically detects ICBC policy document PDFs, applies th
    - files that could not be opened
    - duplicate ICBC policy documents
    - files with no producer two code matched to a producer folder
-
-> If the shared folder already exists, it will also print a log of which files were copied. This does not print the first time you create the folder.
+   - \*\*if the shared folder already exists, it will also print a log of which files were copied. This does not print the first time you create the folder.
 
 8. Move the new ICBC Copies folder back to the shared drive.
 
@@ -75,7 +74,7 @@ A Python script that automatically detects ICBC policy document PDFs, applies th
 > If B3 is blank or config.xlsx is missing, the script runs this mode and will not copy to a shared backup folder.
 
 10. Fill in the following cells:
-    - **B13** — Path to the shared ICBC copies folder created in Step 9
+    - **B13** — Path to the shared ICBC copies folder created in Step 7 and Step 8
     - **B15** — Agency Number used for Certificate Replacement and Same Day Reprint
 
 11. Place `icbc_e-stamp_and_copy_tool.exe` and `config.xlsx` on each computer that processes ICBC transactions.
