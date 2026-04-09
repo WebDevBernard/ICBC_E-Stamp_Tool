@@ -18,7 +18,7 @@ from typing import Iterator, TypedDict
 # ═══════════════════════════════════════════════════════════════════
 
 POLICY_FLAGS: list[tuple[str, str]] = [
-    ("top", "Top"),
+    ("top", "TOP"),
     ("storage", "Storage"),
     ("cancellation", "Cancel"),
     ("rental", "Rental"),
@@ -211,8 +211,8 @@ class ICBCDocument:
                 break
             return f"{core} - {label}" if label != "Cancel" else f"{core} {label}"
 
-        if self.certificate_replacement is not None:
-            return f"{core} - Certificate Replacement"
+        if include_change_cancel and self.certificate_replacement is not None:
+            return f"{core} Cert Replacement"
 
         if (
             include_change_cancel
