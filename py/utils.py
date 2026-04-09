@@ -211,6 +211,9 @@ class ICBCDocument:
                 break
             return f"{core} - {label}" if label != "Cancel" else f"{core} {label}"
 
+        if self.certificate_replacement is not None:
+            return f"{core} - Certificate Replacement"
+
         if (
             include_change_cancel
             and (self.transaction_type or "").strip().title() == "Change"
@@ -683,7 +686,8 @@ def scan_icbc_pdfs(
             else:
                 unreadable.append(path)
 
-    print(flush=True)
+    if total:
+        print(flush=True)
 
     mtime_order = {p: i for i, p in enumerate(pdfs)}
     documents = dict(sorted(documents.items(), key=lambda kv: mtime_order[kv[0]]))
@@ -705,11 +709,11 @@ def copy_pdfs(
     producer_mapping: dict[str, str] | None = None,
     ignore_archive: bool = False,
 ) -> tuple[list[Path], list[Path]]:
+    if not documents:
+        return [], []
     output_root = Path(output_root_dir)
     prod_map = producer_mapping or {}
     archive_folder = output_root / "_Archive"
-
-    print("Waiting on I/O...", end="", flush=True)
 
     existing_index: dict[str, set[str]] = {}
     for existing in output_root.rglob("*.pdf"):
@@ -721,8 +725,6 @@ def copy_pdfs(
         if ts:
             existing_index.setdefault(key, set()).add(ts)
 
-    print("\r" + " " * 20 + "\r", end="", flush=True)
-
     copied: list[Path] = []
     duplicates: list[Path] = []
     seen: set[tuple[str, str]] = set()
@@ -731,7 +733,11 @@ def copy_pdfs(
         list(reversed(list(documents.items()))), prefix=PFX_COPYING, size=10
     ):
         dest_folder = output_root
-        if doc.producer_name and doc.producer_name in prod_map:
+        if (
+            not doc.certificate_replacement
+            and doc.producer_name
+            and doc.producer_name in prod_map
+        ):
             dest_folder = output_root / safe_filename(prod_map[doc.producer_name])
         dest_folder.mkdir(parents=True, exist_ok=True)
 
@@ -803,12 +809,10 @@ def match_pdfs(
     copy_with_no_producer_two: bool,
     root_folder: Path | str,
 ) -> list[Path] | None:
-    if not copy_with_no_producer_two:
+    if not copy_with_no_producer_two or not files:
         return None
 
     root = Path(root_folder)
-
-    print("Waiting on I/O...", end="", flush=True)
 
     subfolder_cache: dict[str, list[Path]] = {}
     for subdir in root.rglob("*"):
@@ -821,8 +825,6 @@ def match_pdfs(
                 continue
 
     match_index = _build_match_index(subfolder_cache, root)
-
-    print("\r" + " " * 20 + "\r", end="", flush=True)
 
     moved: list[Path] = []
     for file in progressbar(files, prefix=PFX_MATCHING, size=10):
