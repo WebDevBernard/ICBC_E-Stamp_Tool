@@ -27,11 +27,11 @@ A Python script that automatically detects ICBC policy document PDFs, applies th
 ## Features
 
 - 🖋️ Automatically detects ICBC policy documents and stamps a customer copy and a copy for the batch
-- ✏️ Backs up the original PDF to a shared folder using client name and license plate
+- ✏️ Backs up the original PDF to a shared folder
 - 🔍 Duplicate protection using the insured name and transaction timestamp
 - 📊 Sorts files into producer folders using the producer two code
 - 📁 Matches files without a producer two code to a producer folder by checking for a matching insured name
-- ⏳ Automatically archives files older than one year when the script runs
+- ⏳ Continuously archives files older than one year when the script runs
 - 🆓 Free to use and share
 
 ## Setup
@@ -152,7 +152,7 @@ Existing file:
 root/_Archive/2023/CSR1/Steve Smith - ABC123.pdf
 ```
 
-New file without a producer code:
+New file without a producer two code:
 
 ```
 Steve Smith - EFG456.pdf
