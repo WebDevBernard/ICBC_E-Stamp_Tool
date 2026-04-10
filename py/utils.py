@@ -41,6 +41,7 @@ _RE_TITLE_WORD = re.compile(r"[A-Za-z]+('[A-Za-z]+)*")
 _RE_MC = re.compile(r"\b(Mc|Mac)([a-z])")
 _RE_O_APOSTROPHE = re.compile(r"\bO'([a-z])")
 _RE_HYPHEN = re.compile(r"-([a-z])")
+_RE_BC_COMPANY = re.compile(r"(\b\d{7}\s+)Bc(\s+Ltd)", re.IGNORECASE)
 
 # ═══════════════════════════════════════════════════════════════════
 #  ICBC Patterns & Page Rects
@@ -287,6 +288,7 @@ def _title(s: str) -> str:
     s = _RE_MC.sub(lambda m: m.group(1) + m.group(2).upper(), s)
     s = _RE_O_APOSTROPHE.sub(lambda m: "O'" + m.group(1).upper(), s)
     s = _RE_HYPHEN.sub(lambda m: "-" + m.group(1).upper(), s)
+    s = _RE_BC_COMPANY.sub(lambda m: m.group(1) + "BC" + m.group(2), s)
     return s
 
 
