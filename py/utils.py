@@ -38,6 +38,9 @@ _RE_COMPANY = re.compile(r"(Inc\.?|Ltd\.?|Corp\.?)$", re.IGNORECASE)
 _RE_YEAR = re.compile(r"^\d{4}$")
 _RE_FILENAME_TS = re.compile(r"\[([^\]]+)\]")
 _RE_TITLE_WORD = re.compile(r"[A-Za-z]+('[A-Za-z]+)*")
+_RE_MC = re.compile(r"\b(Mc|Mac)([a-z])")
+_RE_O_APOSTROPHE = re.compile(r"\bO'([a-z])")
+_RE_HYPHEN = re.compile(r"-([a-z])")
 
 # ═══════════════════════════════════════════════════════════════════
 #  ICBC Patterns & Page Rects
@@ -280,7 +283,11 @@ PFX_ARCHIVING = "Archiving PDFs:  "
 
 
 def _title(s: str) -> str:
-    return _RE_TITLE_WORD.sub(lambda m: m.group(0).capitalize(), s)
+    s = _RE_TITLE_WORD.sub(lambda m: m.group(0).capitalize(), s)
+    s = _RE_MC.sub(lambda m: m.group(1) + m.group(2).upper(), s)
+    s = _RE_O_APOSTROPHE.sub(lambda m: "O'" + m.group(1).upper(), s)
+    s = _RE_HYPHEN.sub(lambda m: "-" + m.group(1).upper(), s)
+    return s
 
 
 def _sanitise(text: str) -> str:
