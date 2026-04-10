@@ -37,6 +37,7 @@ _RE_COUNTER = re.compile(r"\s*\(\d+\)$")
 _RE_COMPANY = re.compile(r"(Inc\.?|Ltd\.?|Corp\.?)$", re.IGNORECASE)
 _RE_YEAR = re.compile(r"^\d{4}$")
 _RE_FILENAME_TS = re.compile(r"\[([^\]]+)\]")
+_RE_TITLE_WORD = re.compile(r"[A-Za-z]+('[A-Za-z]+)*")
 
 # ═══════════════════════════════════════════════════════════════════
 #  ICBC Patterns & Page Rects
@@ -173,7 +174,7 @@ class ICBCDocument:
 
     @property
     def clean_name(self) -> str:
-        return _sanitise(self.insured_name or "").title()
+        return _sanitise(self.insured_name or "")
 
     @property
     def name_prefix(self) -> str:
@@ -278,6 +279,10 @@ PFX_ARCHIVING = "Archiving PDFs:  "
 # ═══════════════════════════════════════════════════════════════════
 
 
+def _title(s: str) -> str:
+    return _RE_TITLE_WORD.sub(lambda m: m.group(0).capitalize(), s)
+
+
 def _sanitise(text: str) -> str:
     return _RE_SPACES.sub(" ", _RE_INVALID.sub("", text)).strip()
 
@@ -298,14 +303,14 @@ def _format_insured_name(
     has_bcdl_string: bool = False,
     has_bcdl_number: bool = False,
 ) -> str:
-    name = _sanitise(name).title()
+    name = _title(_sanitise(name))
     parts = name.split()
 
     if has_bcdl_string and not has_bcdl_number:
         return name
 
     if name.lower().startswith("estate of"):
-        remainder = name.split(None, 2)[2:]  # everything after "Estate Of"
+        remainder = name.split(None, 2)[2:]
         if remainder:
             rest = remainder[0].split()
             reversed_rest = " ".join(rest[1:] + [rest[0]]) if len(rest) > 1 else rest[0]
