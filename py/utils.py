@@ -304,6 +304,14 @@ def _format_insured_name(
     if has_bcdl_string and not has_bcdl_number:
         return name
 
+    if name.lower().startswith("estate of"):
+        remainder = name.split(None, 2)[2:]  # everything after "Estate Of"
+        if remainder:
+            rest = remainder[0].split()
+            reversed_rest = " ".join(rest[1:] + [rest[0]]) if len(rest) > 1 else rest[0]
+            return f"Estate Of {reversed_rest}"
+        return name
+
     if (lessor or not has_bcdl_string) and _is_company_name(name):
         return name
 
