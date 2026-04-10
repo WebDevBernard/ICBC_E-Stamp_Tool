@@ -270,7 +270,7 @@ def create_icbc_folder_tool() -> None:
     for folder in sorted(
         output_folder.rglob("*/"), key=lambda f: len(f.parts), reverse=True
     ):
-        if folder.parent != output_folder and not any(folder.iterdir()):
+        if folder != output_folder and not any(folder.iterdir()):
             folder.rmdir()
 
     # ── Log
