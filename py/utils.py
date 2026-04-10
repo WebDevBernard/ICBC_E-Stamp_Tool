@@ -291,9 +291,17 @@ def safe_filename(name: str) -> str:
     return _sanitise(name)
 
 
+# ICBC truncates insured names to exactly 27 characters in the owner field.
+# A name that fills the field completely and has 4+ parts is almost certainly
+# a company name rather than a personal name that happens to be that length.
+_ICBC_MAX_NAME_LENGTH = 27
+
+
 def _is_company_name(name: str) -> bool:
     parts = name.split()
-    return (len(name) == 27 and len(parts) >= 4) or bool(_RE_COMPANY.search(name))
+    return (len(name) == _ICBC_MAX_NAME_LENGTH and len(parts) >= 4) or bool(
+        _RE_COMPANY.search(name)
+    )
 
 
 def _format_insured_name(
