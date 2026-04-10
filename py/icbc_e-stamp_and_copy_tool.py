@@ -266,6 +266,13 @@ def create_icbc_folder_tool() -> None:
     if archived_files:
         reincrement_pdfs(root_dir=output_folder)
 
+    # ── Remove empty folders
+    for folder in sorted(
+        output_folder.rglob("*"), key=lambda f: len(f.parts), reverse=True
+    ):
+        if folder.parent != output_folder and not any(folder.iterdir()):
+            folder.rmdir()
+
     # ── Log
     log_path = Path.cwd() / "log.txt"
     with open(log_path, "w", encoding="utf-8") as log:
