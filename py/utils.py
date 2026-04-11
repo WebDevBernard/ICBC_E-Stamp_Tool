@@ -262,6 +262,20 @@ class ICBCDocument:
                 continue
             if label == "Cancel" and not include_change_cancel:
                 break
+
+            # ── Special Risk plate-aware formatting ──────────────────
+            if label == "Special Risk":
+                if self.plate == "STORAGE":
+                    # No displayable plate → append "Storage" to the label
+                    return f"{core} - Special Risk Storage"
+                elif self.plate and self.plate not in _NON_DISPLAY_PLATES:
+                    # Plate is already embedded in core ("Name - ABC123")
+                    # → no second dash, just a space before the label
+                    return f"{core} Special Risk"
+                else:
+                    return f"{core} - Special Risk"
+            # ─────────────────────────────────────────────────────────
+
             return f"{core} - {label}" if label != "Cancel" else f"{core} {label}"
 
         if include_change_cancel and self.certificate_replacement is not None:
