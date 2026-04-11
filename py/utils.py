@@ -42,7 +42,11 @@ _RE_MC = re.compile(r"\b(Mc|Mac)([a-z])")
 _RE_O_APOSTROPHE = re.compile(r"\bO'([a-z])")
 _RE_HYPHEN = re.compile(r"-([a-z])")
 _RE_BC_COMPANY = re.compile(r"(\b\d{7}\s+)Bc(\s+Ltd)", re.IGNORECASE)
-
+_SURNAME_PARTICLES = frozenset(
+    {"de", "la", "del", "los", "las", "le", "van", "von", "den", "der"}
+)
+_RE_ALPHANUMERIC_WORD = re.compile(r"\b([A-Za-z]+\d|\d+[A-Za-z])[A-Za-z0-9]*\b")
+_RE_ROMAN_NUMERAL_SUFFIX = re.compile(r"\b(I{2,3}|I?V|VI{0,3}|IX|XI{0,3})\b")
 # ═══════════════════════════════════════════════════════════════════
 #  ICBC Patterns & Page Rects
 # ═══════════════════════════════════════════════════════════════════
@@ -289,6 +293,8 @@ def _title(s: str) -> str:
     s = _RE_O_APOSTROPHE.sub(lambda m: "O'" + m.group(1).upper(), s)
     s = _RE_HYPHEN.sub(lambda m: "-" + m.group(1).upper(), s)
     s = _RE_BC_COMPANY.sub(lambda m: m.group(1) + "BC" + m.group(2), s)
+    s = _RE_ALPHANUMERIC_WORD.sub(lambda m: m.group(0).upper(), s)
+    s = _RE_ROMAN_NUMERAL_SUFFIX.sub(lambda m: m.group(0).upper(), s)
     return s
 
 
@@ -339,6 +345,17 @@ def _format_insured_name(
 
     if len(parts) == 1:
         return name
+
+    if has_bcdl_number and len(parts) >= 4:
+        second = parts[1].lower()
+        compound_last = len(second) > 2 and second not in _SURNAME_PARTICLES
+        if compound_last:
+            last = " ".join(parts[:2])
+            first_middle = " ".join(parts[2:])
+        else:
+            last = parts[0]
+            first_middle = " ".join(parts[1:])
+        return f"{first_middle} {last}"
 
     return " ".join(parts[1:] + [parts[0]])
 
