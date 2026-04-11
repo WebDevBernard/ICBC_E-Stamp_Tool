@@ -69,12 +69,14 @@ _CHINESE_SURNAMES = frozenset({
     "loo", "goo", "hoo", "boo", "doo", "foo", "soo",
     "yim", "shiu", "nip", "yee", "gee", "zee",
     "ip", "ap",
+    "tsui", "suen", "hon", "wan", "tseung", "tin", "law", "lor", "leong",
     # ── Toisanese / Sze Yup (common in older BC families) ─────────
     "lum", "jung", "joong", "louie", "louey",
     "quan", "quon", "guan",
     "joe", "jow", "jew", "jue", "chew",
     "mar", "mock", "hoy", "hew", "sue", "lew", "pon",
     "bing", "dea", "ark", "gin", "jang", "nom",
+    "mah", "chin", "chinn",
     # ── Hokkien / Teochew / Hakka (SE Asian diaspora in BC) ───────
     "tan", "teh", "tay", "tee",
     "goh", "koh", "lim", "ong", "bong",
@@ -84,6 +86,9 @@ _CHINESE_SURNAMES = frozenset({
     "heng", "pang", "kuah", "tiong", "phang",
     "khaw", "kew", "yong", "por", "pua", "kok",
     "saw", "beh", "peh", "loh", "toh",
+    "liew", "yeoh", "yeo", "wee", "sng", "soon", "tng",
+    "hee", "teng", "foong", "seow", "siew", "neo", "cheah",
+    "chong", "soong", "ko", "hang",
 })
 # fmt: on
 # ═══════════════════════════════════════════════════════════════════
