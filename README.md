@@ -198,7 +198,8 @@ IF "Owner's BC Driver's Licence" is present:
     Masked licence number (****123 present)?
         ├── YES
         │     → Treat as PERSON
-        │     → Apply reversal rules
+        │     → Apply name reversal logic  (surname-first-middle →
+        |       first-middle-surname)
         │
         │     IF name has 4 or more parts:
         │         → Check compound surname logic:
@@ -225,8 +226,7 @@ ELSE (No "Owner's BC Driver's Licence"):
         │
         └── Otherwise
                 → Treat as PERSON
-                → Apply basic reversal (surname-first-middle →
-                  first-middle-surname)
+                → Apply name reversal logic
                 → Apply compound surname logic
 ```
 
