@@ -55,13 +55,21 @@ A Python script that automatically detects ICBC policy document PDFs, applies th
 
 6. Run `icbc_e-stamp_and_copy_tool.exe`.
 
-7. The script creates a new **ICBC Copies** folder and a `log.txt` file listing:
-   - files that are not ICBC policy documents
-   - files that are ICBC standalone payment plans and payment receipts
-   - files that could not be opened
-   - duplicate ICBC policy documents
-   - files with no producer two code matched to a producer folder
-   - \*\*if the shared folder already exists, it will also print a log of which files were copied. This does not print the first time you create the folder.
+7. The script creates a new **ICBC Copies** folder and a `log.txt` file.
+
+<details>
+<summary><b>📄 Click to view what is recorded in log.txt</b></summary>
+
+The `log.txt` file lists files that were skipped or flagged during processing:
+
+- files that are not ICBC policy documents
+- ICBC standalone payment plans and payment receipts
+- files that could not be opened
+- duplicate ICBC policy documents
+- files with no producer two code matched to a producer folder
+- if the shared folder already exists, log of all files copied
+
+</details>
 
 8. Move the new ICBC Copies folder back to the shared drive.
 
@@ -70,8 +78,6 @@ A Python script that automatically detects ICBC policy document PDFs, applies th
 ### Daily Use — ICBC E-Stamp and Copy Tool
 
 9. In **config.xlsx**, set **B3** back to: `ICBC E-Stamp and Copy Tool`
-
-> If B3 is blank or config.xlsx is missing, the script runs this mode and will not copy to a shared backup folder.
 
 10. Fill in the following cells:
     - **B13** — Path to the shared ICBC copies folder created in Step 7 and Step 8
@@ -85,15 +91,19 @@ A Python script that automatically detects ICBC policy document PDFs, applies th
     - the policy document in Downloads is stamped and placed on Desktop
     - an unmodified copy is backed up to the shared drive
 
-### ❗ The script uses the client's name and transaction timestamp in the filename to find duplicates.
+### ⚠️ **CRITICAL RULE**
 
-> Do not rename files or manually create folders inside shared backup folder. Only use the Excel sheet to create new folders.
+> The script uses the client's name and transaction timestamp in the filename to find duplicates.
+>
+> 🚫 Do not rename files in the shared backup  
+> 🚫 Do not manually create folders inside the shared backup  
+> ✅ Only use the Excel sheet to create new folders
 
 ---
 
 ### Additional Usage - Create ICBC Copies Folder Tool (copying older files to shared folder)
 
-14. The ICBC E-Stamp Tool checks only the last 10 modified PDFs. Use the Create ICBC Copies Folder Tool to catch any files missed — useful if a computer processes walk-ins only, or if a CSR forgot to run the script. Fill in the following cells:
+14. The ICBC E-Stamp and Copy Tool checks only the last 10 modified PDFs. Use the Create ICBC Copies Folder Tool to catch any files missed — useful if a computer processes walk-ins only, or if a CSR forgot to run the script. Fill in the following cells:
     - **B7** — path to the Downloads folder (input)
     - **B9** — path to your shared backup folder (output)
 
@@ -164,7 +174,7 @@ The script will place the new file in:
 root/CSR1/Steve Smith - EFG456.pdf
 ```
 
-> If the producer two code was entered incorrectly, manually move that file to the root folder to prevent future files from copying into a producer folder.
+> If a file was copied into the wrong producer folder due to an incorrect producer two code, move all files with that client name to the root folder. Otherwise future files will continue copying into the wrong folder. Running `icbc_e-stamp_and_copy_tool.exe` after moving them will archive the files into the correct year folder.
 
 ---
 
@@ -176,41 +186,68 @@ This usually happens if the `_Archive` folder was accidentally moved inside anot
 
 ---
 
-## Building the Executable
+### ❓ Why are some names not **first-middle-surname**?
 
-Clone the repository:
+ICBC prints insured names in **surname-first-middle** order on policy documents (e.g. `SMITH JOHN ROBERT`). The script attempts to reverse these into **first-middle-surname** (e.g. `John Robert Smith`), but reversal only happens when there is enough confidence the name belongs to a person rather than a company.
 
-```bash
-git clone https://github.com/WebDevBernard/ICBC_E-Stamp_Tool.git
-cd ICBC_E-Stamp_Tool
+**The script uses the following to determine if a name belongs to a person or a company:**
+
+```text
+IF "Owner's BC Driver's Licence" is present:
+    ↓
+    Masked licence number (****123 present)?
+        ├── YES
+        │     → Treat as PERSON
+        │     → Apply reversal rules
+        │
+        │     IF name has 4 or more parts:
+        │         → Check compound surname logic:
+        │             - Recognized Chinese surname (checks if it is a common
+        |               Chinese surname from a list of Chinese surnames)
+        │               (WONG JOHN LEE MAN → John Lee Man Wong)
+        │                   → First word is surname
+        │             - Second word is particle (de / van / von)
+        │                   → First word is surname
+        |             - Otherwise
+        │               (GARCIA LOPEZ JUAN CARLOS → Juan Carlos Garcia Lopez)
+        │                   → First two words are surname
+        │
+        └── NO
+              → Treat as COMPANY
+              → DO NOT reverse name
+
+ELSE (No "Owner's BC Driver's Licence"):
+    → Fallback mode (TOP / Storage / Cancel)
+
+    Apply ONLY fallback rules:
+
+        ├── 27-character truncation AND 4+ parts
+        │       → Treat as COMPANY (do not reverse)
+        │       → Reason: ICBC has a limit of 27 chars
+        |         including spaces, therefore it is likely a
+        |         company name unless the person has two first
+        |         middle names or two surnames
+        │
+        ├── Corporate suffix detected (Inc / Ltd / Corp)
+        │       → Treat as COMPANY (do not reverse)
+        │
+        └── Otherwise
+                → Treat as PERSON
+                → Apply basic reversal (surname-firstname-middlename →
+                  firstname-middlename-surname)
+                → NO compound surname detection in this mode
 ```
-
-Install dependencies and run auto-py-to-exe:
-
-```bash
-pip install -r requirements.txt
-python -m auto_py_to_exe
-```
-
-In the GUI:
-
-1. Select the file: `/py/icbc_e-stamp_and_copy_tool.py`
-2. Settings:
-   - One File
-   - Console Based
-3. Optional: download `icon.ico` from github
-4. Click **Convert .PY to .EXE**
 
 ---
 
-## How the tool detects ICBC policy document
+## How the tool detects an ICBC policy document
 
 <table align="center">
 <tr>
 <td><img src="https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/images/transaction_timestamp.png" alt="Transaction Timestamp Area"/></td>
 </tr>
 <tr>
-<td align="center">The highlighted area is where the script checks for the word <em>"Transaction Timestamp"</em> to determine if it is an ICBC policy document.</td>
+<td __align__="center">The highlighted area is where the script checks for the text <em>"Transaction Timestamp"</em> followed by a space and a 14-digit number to determine if it is an ICBC policy document.</td>
 </tr>
 </table>
 
@@ -221,12 +258,3 @@ In the GUI:
 Licensed under the **AGPL-3.0 License**
 
 https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/blob/main/LICENSE.txt
-
-This project uses:
-
-- PyMuPDF
-- MuPDF
-
-Both licensed under **GNU Affero General Public License v3.0**.
-
-Any modified or redistributed versions must also publish their source code under the same license.
