@@ -9,7 +9,7 @@ import openpyxl
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from pathlib import Path
 from typing import Iterator, TypedDict
 
@@ -36,7 +36,7 @@ _RE_SPACES = re.compile(r"\s+")
 _RE_COUNTER = re.compile(r"\s*\(\d+\)$")
 _RE_COMPANY = re.compile(r"(Inc\.?|Ltd\.?|Corp\.?)$", re.IGNORECASE)
 _RE_YEAR = re.compile(r"^\d{4}$")
-_RE_FILENAME_TS = re.compile(r"\[([^\]]+)\]")
+_RE_FILENAME_TS = re.compile(r"\[(\d{14})\]")
 _RE_TITLE_WORD = re.compile(r"[A-Za-z]+('[A-Za-z]+)*")
 _RE_MC = re.compile(r"\b(Mc|Mac)([a-z])(?=[a-z]{2,})")
 _RE_O_APOSTROPHE = re.compile(r"\bO'([a-z])")
@@ -91,6 +91,7 @@ _CHINESE_SURNAMES = frozenset({
     "chong", "soong", "ko", "hang",
 })
 # fmt: on
+
 # ═══════════════════════════════════════════════════════════════════
 #  ICBC Patterns & Page Rects
 # ═══════════════════════════════════════════════════════════════════
@@ -99,6 +100,7 @@ ICBC_PATTERNS: "RegexPatterns" = {
     "timestamp": re.compile(r"Transaction Timestamp\s*(\d{14})"),
     "certificate_replacement": re.compile(r"Certificate Replacement\s*(\d{14})"),
     "same_day_re-print": re.compile(r"Same day Re-print\s*(\d{14})"),
+    "reprint": re.compile(r"Reprint\s+(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})", re.IGNORECASE),
     "license_plate": re.compile(
         r"Licence Plate Number\s*([A-Z0-9\- ]+)", re.IGNORECASE
     ),
@@ -145,6 +147,7 @@ class RegexPatterns(TypedDict, total=False):
     timestamp: re.Pattern[str]
     certificate_replacement: re.Pattern[str]
     same_day_reprint: re.Pattern[str]
+    reprint: re.Pattern[str]
     license_plate: re.Pattern[str]
     has_bcdl: re.Pattern[str]
     temporary_operation_permit: re.Pattern[str]
@@ -266,11 +269,8 @@ class ICBCDocument:
             # ── Special Risk plate-aware formatting ──────────────────
             if label == "Special Risk":
                 if self.plate == "STORAGE":
-                    # No displayable plate → append "Storage" to the label
                     return f"{core} - Special Risk Storage"
                 elif self.plate and self.plate not in _NON_DISPLAY_PLATES:
-                    # Plate is already embedded in core ("Name - ABC123")
-                    # → no second dash, just a space before the label
                     return f"{core} Special Risk"
                 else:
                     return f"{core} - Special Risk"
@@ -364,17 +364,8 @@ def safe_filename(name: str) -> str:
     return _sanitise(name)
 
 
-# ICBC truncates insured names to exactly 27 characters in the owner field.
-# A name that fills the field completely and has 4+ parts is almost certainly
-# a company name rather than a personal name that happens to be that length.
-_ICBC_MAX_NAME_LENGTH = 27
-
-
 def _is_company_name(name: str) -> bool:
-    parts = name.split()
-    return (len(name) == _ICBC_MAX_NAME_LENGTH and len(parts) >= 4) or bool(
-        _RE_COMPANY.search(name)
-    )
+    return bool(_RE_COMPANY.search(name))
 
 
 def _format_insured_name(
@@ -404,7 +395,9 @@ def _format_insured_name(
     if len(parts) == 1:
         return name
 
-    if has_bcdl_number and len(parts) >= 4:
+    if (has_bcdl_number or not has_bcdl_string) and len(parts) >= 4:
+        if _is_company_name(name):
+            return name
         second = parts[1].lower()
         is_chinese = parts[0].lower() in _CHINESE_SURNAMES
         compound_last = (
@@ -476,6 +469,13 @@ def _extract_filename_timestamp(path: Path) -> str | None:
     return m.group(1) if m else None
 
 
+def _filename_date(path: Path) -> date:
+    ts = _extract_filename_timestamp(path)
+    if ts:
+        return datetime.strptime(ts, "%Y%m%d%H%M%S").date()
+    return datetime.fromtimestamp(path.stat().st_mtime).date()
+
+
 # ═══════════════════════════════════════════════════════════════════
 #  Excel Mapping
 # ═══════════════════════════════════════════════════════════════════
@@ -541,6 +541,15 @@ def _search(patterns: RegexPatterns, key: str, text: str) -> re.Match[str] | Non
     return pat.search(text) if pat else None
 
 
+def _parse_reprint_timestamp(match: re.Match[str]) -> str | None:
+    try:
+        return datetime.strptime(match.group(1).strip(), "%d %b %Y").strftime(
+            "%Y%m%d%H%M%S"
+        )
+    except ValueError:
+        return None
+
+
 def _extract_base_fields(
     text: str,
     patterns: RegexPatterns,
@@ -548,12 +557,21 @@ def _extract_base_fields(
     ts = _search(patterns, "timestamp", text)
     cert_rep = _search(patterns, "certificate_replacement", text)
     same_day = _search(patterns, "same_day_re-print", text)
+    reprint = _search(patterns, "reprint", text)
 
-    if not ts and not cert_rep and not same_day:
+    reprint_ts = _parse_reprint_timestamp(reprint) if reprint else None
+
+    if not ts and not cert_rep and not same_day and not reprint_ts:
         raise ValueError("No timestamp found — not an ICBC document")
 
     raw_timestamp = (
-        ts.group(1) if ts else cert_rep.group(1) if cert_rep else same_day.group(1)
+        ts.group(1)
+        if ts
+        else (
+            cert_rep.group(1)
+            if cert_rep
+            else same_day.group(1) if same_day else reprint_ts
+        )
     )
 
     lp = _search(patterns, "license_plate", text)
@@ -561,7 +579,7 @@ def _extract_base_fields(
 
     return (
         raw_timestamp,
-        cert_rep.group(1) if cert_rep else None,
+        cert_rep.group(1) if cert_rep else reprint_ts,
         same_day.group(1) if same_day else None,
         lp.group(1).strip().upper() if lp else None,
         extract_insured_name(
@@ -964,15 +982,13 @@ def auto_archive(
 
     all_pdfs = [f for f in root.rglob("*.pdf") if archive not in f.parents]
 
-    stale = [
-        p for p in all_pdfs if datetime.fromtimestamp(p.stat().st_mtime).date() < cutoff
-    ]
+    stale = [p for p in all_pdfs if _filename_date(p) < cutoff]
     if not stale:
         return None
 
     archived: list[Path] = []
     for pdf in progressbar(stale, prefix=PFX_ARCHIVING, size=10):
-        year = time.strftime("%Y", time.localtime(pdf.stat().st_mtime))
+        year = str(_filename_date(pdf).year)
         target = archive / year / pdf.relative_to(root).parent
         target.mkdir(parents=True, exist_ok=True)
         dest = unique_file_path(target / pdf.name)

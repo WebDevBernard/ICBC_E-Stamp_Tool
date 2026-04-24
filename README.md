@@ -2,13 +2,13 @@
 
 ## Downloads
 
-Download the required files from the latest release (v1.0.0):
+Download the required files from the latest release (v1.0.1):
 
 - 📄 **Config File**  
-  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/config.xlsx)
+  [config.xlsx](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.1/config.xlsx)
 
 - 🏷 **ICBC E-Stamp and Copy Tool**  
-  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.0/icbc_e-stamp_and_copy_tool.exe)
+  [icbc_e-stamp_and_copy_tool.exe](https://github.com/WebDevBernard/ICBC_E-Stamp_Tool/releases/download/v1.0.1/icbc_e-stamp_and_copy_tool.exe)
 
 ## Summary
 
@@ -220,22 +220,14 @@ ELSE (No "Owner's BC Driver's Licence"):
     → Fallback mode (TOP / Storage / Cancel)
 
     Apply ONLY fallback rules:
-
-        ├── 27-character truncation AND 4+ parts
-        │       → Treat as COMPANY (do not reverse)
-        │       → Reason: ICBC has a limit of 27 chars
-        |         including spaces, therefore it is likely a
-        |         company name unless the person has two first
-        |         middle names or two surnames
-        │
         ├── Corporate suffix detected (Inc / Ltd / Corp)
         │       → Treat as COMPANY (do not reverse)
         │
         └── Otherwise
                 → Treat as PERSON
-                → Apply basic reversal (surname-firstname-middlename →
-                  firstname-middlename-surname)
-                → NO compound surname detection in this mode
+                → Apply basic reversal (surname-first-middle →
+                  first-middle-surname)
+                → Apply compound surname logic
 ```
 
 ---
