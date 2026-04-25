@@ -26,7 +26,7 @@ A Python script that automatically detects ICBC policy document PDFs, applies th
 
 ## Features
 
-- 🖋️ Automatically detects ICBC policy documents and stamps a customer copy and a copy for the batch
+- 🖋️ Automatically detects ICBC policy documents in Downloads folder and stamps a customer copy and a copy for the batch
 - ✏️ Backs up the original PDF to a shared folder
 - 🔍 Duplicate protection using the insured name and transaction timestamp
 - 📊 Sorts files into producer folders using the producer two code
@@ -138,7 +138,7 @@ Also verify:
 
 The stamped copy folder named **ICBC E-Stamp Copies** appears on your Desktop, or inside the script folder if your Desktop is synced with OneDrive.
 
-> The script checks the **10 most recently modified PDFs** in the input folder.
+> The script checks the **10 most recently modified PDFs** in the Downloads folder.
 
 ---
 
@@ -198,8 +198,7 @@ IF "Owner's BC Driver's Licence" is present:
     Masked licence number (****123 present)?
         ├── YES
         │     → Treat as PERSON
-        │     → Apply name reversal logic  (surname-first-middle →
-        |       first-middle-surname)
+        │     → Apply name reversal logic  (surname-first-middle → first-middle-surname)
         │
         │     IF name has 4 or more parts:
         │         → Check compound surname logic:
