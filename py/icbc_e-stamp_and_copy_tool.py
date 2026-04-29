@@ -27,10 +27,11 @@ from utils import (
 
 # ────────────── Constants ────────────── #
 DEFAULTS = {
-    "number_of_pdfs": 10,
-    "copy_with_no_producer_two": True,
-    "min_age_to_archive": 1,
-    "ignore_archive": False,
+    "number_of_pdfs": 10,  # Number of Pdf's to check
+    "copy_with_no_producer_two": True,  # Match same insureds names with no producer 2 code
+    "min_age_to_archive": 1,  # Number of years old before archive
+    "ignore_archive": False,  # False = Do not use files in archives to find matching insured name
+    "archive_by_timestamp": False,  # False = Do not archive by timestamp, use last modified date
 }
 
 
@@ -168,8 +169,9 @@ def icbc_e_stamp_tool() -> None:
             )
 
         archived_files = auto_archive(
-            root_path=COPY_OUTPUT_FOLDER,
+            root_path=COPY_OUTPUT_FOLDER,  # or output_folder
             min_age_years=DEFAULTS["min_age_to_archive"],
+            use_filename_timestamp=DEFAULTS["archive_by_timestamp"],
         )
         if archived_files:
             reincrement_pdfs(root_dir=COPY_OUTPUT_FOLDER)
@@ -260,8 +262,9 @@ def create_icbc_folder_tool() -> None:
 
     # ── Archive
     archived_files = auto_archive(
-        root_path=output_folder,
+        root_path=COPY_OUTPUT_FOLDER,  # or output_folder
         min_age_years=DEFAULTS["min_age_to_archive"],
+        use_filename_timestamp=DEFAULTS["archive_by_timestamp"],
     )
     if archived_files:
         reincrement_pdfs(root_dir=output_folder)

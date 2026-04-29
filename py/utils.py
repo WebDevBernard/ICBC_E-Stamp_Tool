@@ -126,7 +126,7 @@ ICBC_PATTERNS: "RegexPatterns" = {
         r"Binder for Owner['\u2019]s Interim Certificate of Insurance"
     ),
     "has_bcdl": re.compile(
-        r"Owner['\u2019]s BC Driver['\u2019]s Licence Number(?:\s+(\*{4,5}\d{3}))?",
+        r"Owner['\u2019]s BC Driver['\u2019]s Licence Number(?:\s+(\*{4,5}\d{3}|\d{7,8}))?",
         re.IGNORECASE,
     ),
 }
@@ -973,6 +973,7 @@ def match_pdfs(
 def auto_archive(
     root_path: Path | str,
     min_age_years: int = 2,
+    use_filename_timestamp: bool = False,
 ) -> list[Path] | None:
     root = Path(root_path)
     archive = root / "_Archive"
@@ -980,15 +981,20 @@ def auto_archive(
 
     cutoff = (datetime.now() - timedelta(days=365 * min_age_years)).date()
 
+    def _file_date(p: Path) -> date:
+        if use_filename_timestamp:
+            return _filename_date(p)
+        return datetime.fromtimestamp(p.stat().st_mtime).date()
+
     all_pdfs = [f for f in root.rglob("*.pdf") if archive not in f.parents]
 
-    stale = [p for p in all_pdfs if _filename_date(p) < cutoff]
+    stale = [p for p in all_pdfs if _file_date(p) < cutoff]
     if not stale:
         return None
 
     archived: list[Path] = []
     for pdf in progressbar(stale, prefix=PFX_ARCHIVING, size=10):
-        year = str(_filename_date(pdf).year)
+        year = str(_file_date(pdf).year)
         target = archive / year / pdf.relative_to(root).parent
         target.mkdir(parents=True, exist_ok=True)
         dest = unique_file_path(target / pdf.name)
