@@ -262,7 +262,7 @@ def create_icbc_folder_tool() -> None:
 
     # ── Archive
     archived_files = auto_archive(
-        root_path=COPY_OUTPUT_FOLDER,  # or output_folder
+        root_path=output_folder,
         min_age_years=DEFAULTS["min_age_to_archive"],
         use_filename_timestamp=DEFAULTS["archive_by_timestamp"],
     )
