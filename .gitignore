@@ -1,18 +1,28 @@
-/venv
-/py/output
-/output
-/py/config.xlsx
-/py/~$config.xlsx
+# Virtual environments
+venv/
+
+# Build/output folders
+output/
+py/output/
+build/
 
 # Python cache
 __pycache__/
 *.py[cod]
 *$py.class
-/py/log.txt
 .pytest_cache/
 
-AzureSignFile.txt
-SignfileMetadata.json
+# Logs
+py/log.txt
+
+# Excel / config files
 config.xlsx
-/py/ICBC E-Stamp Copies
-/py/log.txt
+py/config.xlsx
+py/~$config.xlsx
+
+
+# Misc project files
+.CLAUDE.md
+
+# Specific directories
+py/ICBC E-Stamp Copies/

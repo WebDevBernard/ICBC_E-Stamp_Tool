@@ -112,7 +112,7 @@ ICBC_PATTERNS: "RegexPatterns" = {
     "customer_copy": re.compile(r"customer copy", re.IGNORECASE),
     "validation_stamp": re.compile(r"NOT VALID UNLESS STAMPED BY", re.IGNORECASE),
     "time_of_validation": re.compile(r"TIME OF VALIDATION", re.IGNORECASE),
-    "producer": re.compile(r"-\s*([A-Za-z]+)\s*-", re.IGNORECASE),
+    "producer": re.compile(r"-\s*([A-Za-z0-9]{1,3})\s*-", re.IGNORECASE),
     "transaction_type": re.compile(r"Transaction Type\s+([A-Z]+)", re.IGNORECASE),
     "cancellation": re.compile(r"Application for Cancellation"),
     "storage_policy": re.compile(r"Storage Policy"),
