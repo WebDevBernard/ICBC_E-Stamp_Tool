@@ -264,19 +264,20 @@ class ICBCDocument:
             if not getattr(self, attr, False):
                 continue
             if label == "Cancel" and not include_change_cancel:
-                break
+                continue
 
             # ── Special Risk plate-aware formatting ──────────────────
             if label == "Special Risk":
                 if self.plate == "STORAGE":
-                    return f"{core} - Special Risk Storage"
+                    core = f"{core} - Special Risk Storage"
                 elif self.plate and self.plate not in _NON_DISPLAY_PLATES:
-                    return f"{core} Special Risk"
+                    core = f"{core} Special Risk"
                 else:
-                    return f"{core} - Special Risk"
+                    core = f"{core} - Special Risk"
+                continue
             # ─────────────────────────────────────────────────────────
 
-            return f"{core} - {label}" if label != "Cancel" else f"{core} {label}"
+            core = f"{core} - {label}" if label != "Cancel" else f"{core} {label}"
 
         if include_change_cancel and self.certificate_replacement is not None:
             return f"{core} Cert Replacement"
