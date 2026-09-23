@@ -4,8 +4,15 @@ import shutil
 import sys
 import threading
 import time
+
+from io import BytesIO
+
 import fitz
 import openpyxl
+import pymupdf_fonts
+
+from PIL import Image, ImageDraw, ImageFont
+
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
@@ -1042,15 +1049,202 @@ def reincrement_pdfs(root_dir: Path | str) -> None:
 #  Stamping Constants
 # ═══════════════════════════════════════════════════════════════════
 
-VALIDATION_STAMP_OFFSET = (-4.25, 23.77, 1.58, 58.95)
-TIME_OF_VALIDATION_OFFSET = (0.0, 10.35, 0.0, 40.0)
-TIME_STAMP_OFFSET = (0.0, 13.0, 0.0, 0.0)
-TIME_OF_VALIDATION_AM_OFFSET = (0.0, -0.6, 0.0, 0.0)
-TIME_OF_VALIDATION_PM_OFFSET = (0.0, 21.2, 0.0, 0.0)
+VALIDATION_STAMP_OFFSET = (0.0, 23.77)
+
+TIME_OF_VALIDATION_OFFSET = (0.0, 20.0)
+
+TIME_STAMP_OFFSET = (0.0, 40.0)
+
+TIME_OF_VALIDATION_AM_OFFSET = (0.0, -8.4)
+
+TIME_OF_VALIDATION_PM_OFFSET = (0.0, 12.8)
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  PDF Stamping Functions
+#  Font Configuration
+# ═══════════════════════════════════════════════════════════════════
+
+FONT_PATHS: dict[str, str] = {
+    "spacembo": "spacembo",
+    "spacemo": "spacemo",
+    "helv": "notos",
+}
+
+_TEXT_IMAGE_SCALE = 4
+
+_FONT_CACHE: dict[
+    tuple[str, int],
+    ImageFont.FreeTypeFont,
+] = {}
+
+
+def _load_font(
+    fontname: str,
+    pixel_size: int,
+) -> ImageFont.FreeTypeFont:
+
+    key = (fontname, pixel_size)
+
+    if key in _FONT_CACHE:
+        return _FONT_CACHE[key]
+
+    source = FONT_PATHS.get(fontname, fontname)
+
+    font_bytes = pymupdf_fonts.myfont(source)
+
+    font = ImageFont.truetype(
+        BytesIO(font_bytes),
+        pixel_size,
+    )
+
+    _FONT_CACHE[key] = font
+
+    return font
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  Render Text As Transparent PNG
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _render_text_png(
+    text: str,
+    fontname: str,
+    fontsize: float,
+    color: tuple[int, int, int] = (0, 0, 0),
+) -> tuple[bytes, float, float]:
+
+    pixel_size = max(
+        1,
+        round(fontsize * _TEXT_IMAGE_SCALE),
+    )
+
+    font = _load_font(
+        fontname,
+        pixel_size,
+    )
+
+    # Get actual text dimensions
+    dummy_image = Image.new(
+        "RGBA",
+        (1, 1),
+        (255, 255, 255, 0),
+    )
+
+    draw = ImageDraw.Draw(dummy_image)
+
+    bbox = draw.textbbox(
+        (0, 0),
+        text,
+        font=font,
+    )
+
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+
+    # Small transparent padding
+    padding = max(
+        2,
+        round(pixel_size * 0.10),
+    )
+
+    image_width = text_width + (padding * 2)
+    image_height = text_height + (padding * 2)
+
+    image = Image.new(
+        "RGBA",
+        (image_width, image_height),
+        (255, 255, 255, 0),
+    )
+
+    draw = ImageDraw.Draw(image)
+
+    draw.text(
+        (
+            padding - bbox[0],
+            padding - bbox[1],
+        ),
+        text,
+        font=font,
+        fill=(
+            color[0],
+            color[1],
+            color[2],
+            255,
+        ),
+    )
+
+    output = BytesIO()
+
+    image.save(
+        output,
+        format="PNG",
+    )
+
+    png_bytes = output.getvalue()
+
+    width_pt = image_width / _TEXT_IMAGE_SCALE
+    height_pt = image_height / _TEXT_IMAGE_SCALE
+
+    return (
+        png_bytes,
+        width_pt,
+        height_pt,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  Insert Text Image
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _insert_text_image(
+    page: fitz.Page,
+    rect: fitz.Rect,
+    text: str,
+    fontname: str,
+    fontsize: float,
+    align: int = 1,
+    color: tuple[int, int, int] = (0, 0, 0),
+    offset_x: float = 0.0,
+    offset_y: float = 0.0,
+) -> None:
+
+    png_bytes, w, h = _render_text_png(
+        text,
+        fontname,
+        fontsize,
+        color,
+    )
+
+    y0 = rect.y0 + (rect.height - h) / 2
+
+    if align == 2:
+        x0 = rect.x1 - w
+    elif align == 0:
+        x0 = rect.x0
+    else:
+        x0 = rect.x0 + (rect.width - w) / 2
+
+    # THIS IS THE IMPORTANT PART
+    x0 += offset_x
+    y0 += offset_y
+
+    image_rect = fitz.Rect(
+        x0,
+        y0,
+        x0 + w,
+        y0 + h,
+    )
+
+    page.insert_image(
+        image_rect,
+        stream=png_bytes,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  Find Existing Timestamps
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -1058,8 +1252,11 @@ def find_existing_timestamps(
     base_name: str,
     folder_dir: Path | str,
 ) -> set[str]:
+
     folder = Path(folder_dir)
+
     key = _file_key(base_name)
+
     return {
         ts
         for pdf in folder.rglob("*.pdf")
@@ -1067,78 +1264,187 @@ def find_existing_timestamps(
     }
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  Validation Stamp
+# ═══════════════════════════════════════════════════════════════════
+
+
 def validation_stamp(
-    doc: fitz.Document, document: ICBCDocument, ts_dt: datetime
+    doc: fitz.Document,
+    document: ICBCDocument,
+    ts_dt: datetime,
 ) -> fitz.Document:
-    for page_num, (x0, y0, x1, y1) in document.validation_stamp_coords:
-        dx0, dy0, dx1, dy1 = VALIDATION_STAMP_OFFSET
-        agency_rect = fitz.Rect(x0 + dx0, y0 + dy0, x1 + dx1, y1 + dy1)
-        date_rect = fitz.Rect(
-            agency_rect.x0 + TIME_STAMP_OFFSET[0],
-            agency_rect.y0 + TIME_STAMP_OFFSET[1],
-            agency_rect.x1 + TIME_STAMP_OFFSET[2],
-            agency_rect.y1 + TIME_STAMP_OFFSET[3],
-        )
+
+    for page_num, (
+        x0,
+        y0,
+        x1,
+        y1,
+    ) in document.validation_stamp_coords:
+
         page = doc[page_num]
-        page.insert_textbox(
+
+        # Keep the detected rectangle exactly as found.
+        agency_rect = fitz.Rect(
+            x0,
+            y0,
+            x1,
+            y1,
+        )
+
+        # ----------------------------------------------------------
+        # Agency Number
+        # ----------------------------------------------------------
+
+        _insert_text_image(
+            page,
             agency_rect,
-            document.agency_number,
+            document.agency_number or "UNKNOWN",
             fontname="spacembo",
             fontsize=9,
             align=1,
+            offset_x=VALIDATION_STAMP_OFFSET[0],
+            offset_y=VALIDATION_STAMP_OFFSET[1],
         )
-        page.insert_textbox(
+
+        # ----------------------------------------------------------
+        # Date
+        # ----------------------------------------------------------
+
+        date_rect = fitz.Rect(
+            x0,
+            y0,
+            x1,
+            y1,
+        )
+
+        _insert_text_image(
+            page,
             date_rect,
             ts_dt.strftime("%b %d, %Y"),
             fontname="spacemo",
-            fontsize=9,
+            fontsize=8,
             align=1,
+            offset_x=TIME_STAMP_OFFSET[0],
+            offset_y=TIME_STAMP_OFFSET[1],
         )
+
     return doc
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  Time Of Validation
+# ═══════════════════════════════════════════════════════════════════
 
 
 def stamp_time_of_validation(
-    doc: fitz.Document, document: ICBCDocument, ts_dt: datetime
+    doc: fitz.Document,
+    document: ICBCDocument,
+    ts_dt: datetime,
 ) -> fitz.Document:
-    am_pm_offset = (
-        TIME_OF_VALIDATION_AM_OFFSET
-        if ts_dt.hour < 12
-        else TIME_OF_VALIDATION_PM_OFFSET
-    )
-    for page_num, (x0, y0, x1, y1) in document.time_of_validation_coords:
-        dx0, dy0, dx1, dy1 = TIME_OF_VALIDATION_OFFSET
-        dx0 += am_pm_offset[0]
-        dy0 += am_pm_offset[1]
-        time_rect = fitz.Rect(x0 + dx0, y0 + dy0, x1 + dx1, y1 + dy1)
-        doc[page_num].insert_textbox(
-            time_rect, ts_dt.strftime("%I:%M"), fontname="helv", fontsize=6, align=2
+
+    if ts_dt.hour < 12:
+        am_pm_offset = TIME_OF_VALIDATION_AM_OFFSET
+    else:
+        am_pm_offset = TIME_OF_VALIDATION_PM_OFFSET
+
+    for page_num, (
+        x0,
+        y0,
+        x1,
+        y1,
+    ) in document.time_of_validation_coords:
+
+        page = doc[page_num]
+
+        time_rect = fitz.Rect(
+            x0,
+            y0,
+            x1,
+            y1,
         )
+
+        # Combine the normal time offset with the
+        # AM/PM-specific offset.
+
+        offset_x = TIME_OF_VALIDATION_OFFSET[0] + am_pm_offset[0]
+
+        offset_y = TIME_OF_VALIDATION_OFFSET[1] + am_pm_offset[1]
+
+        _insert_text_image(
+            page,
+            time_rect,
+            ts_dt.strftime("%I:%M"),
+            fontname="helv",
+            fontsize=6,
+            align=2,
+            offset_x=TIME_OF_VALIDATION_OFFSET[0] + am_pm_offset[0],
+            offset_y=TIME_OF_VALIDATION_OFFSET[1] + am_pm_offset[1],
+        )
+
     return doc
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  Save Batch Copy
+# ═══════════════════════════════════════════════════════════════════
+
+
 def save_batch_copy(
-    doc: fitz.Document, document: ICBCDocument, output_folder: Path
+    doc: fitz.Document,
+    document: ICBCDocument,
+    output_folder: Path,
 ) -> Path:
+
     batch_dir = output_folder / "ICBC Batch Copies"
-    batch_dir.mkdir(parents=True, exist_ok=True)
-    dest = unique_file_path(
-        batch_dir / f"{document.base_name()} [{document.transaction_timestamp}].pdf"
+
+    batch_dir.mkdir(
+        parents=True,
+        exist_ok=True,
     )
-    doc.save(dest, garbage=4, deflate=True)
+
+    dest = unique_file_path(
+        batch_dir / f"{document.base_name()} " f"[{document.transaction_timestamp}].pdf"
+    )
+
+    doc.save(
+        dest,
+        garbage=4,
+        deflate=True,
+    )
+
     return dest
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  Save Customer Copy
+# ═══════════════════════════════════════════════════════════════════
+
+
 def save_customer_copy(
-    doc: fitz.Document, document: ICBCDocument, output_folder: Path
+    doc: fitz.Document,
+    document: ICBCDocument,
+    output_folder: Path,
 ) -> Path:
+
     customer_pages = list(document.customer_copy_pages)
+
     if document.top and (doc.page_count - 1) not in customer_pages:
         customer_pages.append(doc.page_count - 1)
+
     pages_to_delete = [i for i in range(doc.page_count) if i not in customer_pages]
+
     for page_num in reversed(pages_to_delete):
         doc.delete_page(page_num)
+
     dest = unique_file_path(
         output_folder / f"{document.stamp_name()} (Customer Copy).pdf"
     )
-    doc.save(dest, garbage=4, deflate=True)
+
+    doc.save(
+        dest,
+        garbage=4,
+        deflate=True,
+    )
+
     return dest

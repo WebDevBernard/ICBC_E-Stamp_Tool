@@ -2,4 +2,5 @@ pyinstaller
 auto-py-to-exe
 pymupdf
 pymupdf-fonts
+Pillow
 openpyxl
