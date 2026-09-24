@@ -46,6 +46,13 @@ def _countdown(seconds: int) -> None:
     print()
 
 
+def _output_dir() -> Path:
+    for d in (Path.home() / "Desktop", Path.home() / "OneDrive" / "Desktop"):
+        if d.is_dir():
+            return d
+    return Path.cwd()
+
+
 def _require_config() -> None:
     mapping_path = Path.cwd() / "config.xlsx"
     if not mapping_path.exists():
@@ -70,10 +77,7 @@ def icbc_e_stamp_tool() -> None:
     start_total = timeit.default_timer()
 
     # ── Define Desktop stamping folder
-    desktop_path = Path.home() / "Desktop"
-    if not desktop_path.exists():
-        desktop_path = Path.cwd()
-    STAMP_OUTPUT_FOLDER = desktop_path / "ICBC E-Stamp Copies"
+    STAMP_OUTPUT_FOLDER = _output_dir() / "ICBC E-Stamp Copies"
     STAMP_OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
 
     # ── Load Excel mapping
