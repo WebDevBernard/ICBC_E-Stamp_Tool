@@ -1070,7 +1070,7 @@ FONT_PATHS: dict[str, str] = {
     "helv": "notos",
 }
 
-_TEXT_IMAGE_SCALE = 4
+_TEXT_IMAGE_SCALE = 16
 
 _FONT_CACHE: dict[
     tuple[str, int],
@@ -1323,7 +1323,7 @@ def validation_stamp(
             date_rect,
             ts_dt.strftime("%b %d, %Y"),
             fontname="spacemo",
-            fontsize=8,
+            fontsize=9,
             align=1,
             offset_x=TIME_STAMP_OFFSET[0],
             offset_y=TIME_STAMP_OFFSET[1],
